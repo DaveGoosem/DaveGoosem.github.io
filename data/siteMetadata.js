@@ -8,7 +8,7 @@ const siteMetadata = {
   theme: 'dark', // system, dark or light
   siteUrl: 'https://davegoosem.com',
   siteRepo: 'https://github.com/DaveGoosem/DaveGoosem.github.io',
-  siteLogo: '/static/images/logo.png',
+  siteLogo: '/static/images/Logos/DaveGoosem.com_Logo_White.png',
   socialBanner: '/static/images/twitter-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'address@yoursite.com',
