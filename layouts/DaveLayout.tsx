@@ -39,26 +39,26 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
     <SectionContainer>
       <ScrollTopAndComment />
       <article>
-      <div className="space-y-1 pb-10 text-center dark:border-gray-700">
-            <div className="w-full">
-              <Bleed>
-                <div className="relative aspect-[2/1] w-full">
-                  <Image src={displayImage} alt={title} fill className="object-cover" />
-                </div>
-              </Bleed>
-            </div>
-            <div className="relative pt-10">
-              <PageTitle>{title}</PageTitle>
-            </div>
-            <div>
-                  <dt className="sr-only">Published on</dt>
-                  <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                    <time dateTime={date}>
-                      {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
-                    </time>
-                  </dd>
-                </div>
+        <div className="space-y-1 pb-10 text-center dark:border-gray-700">
+          <div className="w-full">
+            <Bleed>
+              <div className="relative aspect-[2/1] w-full">
+                <Image src={displayImage} alt={title} fill className="object-cover" />
+              </div>
+            </Bleed>
           </div>
+          <div className="relative pt-10">
+            <PageTitle>{title}</PageTitle>
+          </div>
+          <div>
+            <dt className="sr-only">Published on</dt>
+            <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+              <time dateTime={date}>
+                {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
+              </time>
+            </dd>
+          </div>
+        </div>
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
           <div className="grid-rows-[auto_1fr] divide-y divide-gray-200 pb-8 dark:divide-gray-700 xl:grid xl:grid-cols-4 xl:gap-x-6 xl:divide-y-0">
             <dl className="pb-10 pt-6 xl:border-b xl:border-gray-200 xl:pt-11 xl:dark:border-gray-700">
@@ -119,16 +119,16 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             <footer>
               <div className="flex flex-wrap">
                 <div className="sm:w-1/4 md:w-1/2 pl-1 pt-1">
-                  <Image src={'/static/images/Logos/2024-Sitecore-MVP-Technology.png'} alt='2024 Sitecore Technology MVP' width={500} height={500}/>
+                  <Image src={'/static/images/Logos/2024-Sitecore-MVP-Technology.png'} alt='2024 Sitecore Technology MVP' width={500} height={500} />
                 </div>
                 <div className="sm:w-1/4 md:w-1/2 pl-1 pt-1">
-                  <Image src={'/static/images/Logos/2023-Sitecore-MVP-Technology.jpg'} alt='2023 Sitecore Technology MVP' width={500} height={500}/>
+                  <Image src={'/static/images/Logos/2023-Sitecore-MVP-Technology.jpg'} alt='2023 Sitecore Technology MVP' width={500} height={500} />
                 </div>
                 <div className="sm:w-1/4 md:w-1/2 pl-1 pt-1">
-                  <Image src={'/static/images/Logos/2022-Sitecore-MVP-Technology.jpg'} alt='2022 Sitecore Technology MVP' width={500} height={500}/>
+                  <Image src={'/static/images/Logos/2022-Sitecore-MVP-Technology.jpg'} alt='2022 Sitecore Technology MVP' width={500} height={500} />
                 </div>
                 <div className="sm:w-1/4 md:w-1/2 pl-1 pt-1">
-                  <Image src={'/static/images/Logos/2021-Sitecore-MVP-Technology.jpg'} alt='2021 Sitecore Technology MVP' width={500} height={500}/>
+                  <Image src={'/static/images/Logos/2021-Sitecore-MVP-Technology.jpg'} alt='2021 Sitecore Technology MVP' width={500} height={500} />
                 </div>
               </div>
               <div className="divide-gray-200 text-sm font-medium leading-5 dark:divide-gray-700 xl:col-start-1 xl:row-start-2 xl:divide-y">

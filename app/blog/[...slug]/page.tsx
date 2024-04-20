@@ -20,7 +20,7 @@ const layouts = {
   PostSimple,
   PostLayout,
   PostBanner,
-  DaveLayout
+  DaveLayout,
 }
 
 export async function generateMetadata({
