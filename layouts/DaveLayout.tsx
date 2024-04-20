@@ -33,20 +33,22 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
   const { filePath, path, slug, date, title, images, tags } = content
   const basePath = path.split('/')[0]
   const displayImage =
-    images && images.length > 0 ? images[0] : 'https://picsum.photos/seed/picsum/800/400'
+    images && images.length > 0 ? images[0] : ''
 
   return (
     <SectionContainer>
       <ScrollTopAndComment />
       <article>
         <div className="space-y-1 pb-10 text-center dark:border-gray-700">
-          <div className="w-full">
-            <Bleed>
-              <div className="relative aspect-[2/1] w-full">
-                <Image src={displayImage} alt={title} fill className="object-cover" />
-              </div>
-            </Bleed>
-          </div>
+          {displayImage && (
+            <div className="w-full">
+              <Bleed>
+                <div className="relative aspect-[2/1] w-full">
+                  <Image src={displayImage} alt={title} fill className="object-cover" />
+                </div>
+              </Bleed>
+            </div>
+          )}
           <div className="relative pt-10">
             <PageTitle>{title}</PageTitle>
           </div>
