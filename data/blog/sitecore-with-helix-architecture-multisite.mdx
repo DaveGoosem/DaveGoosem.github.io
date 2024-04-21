@@ -1,0 +1,56 @@
+---
+title: Sitecore Helix modular & three-tier architecture patterns - why not both?
+date: '2018-09-30'
+tags: ['Sitecore', 'Helix', 'ASP.NET']
+draft: false
+summary:  have discussed the Helix design patterns before and I really love their modular approach to code architecture however whilst trying to discuss this with some colleagues and working out the cleanest way to work with Helix and a Multi-site Sitecore solution it occurred to me that if you are familiar with the "Enterprisey" Three-tier design architecture principles, well the same principles can be applied to your Helix development at a modular level.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+I have discussed the **[Helix](https://helix.sitecore.com/index.html)** design patterns before and I really love their modular approach to code architecture however whilst trying to discuss this with some colleagues and working out the cleanest way to work with Helix and a Multi-site Sitecore solution it occurred to me that if you are familiar with the "Enterprisey" **[Three-tier design](https://en.wikipedia.org/wiki/Multitier_architecture)** architecture principles, well the same principles can be applied to your Helix development at a modular level.
+
+Let's take a look at a super simple example..
+
+Let's say your website has a Feature layer project for "Navigation". In a multisite scenario, you'll likely find that the Navigation data templates will be pretty standard and common across all sites for things like:
+- Show in Navigation
+- Show Child Items
+- Menu Text
+etc etc.
+
+You'll also find that the way in which you obtain the navigation items is going to be the same (albeit from a different parent item for each site).
+What you will find is different is that you will have a different look and feel for your navigations on each site. This generally takes the form of different Views and potentially some Controller differences.
+There are undoubtedly a whole host of ways to manage this kind of thing however something I've found that works quite well (and feels nice and familiar) is to structure your Module's code using a similar pattern to the old three-tier architecture.
+
+What does that look like? Let's take a look..
+
+In your typical three-tier architected solution you would generally see your code structured something like this:
+
+Presentation Layer - website code lives here with your Layouts/Sublayouts/JS/CSS etc
+Business Layer - self explanatory
+Data or Service Layer - also should be self explanatory
+
+Now lets translate that to our Navigation Feature:
+
+- **/Views** ~ Presentation Layer
+- **/Controllers** ~ Business Layer
+- **/Service** ~ Data/Service
+
+It's nothing overly groundbreaking but it is a nice way to work. Service layer is always responsible for getting the data and wrapping it up in a generic/common way so that it can be called from multiple controller actions.
+
+Each controller action should therefore be quite small and focus with ONLY logic which is specific to a given website's needs. Ideally if there is only differences in the way the feature looks, then we can simply have the controller passing data to the relevant View.
+
+The Views should hopefully be self explanatory.
+
+Describing it in this way is actually a useful tool for helping people who aren't as familiar with Helix to feel more at home.
+
+
+
+
+
+
+
+
+
+
