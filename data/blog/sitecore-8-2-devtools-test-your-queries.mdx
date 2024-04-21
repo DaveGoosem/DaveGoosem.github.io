@@ -1,0 +1,22 @@
+---
+title: Sitecore Development Tools | Test your Sitecore Queries
+date: '2019-02-05'
+tags: ['Sitecore']
+draft: false
+summary: As a 'back in the day' Sitecore developer I used to do more with Sitecore Queries than I'd care to admit. Recently I was looking for a 'good' way to set up a rendering with a default location which worked in a multi-site solution and was playing with Sitecore Queries once again. It occurred to me that the tooling that used to be available is no longer accessible through the Sitecore back end.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+As a 'back in the day' Sitecore developer I used to do more with Sitecore Queries than I'd care to admit. Recently I was looking for a 'good' way to set up a rendering with a default location which worked in a multi-site solution and was playing with Sitecore Queries once again. It occurred to me that the tooling that used to be available is no longer accessible through the Sitecore back end.
+
+I did a bit of digging and I located a whole host of useful tooling which I'd known about at some point in the past but which I'd pretty much forgotten about until I re-discovered them again. One of these is the Sitecore XPath Builder which also lets you swap between query notation. Still useful!
+
+`/sitecore/shell/default.aspx?xmlcontrol=IDE.XPath.Builder`
+
+![Query Testing Tool Window](/static/images/posts/2019/sitecore-development-tools-test-queries/QueryToolingWindow.png "Query Testing Tool Window")
+
+There are a whole host of useful tools if you take a look inside the Sitecore directory. I had a peek in the Sitecore.Client.dll and can see that the Default page accepts a query string parameter of "xmlcontrol" to which you can pass the name of any of these types of tools you might find using the name of the xml file and dot separation. Our example is below:
+
+![XPath XML File folder location](/static/images/posts/2019/sitecore-development-tools-test-queries/XpathFileSystem.png "XPath XML File folder location")
