@@ -32,8 +32,7 @@ interface LayoutProps {
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, images, tags } = content
   const basePath = path.split('/')[0]
-  const displayImage =
-    images && images.length > 0 ? images[0] : ''
+  const displayImage = images && images.length > 0 ? images[0] : ''
 
   return (
     <SectionContainer>

@@ -1,0 +1,60 @@
+---
+title: Sitecore Build & Release with VSTS & Azure PaaS
+date: '2018-09-26'
+tags: ['Sitecore', 'Azure', 'Cloud']
+draft: false
+summary: It's been quite some time since we started our journey using Sitecore 8.2 and Azure PaaS. There has been no small amount of experimentation, failings and most importantly, learnings as we worked towards an automated build and release pipeline using VSTS so I thought I would take the opportunity at long last to share some of my experiences.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+It's been quite some time since we started our journey using Sitecore 8.2 and Azure PaaS. There has been no small amount of experimentation, failings and most importantly, learnings as we worked towards an automated build and release pipeline using VSTS so I thought I would take the opportunity at long last to share some of my experiences.
+
+This was the first time I'd tried using Azure PaaS and to be fair, it was very early days for Sitecore supporting PaaS as well. While using the bleeding edge technologies is fun and exciting, it can result in a lot of known issues and unknown issues with both Azure PaaS and Sitecore itself which we had to work through.
+
+##The Approach
+
+> Automation. Everywhere.
+>
+We grabbed the Sitecore XP2 artefacts from the 8.2 Release 4 downloads area and started from that. Into Azure went fully at scale version of Sitecore on PaaS with Redis Cache and Azure Search and Application Insights working. We opted for a SaaS Mongo solution.
+
+Using VSTS we deploy this into our Azure solution and it has a pre-configured, working vanilla Sitecore 8.2 Release 4 website running with 4 Sitecore instances for Content Mangement (CM) Content Delivery (CD) Processing (Proc) and Reporting (Rpt). There are a lot of variables which were pulled out and tokenised in order to ensure we can deploy this infra release multiple times for our environment setup for *Continuous Integration*.
+
+Insert first hurdle.
+
+If your like me, and have been around for a while, you might be familiar with the concept of Content Management and Content Delivery servers. The major differences are typcially that Content Delivery servers don't allow access to the Master Database and don't allow you to access the Sitecore backend area at all. Generally this means you use config file transformations and have seperate ones for CM and CD where appropriate. Content Management has also generaly been the place where the "processing" and "reporting" activities take place. Sitecore versions 8+ have now split this into two additional instances seperating the Processing and Reporting activities. This is all well and good, however now we have different config files required for **four** environments, instead of two.
+
+When I first considered this, I was a bit miffed as to how to tackle build/release automation in my VSTS set up. I don't want to have four different release plans to release into each of the four instances. That's a lot of work and overhead to maintain. How then to keep life as simple as possible, keep the build/release time down so that "Continuous integration" does not become "Continuous Waiting" as seperate builds releases happen?
+
+Role based configuration was the answer. The GitHub project is here:
+https://github.com/Sitecore/Sitecore-Configuration-Roles. As I understand it, this solution is now shipped as part of Sitecore 9+ which is great. Essentially this solution allows you to specify within your .config files, which "roles" the config should be loaded for. If the Role doesn't match your rules, then the config is ignored and not loaded for that Sitecore instance/role. Check out the doco at the link above for further detail. The repo contains pre-configured config files for all Sitecore 8.X versions with the roles defined for you already (thanks guys).
+
+What does this mean?
+
+It means that we can create a single build task to package up our custom application code and deploy that same code into all four Sitecore instance roles and have configuration take care of the rest.
+
+If you're like me and started using the Helix development approach there is some fun to be had with getting your build working effectively and in a timely fashion. I will create a seperate post describing the evolution our Build process has taken. For now, let's look at the approach and the Release portion of this. VSTS guides you into approaching build and release in two parts. Firstly **Build**. This is typically checking out your source code and compiling it and dropping your artifacts somewhere that you can then pick up as part of your **Release**. We ended up having one repo with the Sitecore source code in it and the Role Based config placed on top, which I've  I'll cover why below.
+
+The Sitecore Source Code repository is "built" and pushed up as an artefact. Once we had this set up you rarely change it and just pick it up in your Releases. Another Build is responsible for pulling down the custom application code and pushing that up as another artefact. These are both set up with automation to trigger a build every time any code changes come in.
+
+Originally I had our relase just dropping our custom application code over the top of the out of the box Sitecore PaaS code however there were some obvious problems, the foremost of which is the fact that your site will restart (likely more than once while the release is happening if people are browsing the site). The other is that there is no neat way to delete files with Azure PaaS. You can only use an API which has it's own limitations currently such as the fact that you can't recursively delete a folder that contains sub-folders (nightmare!) and if you do use a number of Azure tasks to delete files in this way it's very slow. If you're like us and use Unicorn or TDS to mange your database content then you definately need to be able to remove items. Using something like Web Deploy will actually remove files faster for you however that won't solve the problem of downtime during a release.
+
+Azure deployment slots is where we inevitably ended up. Deployment slots are quite a clever way to work with PaaS environments and allow you to even do "hot-drops" with warmed up, ready to go releases with no noticeable downtime to end users.
+
+I will look at writing something covering deployment slots in more detail in the near future. The key points to be made here however are simply that we can deploy to a seperate 'staging slot' and warm it up, do some smoke tests and be sure the latest release is working as expected before swapping it into Production and making it 'live'.
+
+So far, so good with our approach. There are still some pain-points but they're suprisingly smaller than you might expect and I can see a bright future using the technology stack we're committed to currently.
+
+
+
+
+
+
+
+
+
+
+
+
+
