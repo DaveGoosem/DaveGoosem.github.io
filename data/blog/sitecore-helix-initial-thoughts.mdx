@@ -1,0 +1,35 @@
+---
+title: Sitecore 8.X and Helix - Initial thoughts
+date: '2017-10-11'
+tags: ['Sitecore', 'Helix']
+draft: false
+summary: Last month was the start of an exciting new website development project to bring my company's Sitecore website into the current era. I'd been aware of the [Sitecore Helix](http://helix.sitecore.net/) design approach for quite some time and was interested in the idea however this finally afforded me the opportunity to really explore what it was all about while I was shopping around for the right approach to building the new site.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+Last month was the start of an exciting new website development project to bring my company's Sitecore website into the current era. I'd been aware of the [Sitecore Helix](http://helix.sitecore.net/) design approach for quite some time and was interested in the idea however this finally afforded me the opportunity to really explore what it was all about while I was shopping around for the right approach to building the new site.
+
+### Pros of the Helix Design Approach
+
+Although there are many design approaches out there in the wild, it's the first time in my memory that Sitecore themselves have released a Demo solution with source code and this source code was what first familiarised developers with the Helix design approach. It says a lot that this is how Sitecore would choose to develop within their own platform in this way.
+
+The vast majority of colleagues and developers I speak to seem to now be using Helix or wish they were which is also a very good thing. Imagine being able to move between projects, companies, interact with the Sitecore Support team and discuss issues without the need to bring them up to speed on the way your solution is architected. Why? Because everyone is following the same general design approach. Would this not be a nice way for the world to be? Similarly, as people improve upon this and look to fast track development, the community can all work together to do so and share in improvements relatively easily.
+
+Helix is utilising some of the more popular tool sets/extensions such as Node.js and Gulp (now natively supported in Visual Studio) which not only is fun to build with, but gives us flexibility on the way we work which we've never really had before.
+
+I won't spend the time describing how the architecture is structured as it's all documented by them (see link above) already however I will comment on the fact that it's very modular and allows us (with some Build/Release design magic) to perform deployments at a feature/component level and not necessarily deploy your entire solution every time. This is perfect for Fast / Agile practices.
+
+### Cons of the Helix Design Approach
+
+Firstly, I must acknowledge that most of my experiences with Sitecore Helix so far which have made it to my "Cons" list are situational. I have been trying to push it to do things which there is not a lot of documented precedent for which, while mostly fun can be sometimes challenging and tiresome when there isn't a huge amount of support and documentation for things.
+
+Alot of this is around Build and Release using Microsoft VSTS trying to build and release into Azure PaaS using and XP1-like infrastructure design.
+
+The other items relate to working in a large development team where you have many Feature/Foundation projects coming to life together. Firstly creating a new Project and Test Project within your Solution along with configuring Unicorn each time is quite a time sync. You do spend a lot of time in tedious configuration however I'm sure someone will create tooling to fast-track this soon (there are already some solutions out there) to overcome this.
+
+Another issue we've faced has been all the Dependencies/References which are required to be added again and again to the many projects. Thankfully Sitecore offers Nuget packages for the bulk of it's Sitecore libraries (with versions) to overcome this and still provide a simple upgrade path, however keeping Nuget package versions all aligned is also frustrating. Visual Studio's "consolidate" option for Nuget Packages is a life saver here.
+
+### Summary
+To wrap up, I'd say that overall Sitecore Helix is very much worth the time to explore and I'm happy we've decided to used this approach. I'm looking forward to creating some super slick Gulp tasks and having the best Build/Release options I can, as well as being able to work with super modular components that are structured logically and make creation of features very easy. I'm also looking forward to where the community takes it and seeing where things are at a year or more from now.
