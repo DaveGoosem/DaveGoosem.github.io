@@ -1,0 +1,53 @@
+---
+title: Sitecore Cold DR with PaaS on a Budget
+date: '2021-03-30'
+tags: ['Sitecore', 'Cloud', 'Architecture']
+draft: false
+summary: Often when having discussions with clients using Azure PaaS about DR and the available options, the ideal scenario comes at a sigificant cost.() LINQ to Sitecore capability.
+layout: DaveLayout
+images: ['/static/images/posts/2021/sitecore-cold-dr-on-a-budget/disaster.jpg']
+authors: ['default']
+---
+
+Often when having discussions with clients using Azure PaaS about Disaster Recovery (DR) and the options available to them, the "ideal" scenario comes at a sigificant cost. The biggest failing of Azure's Platform as a Service offering (in my opinion) is that if you have an App Service provisioned you have to pay for it even if it is Stopped. One of the major drivers for going to the cloud has been the cost saving potential opportunity of being billed based on 'running hours' and being able to turn off resources and not have to pay for them when they're not required. It also means that you can spin up new environments temporarily as they're required and keep them at a low running cost when they're not in use.
+
+## Why not just use Infrastructure As Code to Create Your DR Resources From Scratch?
+
+It's a reasonable question and for many, this is the chosen DR approach. Rather than run everything all the time and pay for it, instead use templated infrastructure configurations and scripts to re-create your infra as you need it. This of course has it's own pros and cons and complexities, one of which being you will likely need to also restore DB backups and rebuild indexes or have a copy of them synced somewhere. This all takes up valuable time when scrambling to stand up your DR infrastructure and requires consideration when planning your DR appraoch.
+
+Another big issue which many people fail to realise is that during a catestrophic data centre availability event, it's highly likely that you're not alone in trying to provision resources in a secondary region and reality is often that you are queued waiting for your secondary resources to be provisioned for a long time as everyone is frantically trying to do the same thing at the same time.
+
+## So where does that leave us?
+
+My preferred way to ensure maximum uptime is to aim for an "active-active" infrastructure architecture which means that you are distributing traffic across both data centres and utilising all your resources all the time. If you're going to be paying for it, you may as well make use of it right? This also ensures that in the case of an incident, there should be no noticeable end-user impact as the traffic just all goes to the healthy resources and perhaps all that happens is you need to scale the healthy region out a bit to pick up the load.
+
+In the Sitecore space, there are still complexities with doing this in a scaled environment as you don't want to have a number of the Sitecore Services/Roles running twice. Some obvious examples being Content Management (unless correctly configured) or your XConnect indexing or processing to avoid duplicate data issues and things like that.
+
+There's also the undeniable cost of running two full scaled topologies in a Production environment both from an Infrastructure running cost standpoint and a Sitecore Licensing standpoint as in an active-active topology you will more than likely also require a licencing agreement to support this as well.
+
+## I do want DR but let's focus on cost saving
+
+This generally get's raised when considering Disaster Recovery and it's definately achieveable with minimal fuss and here are a few things you need to consider before starting your own Cold DR adventure..
+
+1. Consider the purpose of your DR environment. Is it just to keep the lights on while we wait for the Primary Region to come back on line?
+2. What are the bare minimum things your site needs in order to be able to serve content to end-users?
+3. Consider integrations/End-user authentication etc.... Can you get by without or is it decoupled enough that you can also accommodate DR for these things?
+4. If you're in DR mode, what might you want to be able to do during that time givn you may not have a working Content Authoring environment? Can you set up a simple/cost effective way to get messaging to end-users advising them of a degraded experience in some way?
+
+It's important to note that the purpose of what we want to do here is to just ensure there is an appropriate level of service being provided to end-users. We're not looking for a like-for-like capability with the primary region, we're looking for only what we absolutely need.
+
+Consider a relatively simple brochure-ware website.. On the left is a pretty standard scaled topology in our primary region, while on the left, we have a Cold DR environment which has only what we absolutely need to keep everything running.
+
+If we wanted, we could also combine the XConnect Collection and CD App Service Plans given these are both able to be scaled and save further by having a singular Plan.
+
+![Sample cost saving architecture](/static/images/posts/2021/sitecore-cold-dr-on-a-budget/image-4.png "Sample cost saving architecture")
+
+We've kept the staging slot in place so that the CI/CD pipeline can run the same set of tasks for CD in the primary and secondary regions. We obviously need to keep deploying the same version of the application into both regions in each and every release to production.
+
+I would also take the cost reduction further and consider scripting a "scale down" and "scale up" script which can be applied to the App Services to keep them on the lowest possible tier when not in use and then just bump them up to the standard (same as primary region) tier when in use or deployments are happening and you need to test the secondary CD instance.
+
+You'll notice that there are no XConnect DB's being replicated to the secondary region and this is intentional. Aside from it being a pain to configure replication for these, this DR configuration is focused on just serving what it needs to until the primary region is back online. At that point, you would fail back to the primary region as soon as service is restored and stable there.
+
+Having the Collection instance pointing to the DB's in the primary region is also fine for a period of time. As long as service is restored there within a reasonable time frame (not weeks of outage) then the data will still be pushed in when the Databases become available. Happy days..
+
+The fail over can be managed through a Traffic Manager or whatever else you're using in front of your App Services.
