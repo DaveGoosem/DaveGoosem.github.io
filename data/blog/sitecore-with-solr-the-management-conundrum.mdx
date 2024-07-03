@@ -1,0 +1,35 @@
+---
+title: Sitecore with Solr - the management conundrum
+date: '2021-05-04'
+tags: ['Sitecore', 'Cloud', 'Architecture', 'SearchStax', 'Solr']
+draft: false
+summary: Solr is such an amazingly powerful product full of great features which is hard to beat however the challenge faced by most companies or Sitecore Development shops is that traditionally, Solr is hosted in a totally different ecosystem.
+layout: DaveLayout
+authors: ['default']
+---
+
+![Searchstax and Sitecore](/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/SearchStax-SitecoreLogos-2.png "Searchstax and Sitecore")
+
+If you've been around the Sitecore Ecosystem for any period of time, you've likely seen the evolution of Sitecore and Search at scale. In earlier versions indexing strategies were used to copy locally stored Lucene indexes to all servers. Later, centralised indexing solutions like Solr and then Azure Search were employed.  At the time of writing this article, Sitecore has moved back to just officially supporting Solr.
+
+Solr is such an amazingly powerful product full of great features which is hard to beat however the challenge faced by most companies or Sitecore Development shops is that traditionally, Solr is hosted in a totally different ecosystem. If you have Sitecore, you've probably invested heavily into the .NET ecosystem both in developers who specialise in .NET and the Microsoft stack, as well as Networking and System Engineers or Cloud experts who more than likely align most strongly to the .NET ecosystem as well.
+
+If you think back to the period of time when Sitecore solutions were using MongoDB to manage the XDB data, this again was a similar problem whereby more often than not, the people building and managing the hosting of your Sitecore Solution were not familiar with Linux or hosting Mongo on Windows and likely knew all about SQL maintenance and management but not Mongo.
+
+## So where does that leave us?
+
+If you've set up a Solr Cloud instance before and configured ZooKeeper you'd probably agree that it's almost a specialist role in and of itself. In the current age of cloud deployed "as a service" configurations, the last thing you want is to have a super slick "as a sevice" topology for everything and then a VM Cluster for managing your Solr indexes. That's a weak link and doesn't really make sense for most companies.
+
+## The SearchStax SaaS Offering
+
+We have a number of clients all set up and using SearchStax in various configurations. This is easily the best way to go currently as they are compeditively priced (especially if you take the management/support overhead into consideration) and they've got guides for usage with Sitecore https://www.searchstax.com/solutions/sitecore-solr/ . SearchStax enables you set up a fully scaleable  Solr cluster with DR (via replication) and manage it all through a slick SaaS web interface.
+
+There is also a tonne of other capability you can make use of in the form of their own SaaS Site Search offering which lets you configure a plug and play content search. This isn't always needed for a Sitecore solution but is still a great product worth exploring.
+
+The best bit about it is that it can be deployed to the same data centres as your existing resources and it can be a part of your topology regardless of the type of deployment apprach you decide to take - be that PaaS, IaaS or Containers or any other approach you might take.
+
+You may have noticed the SearchStax clusters sitting in the Cold DR example topology from one of my previous posts... It's quick/easy to stand up via  a request to SearchStax and then easy to deploy your cores and connect to them once that's done - see here: https://www.searchstax.com/docs/sitecore-10-1/
+
+![Example architecture using Solr](/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/image-5.png "Example architecture using Solr")
+
+I'll look at covering the setup SearchStax in another post coming soon..
