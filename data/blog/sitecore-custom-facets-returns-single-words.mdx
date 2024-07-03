@@ -1,0 +1,30 @@
+---
+title: Sitecore Custom Facets with 'text' field type returns single words from Solr
+date: '2020-08-25'
+tags: ['Sitecore', 'SOLR']
+draft: false
+summary: This article describes an issue you may encounter when you are trying to use the faceting capability of Solr. It touches on the way you can use the Sitecore Search API to generate Solr queries which contain facets using Sitecore's FacetOn() LINQ to Sitecore capability.
+layout: DaveLayout
+images: ['/static/images/posts/2020/sitecore-custom-facets-returns-single-words/sitecore-search.jpg']
+authors: ['default']
+---
+
+This article describes an issue you may encounter when you are trying to use the faceting capability of Solr. It touches on the way you can use the Sitecore Search API to generate Solr queries which contain facets using Sitecore's FacetOn() [LINQ to Sitecore capability](https://doc.sitecore.com/developers/100/sitecore-experience-manager/en/linq-to-sitecore.html?ref=davegoosem.com).
+
+To summarise the issue, faceting does not really work on a 'text' field type within Solr. When you use a 'text' field type, you will have single word/token results returned. If you use a 'String' field type to store your data, you will get phrases and results with multiple terms returned which is usually what you want when trying to perform faceting.
+
+> Easy right?
+
+The issue with this is that a string field type can only store a certain number of characters. It has a fixed size which you can increase but it's still going to be set to a limited size which can be problematic.
+
+Let's look at an example scenario whereby you are tasked with <b>indexing the contents of thousands of PDF documents</b> so that you can search on the contents and return them in your search results. You also need to be able to dynamically generate Facets using Sitecore's `FacetOn()` call on a certain index field which will return results which also includes a list of facets which you can display and use to then call `Filter()` on to filter your results.
+
+This is a pretty common scenario and the challenge is that a PDF document is never a fixed size/length. The PDF document might have a couple of pages or a couple of hundred pages and so you can't be 100% certain that the contents of your PDF will fit with a 'string' data type.
+
+If you are building out a custom index using Sitecore you can specify the field 'type' in your config to set it to a string and force the issue however if the file is too big, the indexer will throw an error telling you that you've exceeded the max length. This will inevitibly lead to you using a 'text' field type which can handle more characters but which won't return you those nice meaningful facets.
+
+> Checkmate?
+
+Kind of... It's important to remember that faceting is a 'nice to have' and should try to make user's lives easier but it's not the end of the world if you don't have a perfect set of facet options to filter on. Create another 'facet' index field and enforce it's type as a 'string' type in the Sitecore index definition config. Next, create some code which will strip out any non-essential content from the start of the document (if you haven't already for the search index field) as well as parse the content and only take up to the max Solr string field length worth of characters to the nearest word. Now you can Facet on this String field and have nice facet results returned for a good portion of your document.
+
+Tweak it as you need and you should still be able to provide a good experience to your users in this way.
