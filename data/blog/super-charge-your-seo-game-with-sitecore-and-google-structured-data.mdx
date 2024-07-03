@@ -1,0 +1,288 @@
+---
+title: Super charge your SEO with Sitecore and Google Structured Data
+date: '2021-08-02'
+tags: ['Sitecore', 'SEO', 'SXA']
+draft: false
+summary: There is often a situation where you have common types of data on a set of pages on your site which form the main purpose of your website.
+layout: DaveLayout
+images: ['/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/1690.jpg']
+authors: ['default']
+---
+Depending on the type of website you're building, there is often a situation where you have a bunch of products or repeated data elements which you want to present as pages on your site. Typically these pieces of data form the main purpose of your website and contain the most valuable data which you want to promote and attract users to consume.
+
+Whenever this is the case, it's worth looking into enhancing your SEO using Google Structured Data.
+
+## What is Google Structured Data?
+
+Ever been browsing the web and wondered how some search results came to be presented like this?
+
+![Google Results](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image.png "Google Results")
+
+It's likely that the page the search result links to has been set up to use Structured Data as shown below.
+
+![Structured data example markup](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-1.png "Structured data example markup")
+
+Summarising the documenation [here](https://developers.google.com/search/docs/advanced/structured-data/intro-structured-data?ref=davegoosem.com#structured-data), Structured Data helps google understand the content of the page and in doing so in a standardised data structure, gain some SEO advantages and perks like the results formatting. Google has defined the data structure based on Schema.org which will be interpreted and it's up to us as the developers to map our data to this structure and include it on the page if you want to make use of it.
+
+Google Structured Data is using the [Schema.org](https://schema.org/docs/schemas.html?ref=davegoosem.com) data structure whcih is important to note as you'll see if you keep reading.
+
+A full list of the data types supported can be viewed [here](https://developers.google.com/search/docs/advanced/structured-data/search-gallery?ref=davegoosem.com).
+
+## Using Structured Data in your Sitecore Solution
+
+The easiest way to understand this will be to take a look at an example project and walk through the implementation decisions we made. There are obviously a bunch of ways to do this so by seeing this relatively simple example, you can take it and run with it.
+
+In a recent piece of work we were tasked with including Google Structured Data into some pages for a Real Estate website in three key page types.
+
+1. The Property Listing pages (rentals and for sale listings)
+2. The Agent Details pages (property managers and sales agents)
+3. The Office Details pages (office locations)
+
+For each of these we needed to ensure that we had all the releveant data included in the page. This included location data/person data, event data (for auctions/inspections) and image links etc.
+
+All the data is imported from external systems into Sitecore Item buckets (one bucket for each) and the data is mapped to relevant fields on the Sitecore items (which are pages), including all your standard Sitecore SXA SEO fields.
+
+Since we already had a local copy of all the data, we decided to look after this using a custom SXA Controller Rendering and use an exsiting Nuget package called [Schema.NET](https://github.com/RehanSaeed/Schema.NET?ref=davegoosem.com) which saves us trying to generate the json structure by hand. This is great as we can just map to it and then use it's inbuilt extensions to render it as an "html escaped string" later.
+
+Let's have a quick look at some sample code for the Listings. I've removed a buch of the mapping code lines for brevity:
+
+Here is our sample portion of the Repository method:
+
+```
+public override IRenderingModelBase GetModel()
+{
+	ListingSEOMetaDataRenderingModel model = new ListingSEOMetaDataRenderingModel();
+
+	FillBaseProperties(model);
+
+	//uses the page item to source data
+    Item item = PageContext.Current;
+
+    var propertyType = item.Fields[Constants.Templates.Listing.Fields.PropertyType]?.Value;
+    var listingType = item.Fields[Constants.Templates.Listing.Fields.Type]?.Value;
+    var category = item.Fields[Constants.Templates.Listing.Fields.Category]?.Value;
+    var bedrooms = item.Fields[Constants.Templates.Listing.Fields.Bedrooms]?.Value;
+    var status = item.Fields[Constants.Templates.Listing.Fields.Status]?.Value;
+    var carSpaces = item.Fields[Constants.Templates.Listing.Fields.CarSpaces]?.Value;
+    var bathrooms = item.Fields[Constants.Templates.Listing.Fields.Bathrooms]?.Value;
+
+	var auctionDate = item.Fields[Constants.Templates.Listing.Fields.AuctionDate]?.Value;
+	var auctionVenue = item.Fields[Constants.Templates.Listing.Fields.AuctionVenue]?.Value;
+    var inspectionsJson = item.Fields[Constants.Templates.Listing.Fields.InspectionsJson]?.Value;
+    var saleMethod = item.Fields[Constants.Templates.Listing.Fields.SaleMethod]?.Value;
+    var displayPrice = item.Fields[Constants.Templates.Listing.Fields.DisplayPrice]?.Value;
+
+	//map the values to the structured data objects
+    //Note: a residence is a "place" so we are mapping Commercial buildings as a "Place" and everything else as a "Residence"
+    var residence = propertyType == Foundation.SEO.Constants.CommercialPropertyType ? new Schema.NET.Place() : new Schema.NET.Residence();
+    residence.Name = streetAddressFull;
+    residence.Image = string.IsNullOrEmpty(residenceImage) ? null : new Uri(residenceImage);
+    residence.Url = residenceUrl;
+    residence.Description = descriptionText.FirstCharToUpper();
+    residence.Logo = string.IsNullOrEmpty(logoImageUrl) || Sitecore.Context.PageMode.IsExperienceEditorEditing ? null : new Uri(logoImageUrl);
+
+    var residenceAddress = new PostalAddress
+    {
+    	AddressLocality = suburb,
+        AddressCountry = !string.IsNullOrEmpty(country) ? country : "AU", //default to australia as only in AUS currently and the field is often blank
+        PostalCode = postcode,
+        StreetAddress = showAddress ? streetAddressShort : string.Empty,
+        AddressRegion = state?.ToUpper()
+    };
+
+    if (showAddress)
+    {
+    	residence.Geo = new Values<IGeoCoordinates, IGeoShape>
+        (
+        	new GeoCoordinates { Latitude = latitude, Longitude = longitude }
+        );
+    }
+
+    residence.Address = residenceAddress;
+
+    List<LocationFeatureSpecification> amenities = new List<LocationFeatureSpecification>();
+
+    if (!string.IsNullOrEmpty(bedrooms) && bedrooms != "0")
+    {
+    	var amenityFeatureBedrooms = _seoService.GetBedroomsMetaDataTextSnippet(bedrooms, category, propertyType, false);
+        amenities.Add(new Schema.NET.LocationFeatureSpecification { Name = amenityFeatureBedrooms });
+        model.Bedrooms = bedrooms;
+    }
+
+    if (!string.IsNullOrEmpty(bathrooms) && bathrooms != "0")
+    {
+    	var amenityFeatureBathrooms = $"{bathrooms} Bathroom";
+        amenities.Add(new Schema.NET.LocationFeatureSpecification { Name = amenityFeatureBathrooms });
+        model.Bathrooms = bathrooms;
+    }
+
+    if (!string.IsNullOrEmpty(carSpaces) && carSpaces != "0")
+    {
+    	var amenityFeatureCarSpaces = $"{carSpaces} Car Spaces";
+        amenities.Add(new Schema.NET.LocationFeatureSpecification { Name = amenityFeatureCarSpaces });
+        model.Parking = carSpaces;
+    }
+
+    residence.AmenityFeature = new OneOrMany<Schema.NET.ILocationFeatureSpecification>(amenities); ;
+
+    DateTime auctionDateValue;
+    var organizer = new Organization { Name = "YourOrganisation" };
+
+    var events = new List<Schema.NET.Event>();
+    //handle auction event if data present
+    if (DateTime.TryParse(auctionDate, out auctionDateValue))
+    {
+    	var name = $"Auction {streetAddressFull}";
+        var auctionEvent = new Schema.NET.SaleEvent();
+        auctionEvent.Name = name;
+        auctionEvent.StartDate = new DateTimeOffset(auctionDateValue);
+
+        //handle the auction event location
+        var auctionEventLocationPlace = new Place
+        {
+			Url = residenceUrl
+        };
+
+        if (!string.IsNullOrEmpty(auctionVenue)
+        {
+        	auctionEventLocationPlace.Address = residenceAddress;
+        }
+
+        auctionEvent.Location = auctionEventLocationPlace;
+        auctionEvent.Url = residenceUrl;
+        auctionEvent.Organizer = organizer;
+        events.Add(auctionEvent);
+    }
+
+    //handle inspection events if present
+    var inspections = InspectionTimes(inspectionsJson);
+    if (inspections != null)
+    {
+    	foreach (var inspection in inspections)
+        {
+        	DateTime inspectionFrom;
+            DateTime inspectionTo;
+            var inspectionEventLocationPlace = new Place
+            {
+            	Url = residenceUrl,
+                Address = residenceAddress
+            };
+            if (DateTime.TryParse(inspection.DateTimeFrom, out inspectionFrom) && DateTime.TryParse(inspection.DateTimeTo, out inspectionTo))
+            {
+            	events.Add(new Schema.NET.Event
+                {
+                	Name = $"Inspection {streetAddressFull}",
+                    StartDate = new DateTimeOffset(inspectionFrom),
+                    EndDate = new DateTimeOffset(inspectionTo),
+                    Location = inspectionEventLocationPlace,
+                    Organizer = organizer,
+                    Url = residenceUrl
+                 });
+             }
+		}
+    }
+
+	residence.Events = new OneOrMany<IEvent>(events);
+    model.Place = residence;
+
+    //populate the remaining DataLayer properties
+    model.SaleMethod = saleMethod;
+    model.PropertyType = propertyType;
+    model.Tenure = listingStatusText;
+    model.State = state?.ToUpper();
+    model.Region = region;
+    model.Suburb = suburb;
+    model.Postcode = postcode;
+    model.Category = category;
+    model.Id = externalId;
+    model.Price = displayPrice;
+    model.Office = GetOfficeName(item);
+    model.Agent = GetMainAgentName(item);
+
+    return model;
+}
+```
+
+and the simple controller method
+
+```
+public class ListingSEOMetaDataController : StandardController
+{
+	private readonly IListingMetaDataRepository _repository;
+    public ListingSEOMetaDataController(IListingMetaDataRepository repository)
+    {
+    	_repository = repository;
+    }
+
+    public ActionResult ListingSEOMetaData()
+    {
+    	return View("~/Views/Listing/ListingSEOMetaData.cshtml", _repository.GetModel());
+    }
+}
+```
+
+and finally, the View which as you can see is very clean and simple and just uses the library's extension to spit out a nice string in the format we need.
+
+```
+@model Client.Feature.Listing.Models.ListingSEOMetaDataRenderingModel
+
+<script type="application/ld+json">
+    @Html.Raw(Model.Place.ToHtmlEscapedString())
+</script>
+```
+
+This rendering was then simply added to the relevant page and the end result is something which looks like this:
+
+
+![Page markup with our data in it](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-2.png "Page markup with our data in it")
+
+Once you pull out the json and put it in a nice formatter:
+
+```
+{
+  "@context": "https://schema.org",
+  "@type": "Residence",
+  "name": "501/9 Le Geyt Street Windsor QLD 4030",
+  "description": "2 bedroom unit for sale in Windsor QLD 4030",
+  "image": "//cdn5.client.com.au/5/6/8/2/9/568292C5-D3CD-F181-04B40C96297C8652_3.jpg",
+  "url": "https://www.client.com.au/501-9-le-geyt-street-windsor-qld-4030-for-sale-441997",
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "AU",
+    "addressLocality": "Windsor",
+    "addressRegion": "QLD",
+    "postalCode": "4030",
+    "streetAddress": "501/9 Le Geyt Street "
+  },
+  "amenityFeature": [
+    {
+      "@type": "LocationFeatureSpecification",
+      "name": "2 bedroom"
+    },
+    {
+      "@type": "LocationFeatureSpecification",
+      "name": "2 Bathroom"
+    },
+    {
+      "@type": "LocationFeatureSpecification",
+      "name": "1 Car Spaces"
+    }
+  ],
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "-27.435600280000000",
+    "longitude": "153.032012940000000"
+  },
+  "logo": "https://www.client.com.au/-/media/project/client/website/logo/client-black.svg"
+}
+```
+
+## Testing your Structured Data
+
+It's worth noting that if you don't adhere to the data structure, it may not work as you would like it to so it's worth using the testing tooling available during development to ensure you've got your mapping and output structured data looking the way it should.
+
+To do this, fire up the testing tool [here](https://search.google.com/structured-data/testing-tool?ref=davegoosem.com) and you can either use a URL if that will work for you, or paste in your output data snippet. If there are any issues, the output window will contains some detail about the problem and you can fix it up. Easy as.
+
+![Google Structured data testing tool](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-3.png "Google Structured data testing tool")
+
+This isn't a super complicated process... Honestly, the most challenging part is working out what schema.org data types to use but well worth implementing into your solution where possible.
