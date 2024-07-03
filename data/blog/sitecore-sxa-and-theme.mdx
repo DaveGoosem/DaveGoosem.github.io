@@ -1,0 +1,29 @@
+---
+title: Sitecore SXA Themes Enable gulp sync with Creative Exchange
+date: '2020-01-30'
+tags: ['SXA', 'Sitecore']
+draft: false
+summary: Sitecore SXA Themes Enable gulp sync with Creative Exchange Error - 403.0 - The request could not be completed because the service is disabled.
+layout: DaveLayout
+authors: ['default']
+---
+
+If you've set up a new Sitecore solution with SXA, you've likely installed your solution, then installed the Sitecore Powershell package and then finally the SXA package.
+Depending on your version of Sitecore and the Powershell package, it seems that often you will need to go and enable a config file to allow the Gulp watcher tasks to actually sync to the Theme in your Sitecore Media Library using Creative Exchange. Presumably this is disabled by default so that non-development environments are not exposed however for your local development environment, you want this to be enabled.
+
+The error you'll likely see indicating this looks something like this:
+
+```
+Error - 403.0 - The request could not be completed because the service is disabled.
+```
+
+![Service Disabled error when running gulp default in a Sitecore SXA theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-2.png "Service Disabled error when running gulp default in a Sitecore SXA theme")
+
+<i> Above: Service Disabled error when running gulp default in a Sitecore SXA theme </i>
+
+To resolve this, the easiest thing to do is generally to do a "search all" within your App_config folder for `<powershell>` to locate the sync patch file which is disabled and remove the .disabled extension to enable the patch.
+
+
+![powershell config for sxa theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-1.png "powershell config for sxa theme")
+
+This will enable the sync to work in your local development environment.
