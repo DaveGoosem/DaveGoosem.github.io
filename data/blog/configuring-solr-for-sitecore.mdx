@@ -1,0 +1,208 @@
+---
+title: Configuring Solr for Sitecore
+date: '2019-07-17'
+tags: ['Sitecore', 'Solr']
+draft: false
+summary: Setting up a Production-ready Solr instance can be a bit of a pain. Here is a quick guide to get you up and running with a Solr instance ready for your Sitecore 9.x solution.
+layout: DaveLayout
+
+authors: ['default']
+---
+
+![](/static/images/posts/2019/configuring-solr-for-sitecore/sitecore-solr.png "Solr and Sitecore")
+
+Setting up a Production-ready Solr instance can be a bit of a pain. Here is a quick guide to get you up and running with a Solr instance ready for your Sitecore 9.x solution.
+Depending on the version of Sitecore you are installing it's a good idea to find the Sitecore page related to your Sitecore version and confirm version of Solr you need. This document describes the process for installing version 7.2.1 which is used for Sitecore 9.1 +.
+
+## Install Java Runtime
+Grab the latest version (currently 1.8) from the website
+https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+
+If installed correctly, you should be able to close any other Powershell windows and open a new Powershell window (as admin) and run the following to confirm:
+
+```
+$ java -version
+#you should see something that looks like this if java is installed and available in your environment path variables
+java version "1.8.0_60"
+Java(TM) SE Runtime Environment (build 1.8.0_60-b27)
+Java HotSpot(TM) 64-Bit Server VM (build 25.60-b23, mixed mode)
+```
+
+## Install Solr
+
+Grab the version of Solr that you require from https://lucene.apache.org/solr/downloads.html and unpack it on the machine you want to use for Solr into the location of your choice.
+
+##Confirm Solr runs with default settings
+Refer to: https://lucene.apache.org/solr/guide/6_6/running-solr.html
+
+You can start Solr by moving into the root directory of your Solr instance and then running:
+
+```
+.\bin\solr -start -f
+```
+
+You can then browse to: http://localhost:8983/solr/ (default port is 8983 for http and 8984 for https)
+
+To stop Solr you can run the following command:
+
+```
+.\bin\solr -stop
+```
+
+## Configure Solr for SSL
+
+Every instance of Solr should be configured for SSL. We need this in all non-development environments, so lets ensure we have that working in development ahead of time.
+https://lucene.apache.org/solr/guide/7_2/enabling-ssl.html
+
+Generate a Self-signed cert in windows by running powershell ISE as administrator and pasting the following into your window (update your params to match: `<your solr location>\server\etc\SolrSelfSigned.pfx`) by running the following command:
+
+```
+# the domain name of your Solr instance
+$domainName = "localhost"
+# the path of to export your .pfx file
+$pfxPath = "Z:\Solr\solr-7.2.1\server\etc\SolrSelfSigned.pfx"
+# the secret to assign your exported .pfx file
+$pfxPassword = ConvertTo-SecureString -String "secret" -Force -AsPlainText
+
+New-SelfSignedCertificate -DnsName $domainName -CertStoreLocation cert:\LocalMachine\My | % { Move-Item -Path Cert:\LocalMachine\My\$($_.Thumbprint) -Destination Cert:\LocalMachine\Root; Export-PfxCertificate -Cert $_ -FilePath $pfxPath -Password $pfxPassword }
+```
+
+Update your Solr config located in the bin directory inside the Solr directory and called "solr.in.cmd" file for Windows by opening Notepad (or similar) as admin and replacing the commented section (REM = comment prefix) in the file with these values (change the path to the pfx to match yours if required):
+
+```
+REM Enables HTTPS. It is implictly true if you set SOLR_SSL_KEY_STORE. Use this config
+REM to enable https module with custom jetty configuration.
+set SOLR_SSL_ENABLED=true
+REM Uncomment to set SSL-related system properties
+REM Be sure to update the paths to the correct keystore for your environment
+set SOLR_SSL_KEY_STORE=Z:\Solr\solr-7.2.1\server\etc\SolrSelfSigned.pfx
+set SOLR_SSL_KEY_STORE_PASSWORD=secret
+set SOLR_SSL_KEY_STORE_TYPE=PKCS12
+set SOLR_SSL_TRUST_STORE=Z:\Solr\solr-7.2.1\server\etc\SolrSelfSigned.pfx
+set SOLR_SSL_TRUST_STORE_PASSWORD=secret
+set SOLR_SSL_TRUST_STORE_TYPE=PKCS12
+set SOLR_SSL_NEED_CLIENT_AUTH=false
+set SOLR_SSL_WANT_CLIENT_AUTH=false
+```
+
+While you're here, it's worth uncommenting the Port config setting and setting that to be a different value. The default SSL port is 8984. If you choose something different be sure to use that in the settings below.
+
+<i>Note: for the above steps, replace the password "secret" with your own secure value.</i>
+
+## Configure Solr to run as a Windows Service
+You don't want to have to manually run commands and rely on that to have Solr running, so set it to be a Window Service and ensure it's enabled on start up of the machine. You can use a tool called NSSM http://nssm.cc/download which will also manage uninstalling/removal of services nicely too, or you can use powershell once again with the following command (subbing in your own values). It should look like this if done successfully:
+```
+$serviceName = "Solr"
+$binaryPath = "Z:\Solr\solr-7.2.1\bin\solr.cmd -f -p 8984"
+
+"installing service"
+
+New-Service -name $serviceName -binaryPathName $binaryPath -displayName $serviceName -startupType Automatic
+
+"installation completed"
+```
+
+Start your service in 'services.msc' and hit solr at https://localhost:8984/solr/#/
+Note: Solr uses port 8983 by default for non-secure (HTTP) connections and we should be using port 8984 for secure connections (HTTPS) which the updated config above will enforce.
+
+## Configure Solr for Basic Auth
+
+By default, Solr exposes some API endpoints which if you don't protect them can be exploited by "the internet". I'd recommend IP restricting your Solr instance as well as protecting it with authentication. For the purpose of this guide, we're going to add just a single admin-level user which can be used in our Sitecore connection strings.
+
+See https://lucene.apache.org/solr/guide/7_2/basic-authentication-plugin.html for Solr’s documentation.
+
+Browse to your SOLR_HOME directory, which for us is at D:\SolrIndexes and copy the security.json file to this location from the GIT Repository. If you can’t find it, the file is just a file called “security.json” with the following inside it:
+
+```
+{
+"authentication":{
+   "blockUnknown": true,
+   "class":"solr.BasicAuthPlugin",
+   "credentials":{"solr":"IV0EHq1OnNrj6gvRCwvFwTrZ1+z1oBbnQdiVC3otuq0= Ndd7LKvVBAaZIF0QAVi1ekCfAJXr1GGfLtRUXhgrF8c="}
+},
+"authorization":{
+   "class":"solr.RuleBasedAuthorizationPlugin",
+   "permissions":[{"name":"security-edit",
+      "role":"admin"}],
+   "user-role":{"solr":"admin"}
+}}
+```
+
+The above file defines a ‘known’ admin user with the following credentials:
+
+User: solr
+Password: SolrRocks
+
+Note in the above, <b>all passwords are hashed</b> so the only way to add a new value is to use the API to do so. To add a new user, there following Powershell script has been created. Save this as “AddSolrBasicAuthUserAccount.ps1” which will add a new admin user to authenticate to Solr using Basic Auth which is the one we will use for all Connections to Solr from Sitecore and other Applications.
+
+Note: if you want to configure multiple users, use this same process and add your different username/password values into the script. If you’ve removed the OOTB user account you will need to modify it further to use a new admin user or add the OOTB one back to make the change and then remove it again.
+
+https://lucene.apache.org/solr/guide/7_2/rule-based-authorization-plugin.html#rule-based-authorization-plugin (for permissions)
+
+```
+$user = "solr"
+$pass = "SolrRocks"
+
+$solrUrl = "https://localhost:8984"
+$solrLoginPassword = "yoursupersecurepassword"
+
+$secpasswd = ConvertTo-SecureString $pass -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential($user, $secpasswd)
+
+Invoke-WebRequest -Uri $solrUrl/solr/admin/authentication `
+    -UseBasicParsing `
+    -Method "POST" `
+    -ContentType "application/json" `
+    -Body "{'set-user':{'solruser': $solrLoginPassword}}" `
+    -Credential $credential
+
+```
+
+This is going to add a new user called "solruser" with the random password (change this to whatever you like for your project)
+
+If successful, you should see a 200 response in powershell.
+
+Update the security.json file in your SOLR_HOME directory like so. Here we have removed the old “admin” out of the box account to properly secure Solr, so in the ‘security.json’ file in your Solr Home directory, go I and remove the credentials for the “solr” user as these credentials are advertised everywhere and are ONLYused for initially creating your own new users. We have also updated the permissions so that our new `solruser` is the admin role now.
+
+```
+{
+  "authentication":{
+    "blockUnknown":true,
+    "class":"solr.BasicAuthPlugin",
+    "credentials":{
+      "solruser":"gzA+y+sVg9apoi2e8j//UNRcPdtjnX6tF/kz+L2aKkI= SD8+FMyhc/qJ7XVINf0zadsfadffasadsfjxoGbY+coA5s="},
+    "":{"v":0}},
+  "authorization":{
+    "class":"solr.RuleBasedAuthorizationPlugin",
+    "permissions":[{
+        "name":"security-edit",
+        "role":"admin"}],
+    "user-role":{"solruser":"admin"}
+  }
+}
+```
+
+Stop the solr service and start it again and attempt to login to confirm your changes are successful.
+
+Connecting to Solr now will require that you provide username and password in your connection strings. Simply append:
+user:password@localhost:8984/solr
+
+Note: To avoid authentication issues, make your password not contain special characters (or limit them) so that you don't have an @ in your hashed password etc. This will cause you pain if you try to have your connection string with multiple @ in it and things like that..
+
+## Additional security hardening
+
+Should you wish to, you can also move your Solr instance's logs and indexes locations. This is an optional step and useful for when you want to scale solr (not covered here).
+
+Stop Solr if it’s still running.
+
+Open the Solr Config once more (see above for details). Set the value of SOLR_ HOME to a new directory we’ve created here:
+
+`set SOLR_HOME=D:\SolrIndexes`
+
+Copy the solr.xml and zoo.cfg files from the old location to your new location so that the expected config is in place for start up.
+
+Set the SOLR_LOGS_DIR value to a new directory we’ve created here: `D:\logs` like so:
+
+`set SOLR_LOGS_DIR=D:\logs`
+
+Start up Solr again and confirm it’s running as expected.
