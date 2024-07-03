@@ -1,0 +1,41 @@
+---
+title: Getting Rid of Sitecore Config Transforms
+date: '2019-12-08'
+tags: ['CI/CD', 'DevOps', 'Sitecore']
+draft: false
+summary: It's as simple as this to stop drowning in config files and improve your build/release process while you're at it.
+layout: DaveLayout
+images: ['/static/images/posts/2019/getting-rid-of-sitecore-config-transforms/drowning_in_documents.png']
+authors: ['default']
+---
+
+There's no denying the fact that Sitecore is a configuration file heavy beast. With countless flexibility you will inevitably have countless configuration settings to manage it all.  One of the most painful parts of all of this for me is the need to manage some of the values in these configuration files through all of your environments, be that local development environments, test environments such as staging, UAT or pre-prod and then of course, production itself.
+
+## The reign of the config transform
+For years, this has often been managed through the use of .config file transforms. Using named Build Configurations and a separate file for each one with your build configuration specific values in them. Over the last few years I've been moving away from this approach as it becomes a real pain to manage all the different environments and "roles" for Sitecore's instances (CM, CD, Prod, Rpt). Even with the fanstastic environment "role" based configuration settings, you still need to have different values in different environments a lot of the time.
+
+> So if not transforms, then what?
+
+## Let the reign of the tokenised config begin
+
+It's nothing super groundbreaking (simplicity is best right?), but what I love doing is having one regular config file with the settings you need for local development in the solution. When you identify a setting that you know you will need to have a different value for in a different environment, I simply copy this file and make a disabled version of it which is named with "CI.config.disabled". I'm using Gulp builds so I just update my deployment tasks to also deploy my "CI.config.disabled" extension convention I'm using  for CI builds and finally a Batch script to replace the original local development version with my disabled version for each file I need to manage. This batch script is run at the end of a PaaS Web Deploy task or it can be run as a seperate task.
+
+![Disabled CI Config file](/static/images/posts/2019/getting-rid-of-sitecore-config-transforms/image-1.png "Disabled CI Config File example")
+
+![Post Deployment Batch Script](/static/images/posts/2019/getting-rid-of-sitecore-config-transforms/image.png "Post Deployment Batch Script")
+
+The final element to all of this is tokenisation of the actual values in the config files. This is nothing new and most build/release tools will have a method of doing this. I generally use Azure Devops and variables which can be coupled with a token replacement task. Each variable set is set per-environment which just... makes sense. Easy right?
+
+![Azure Devops Variables](/static/images/posts/2019/getting-rid-of-sitecore-config-transforms/image-2.png "Azure Devops Variables")
+
+![Azure Devops Variables Replacement Step](/static/images/posts/2019/getting-rid-of-sitecore-config-transforms/image-4.png "Azure Devops Variables Replacement Step")
+
+There are a number of reasons why using an approach like this is great:
+
+- Your builds are fast as you're using one app code build per release, rather than transforming and making seperate config directories for each environment or something ike that.
+- You don't have your environment variables in your code base (security right?). Azure devops lets you 'lock'/hide the values after they're set if you wish so they're not visible to everyone
+- There's no processing at release time. No need to transform the config files, it's all super quick file system copy and token replacement.
+- If you need to change an environment config setting, you don't need to commit, get it code reviewed, wait for the buid and then release. You can just update it and re-release (thank goodness!)
+- It's a SINGLE config file to handle every environment! Much less config management overhead.
+
+As I eluded to earlier, I've been working this way for about 4 years now and I absolutely love it. It's as simple as this to stop drowning in config files and improve your build/release process while you're at it.
