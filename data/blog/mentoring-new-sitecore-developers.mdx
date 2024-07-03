@@ -1,0 +1,59 @@
+---
+title: Mentoring New Sitecore Developers
+date: '2021-11-02'
+tags: ['Sitecore']
+draft: false
+summary: Recently I have had a bunch of discussions with people in the Sitecore Community reflecting on my own Sitecore learning experience and how much more challenging it is to get started with Sitecore now days than it used to be.
+layout: DaveLayout
+images: ['/static/images/posts/2021/mentoring-new-sitecore-developers/mentor-image.jpg']
+authors: ['default']
+---
+
+Recently I have had a bunch of discussions with people in the Sitecore Community reflecting on my own Sitecore learning experience and how much more challenging it is to get started with Sitecore now days than it used to be.
+
+## Back in my day..
+
+If I look back at when I first started with Sitecore, a production deployment involved either a single instance or just CM and CD with either 3 or 4 databases (Core, Master, Web and potentially a Forms database if you needed it) all hosted on VMs that you could see and touch.
+
+As a developer, you needed to be across a handful of technologies and do some (comparatively) simple CI/CD configuration. For bigger projects, you might need to configure a Load Balancer or do some more complicated Networking/Security configuration but there always 'a guy/gal for that'. You would often be able to link up with the Networking and/or Systems Engineers to help you provision the required infrastructure (under your guidance) and explain what was required at a high level and let them manage the specifics before pulling it all together and deploying your solution and everyone would high 5 and go for a beer..
+
+
+![The good old days image](/static/images/posts/2021/mentoring-new-sitecore-developers/image.png "The good old days image")
+
+## Fast forward to current day..
+
+Now days your typical developer needs to know so much more and it makes it almost overwhelming for new developers coming into the Sitecore Ecosystem for the first time to understand everything in the way that those of us who have seen the evolution of Sitecore and gradually added new pieces of knowledge along the way that it's worth a bit of inward reflection and consideration about the expectations we're putting on our current day Sitecore Developers and the challenges faced by those who are only starting out in the Sitecore space more recently.
+
+Where before, we might have had some seperation of Roles and Teams into spaces like Front End, Backend, Infrastructure and DevOps we are finding more and more that a "Sitecore Developer" needs to be across all facets of the solution (or at least know enough to be dangerous).
+
+## Front End and Sitecore Developers seperation blurred
+
+Web technologies are trending more and more towards doing things with Client-side technologies and Sitecore is no different. The potential of using JAMStack is clearly understood and as a result, a Sitecore developer needs to know at least enough about how that works to be able to either build solutions in this space with techologies like React/NextJs and/or configure the integration to the Sitecore Backend or data point via JSS.
+
+## DevOps and Sitecore Developers seperation blurred
+
+Sitecore's move towards headless coupled with a move towards cloud hosting means that standing up a Sitecore Environment often consists of Infrastructure as Code as well as pipelines for releasing the Sitecore and application code. Given the complexity around the topologies that are being stood up to host it all and deploy the solution into App Services or Containers, we are noticing a huge shift towards the developers also being responsible for the DevOps and CI/CD Pipelines, or at least having some significant involvement with the process.
+
+## Systems/Networking Engieers and Sitecore Developers seperation blurred in Cloud
+
+This is another big area where your average Sitecore Developers are suddenly finding they need to be across things like managing DNS or SSL certificates (like actually understanding it!?) as well as Security resources like WAF's and Traffic Managers or Disaster Recovery and replication among a whole host of other resources such as a CDN.
+
+## Lets not forget the "Sitecore of things"
+
+At the risk of rambling on too much, lets not forget the rest of the emerging Sitecore offerings which have been added over recent years. Things like SXA, Sitecore's move to a headless topology, Content Hub, EXM, Horizon, Experience Edge,  Commerce, Moosend/Sitecore Send, Boxever... It goes on and on. Even the most experienced of Sitecore veterans cannot possibly be experts at all of these things. If it's tough for the experienced, imagine if you're new to Sitecore...
+
+## How do you eat an elephant?
+
+![Eating an Elephant meme](/static/images/posts/2021/mentoring-new-sitecore-developers/image-1.png "Eating an Elephant meme")
+
+## New Sitecore Developers
+
+That's a lot to take in... So where do you start as a Developer looking at Sitecore for the first time? This has been the question I've been asked numerous times in the last few years and I think the simplest answer is still to recommend that new developers start with the basics. Even if you're making a start by working on an engagement with a  specific aspect of the platform, there's just no match for understanding the HOW and WHY of Sitecore. Concepts like  building with Datasources and the importance of doing so with Sitecore and how Publishing works (Full, Smart or Incremental?) and which database is responsible for what and what a Sitecore Pipeline is...
+
+Understanding all these things is the key to becoming a solid Sitecore Developer. The times where this hasn't happened I have noticed that it results in gaps in understanding and people just following rote-learned design patterns without true understanding which leads to challenges down the track. All of the same things that I learned at the start of my Sitecore journey and built upon over the years - starting at the 'start' is the key to enlightenment in my humble opinion.
+
+Getting your Sitecore Developer Certification is a great way to give a new developer a gentle push in the right direction for exposure to all the core aspects of Sitecore as it forces you to learn about what the product can do.
+
+As a mentor or Technical Lead, be kind to those starting out. Find things which touch the core of sitecore and let them build understanding through repetition. Give them new challenges, but mix that in with things they've already seen and done before to build confidence through repetition rather than having your developers "sipping from the firehose" with a constant stream of new and vastly different aspects of the platform.
+
+Work with the team to determine what areas each developer enjoys and look for areas they might like to develop their skills in futher once they've got that solid core set of skills and capability... That might be front end technologies like [NextJS](https://nextjs.org/?ref=davegoosem.com) and [Commerce](https://www.sitecore.com/products/sitecore-commerce?ref=davegoosem.com) or [JSS](https://doc.sitecore.com/en/developers/hd/190/sitecore-headless-development/sitecore-javascript-rendering-sdk--jss--for-next-js.html?ref=davegoosem.com) and optimising things as far as possible for performance or [Experience Edge](https://doc.sitecore.com/en/developers/101/developer-tools/sitecore-experience-edge-for-xm.html?ref=davegoosem.com) and [Blazor](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor?ref=davegoosem.com). Whatever it is, there's going to be enough space for everyone to know enough to be dangerous with most things and then be particularly strong in a couple of facets of the Sitecore platform and it's surrounding ecosystem in the years ahead.
