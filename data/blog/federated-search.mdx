@@ -1,0 +1,245 @@
+---
+title: Federated Search with External Data and Sitecore
+date: '2020-08-18'
+tags: ['Sitecore', 'Helix', 'SOLR']
+draft: false
+summary: In this article we look at how you might develop a Federated Search with data using both Sitecore Content and numerous other external data points.
+layout: DaveLayout
+images: ['/static/images/posts/2020/federated-search/computer-search.jpg']
+authors: ['default']
+---
+In this article we look at how you might develop a Federated Search with data using both Sitecore Content and numerous other external data points.
+
+## What do we mean by "Federated Search"?
+Federated Search is a type of search which returns data from a range of different originating sources.
+Breaking down
+
+## Breaking down the problem
+In order to be able to create our federated search, there are a few things we need to consider, the largest of which are:
+
+1. We need to index the data using Sitecore Custom Crawlers
+2. We create our search for the indexed data using the Sitecore Search API.
+
+On top of this we need to be able to allow for <b>either</b> a search on <b>individual</b> indexes or a search across <b>all</b> indexes.
+
+The data could be sourced from:
+
+- Multiple API endpoints
+- File System shared directories containing large PDF's
+- Sitecore Content pages
+
+We need to be able to page the results and display the results based on the relevance/score across all search indexes. which  proved to be a complicated challenge as there really isn't a logical clean way to do this using multiple indexes when you consider the combined search. After all, how can you generate pagingation for disparate results if you pull the 'most relavant' results out from multiple indexes and sort them by relevance?
+
+For this reason it just seemed inevitable that we will need to have individual indexes for when users are searhing on just the one data set, but also a 'combined' index with all the data also pushed into this combined index as well. This may sound like a double up of indexing, but there isn't really a 'good' way to do this without purchasing a product to manage that for you and we're building our own right?
+
+Finally, the Federated Search will need to be able to support an advanced search capability using multiple input options/combinations which looks like this:
+
+![Example advanced search UI](/static/images/posts/2020/federated-search/image.png "Example advanced search UI")
+
+Supporting this will require some complicated Predicate work.
+
+## Custom Crawlers & Combined Index Definition
+
+The solution will also need custom crawlers to handle he indexing of the various data points as well as scheduled tasks to manage the upkeep of our indexes, including create/removes/renames/updates. I have covered this in a previous blog post entitled 'Indexing External Data with Sitecore' [here](https://davegoosem.com/indexing-external-data-with-sitecore/).
+
+The only additional thing worth adding to my previous blog post is that if you want to create the 'combined' index, you simply create your combined index definition configuration and where the single data point indexes would have just their one crawler defined, you can simply add multiple crawlers to the `<locations>` area and they will all push their data into the new combined index. Neat right!?
+
+Finally, if you have your create/remove/update/rename actions in place, you will  just need to make sure that those actions <b>get performed on both indexes</b> rather than just the singular index you had previously.
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:patch="http://www.sitecore.net/xmlconfig/" xmlns:role="http://www.sitecore.net/xmlconfig/role/" xmlns:search="http://www.sitecore.net/xmlconfig/search/">
+  <sitecore role:require="Standalone or ContentManagement" search:require="solr">
+    <contentSearch>
+      <configuration type="Sitecore.ContentSearch.ContentSearchConfiguration, Sitecore.ContentSearch">
+        <indexes hint="list:AddIndex">
+          <index id="sample_documents_index" type="Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+            <param desc="name">$(id)</param>
+            <param desc="core">sample_documents_index</param>
+            <param desc="propertyStore" ref="contentSearch/indexConfigurations/databasePropertyStore" param1="$(id)" />
+
+            <configuration ref="contentSearch/indexConfigurations/defaultSolrIndexConfiguration">
+            </configuration>
+
+            <locations hint="list:AddCrawler">
+              <crawler type="SampleProject.Foundation.Indexing.Crawlers.MyCrawler, SampleProject.Foundation.Indexing"></crawler>
+                <!-- ADD YOUR ADDTIONAL CRAWLERS HERE FOR ALL YOUR OTHER INDEXED DATA-->
+            </locations>
+
+            <enableItemLanguageFallback>false</enableItemLanguageFallback>
+            <enableFieldLanguageFallback>false</enableFieldLanguageFallback>
+          </index>
+        </indexes>
+      </configuration>
+    </contentSearch>
+  </sitecore>
+</configuration>
+```
+
+## Building out the Search Service
+
+Let's start with the Foundation Layer Search Service. We are creating a nice generic search service which we can use polymorphism to allow different search result item types to be used. We will have a Base Query Object which is used by Feature layer projects to builid out a feature's query terms, set the Pagination settings and Facets etc. Search form data ultimately gets mapped into a Query object to get passed into our service.
+
+```
+public class Query
+{
+    public string QueryText { get; set; }
+    public int NoOfResults { get; set; } = 10;
+    public Dictionary<string, string[]> Facets { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; } = 10;
+    public bool PaginationEnabled { get; set; } = true;
+    public string SelectedSearchIndex { get; set; }
+    public List<string> AvailableIndexes { get; set; }
+}
+
+
+public class SearchService<T> : ISearchService<T> where T : SearchResultItem
+{
+    private readonly SearchSettings _searchSettings;
+    private readonly ILogService _logService;
+
+    public SearchService(SearchSettings searchSettings)
+    {
+        _searchSettings = searchSettings;
+        _logService = DependencyResolver.Current.GetService<ILogService>();
+    }
+
+    /// <summary>
+    /// Simple Search method which accepts a search query and a predicate to filter your results from the caller
+    /// Example predicate could be
+    /// var predicate = PredicateBuilder.True<SolrContentSearchModel>();
+    /// predicate = predicate.Or(x => x.ItemName.Contains(query.SearchTerm.ToLower())).Boost(2f);
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="predicate"></param>
+    /// <returns></returns>
+    public Models.SearchResults<T> Search(Query query, Expression<Func<T, bool>> predicate)
+    {
+        if (query == null)
+            return null;
+
+        IQueryable<T> searchResults = null;
+
+        try
+        {
+            using (var searchContext = CreateSearchContextForIndex(query.SelectedSearchIndex))
+            {
+                if (searchResults == null)
+                    searchResults = searchContext.GetQueryable<T>().Where(predicate);
+            }
+        }
+        catch (Exception ex)
+        {
+            //fail silently but log error
+            _logService.Error(string.Format("unable to search on index {0}. Error was {1}.", query.SelectedSearchIndex, ex));
+        }
+
+        if (searchResults == null)
+        {
+            return null;
+        }
+
+        if (!query.PaginationEnabled)
+        {
+            //If we don't want to use pagination, we will return the full set of results in a single "page"
+            var resultsResponse = new Models.SearchResults<T>(query);
+            var results = searchResults.GetResults();
+            resultsResponse.Results = results.Hits.ToList();
+            resultsResponse.TotalResults = results.TotalSearchResults;
+            resultsResponse.TotalPages = 1;
+            return resultsResponse;
+        }
+
+        return GetPagedResults(query, searchResults);
+
+    }
+
+    private Models.SearchResults<T> GetPagedResults(Query query, IQueryable<T> searchResults)
+    {
+        if (searchResults == null)
+        return null;
+
+        var pagedResults = searchResults.Page(query.Page, query.PageSize).GetResults();
+
+        //order by relevance using the solr 'score' value first before paginating
+        pagedResults.OrderByDescending(x => x.Score);
+
+        var results = new Models.SearchResults<T>(query);
+        results.TotalResults = pagedResults.TotalSearchResults;
+        results.TotalPages = (pagedResults.TotalSearchResults - 1) / query.PageSize;
+        results.Results = pagedResults.Hits.ToList();
+
+        return results;
+    }
+
+    /// <summary>
+    /// Checks for a search index with the name supplied and returns a context if it can, othewise will default to the Sitecore Web Index context
+    /// </summary>
+    /// <param name="searchIndexName"></param>
+    private IProviderSearchContext CreateSearchContextForIndex(string searchIndexName)
+    {
+        var index = !string.IsNullOrEmpty(searchIndexName) ? ContentSearchManager.GetIndex(searchIndexName) : ContentSearchManager.GetIndex(Constants.SitecoreWebIndex);
+        return index.CreateSearchContext();
+	}
+}
+```
+
+This is just an example of what you might have in here. The important part is that its a generic class which contains some methods, we can use anything derived from the default Sitecore SearchResultItem and call the Search method using anything which inherits the base Query object as well as whatever Predicate logic we need.
+
+## Creating your Search Feature
+
+his will obviously involve collecting the data from the form and searching the selected index, whether that be the combined index or an individual index. We need to take all the inputs which have had data supplied in them and work out how the hell to make that into somethinig we can query our indexes with.
+
+We're using Sitecore's indexing capaibility and likewise we're going to use Sitecore's Search capability. Sitecore's [LINQ to Sitecore](https://doc.sitecore.com/developers/100/sitecore-experience-manager/en/linq-to-sitecore.html?ref=davegoosem.com) abstraction means we can write LINQ queries and they will get translated into the equivalent Solr Queries behind the scenes. The beauty of this is that if you're using Azure Search (or if Sitecore supports another provider in the future) your code shouldn't need to change much, if at all. There are some limitations but they're not too hard to overcome once you understand what's going on.
+
+## Predicates
+
+I spent a lot of time on getting this right and its probably worthy of it's own post to detail everything, but what I will detail is the concepts and approach you will need to get this to work for you and look at doing a deep dive in another post.
+
+Let's say that we've got the form data which has been submitted and we have data in each of the free-text fields for:
+
+- with <b>all these words</b>
+- with <b>this exact phrase</b>
+- with <b>at least one</b> of these words
+- <b>without</b> these words
+
+To build this out, I created a Predicate Builder Service in the Search Feature. The first thing we need to do is determine which indexed fields we are going to search on. The more fields there are, the more complex the predicates.
+
+The exact phrase one is easy because we can just use the exact value the user provided (maybe trim any white space). We can put that into a predicate easily enough.
+
+The other three, we will need split the words apart and build them into multiple sub-predicates.
+
+Sub-Predicates? Yes... Lots of predicates stitched together with the correct joining logic in between.
+
+The core concept is that you have your 'parent' prediciates for each index field you are searching on which will be the final predicates you roll up all your inner/sub-predicates into. The important thing to get right here is the predicate join term (And, Or, etc).
+
+```
+//This is the final 'parent' predicate.
+var predicate = PredicateBuilder.True();
+
+//this is an item name sub predicate which we can build our inner logic for scenarios such as "all these words"
+var itemNameAllWordsSubPredicate = PredicateBuilder.True();
+
+//split up the words into an array we can use to populate the predicate
+string[] allWordsArray = SplitOnWords(query.AllWordsString.Trim());
+foreach (string word in allWordsArray)
+{
+	//All words means each word must be present so we want to use the AND operator for the single input on a single field we're handling here. You can 'boost' each search field to boost/rank them higher in results.
+    itemNameAllWordsSubPredicate = predicate.And(x => x.ItemName.Contains(word)).Boost(2f);
+}
+
+//imagine now, that we have done this for each form field type, splitting the words up and using AND or OR to build out each form field's sub predicate for each index field we wish to search on.
+```
+
+At the end of all of this, we then join up our Sub-Predicates using the exact same approach but just stitching the predicates together using ANDs and ORs. You might have a lot of these to look after and that's fine, just be sure to test your AND/OR logic at the end..
+
+`predicate = predicate.And(itemNameAllWordsSubPredicate);`
+
+Inside your Feature Search, you can now use your Predicate Builder Service to take your raw form data and turn that into a predicate which you can pass down to the Search Service we created earlier.
+
+That's it, you're well on your way to a complex Advanced Search capability.
+
+## Taking it further...
+- Add search faceting
+- Add search term highlighting
