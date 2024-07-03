@@ -1,0 +1,439 @@
+---
+title: Indexing External Data for use with Sitecore
+date: '2020-07-16'
+tags: ['Sitecore', 'SOLR']
+draft: false
+summary: In this article we'll take a look at a realtively simple way in which you can utilise Sitecore to look after managing the indexing of external data for you using Solr as the Search Provider.
+layout: DaveLayout
+images: ['/static/images/posts/2020/indexing-external-data-with-sitecore/Solr-Sitecore-Search-Terms.png']
+authors: ['default']
+---
+Often when you're building a Sitecore site which has an advanced search capability, there is a need to index some data which does not reside within Sitecore.
+
+In this article we'll take a look at a realtively simple way in which you can utilise Sitecore to look after a lot of this for you using Solr as the Search Provider. This could of course also apply to any Search Provider supported by Sitecore.
+
+Lets take a look at two possible scenarios for external data. The first will be File System Data which is the more challenging to manage and secondly data obtained from an external endpoint or API. The concepts covered here should be enough to help you with your own indexing scenarios. The external endpoint scenario could be used for API's, Services, SQL Databases or anything else you might need to use to retrieve data.
+
+Both of these Scenarios share the goal of retrieving data and getting it into a shape we can work with to index however the maintenance of both scenarios varies slightly when it comes to your Add/Remove/Update operations.
+
+## Creating a Custom Sitecore Crawler
+
+A custom Sitecore crawler is the basis of everything we're going to do here. There are a number of of out of the box implementations of `Sitecore.ContentSearch.Crawler<T>` which are available for us to use however I have chosen to implement `FlatDataCrawler<T>` . The sample code has some comments describing how this hangs together.
+
+```
+//set up our Documents to be used in the crawler
+
+public class BaseDocument
+{
+    public string Id { get; set; }
+    public int Year { get; set; }
+    public string FileName { get; set; }
+    public DateTime LastUpdatedDate { get; set; }
+    public string FileContents { get; set; }
+    public string IndexName { get; set; }
+}
+
+public class SampleDocument : BaseDocument
+{
+	public string PublishDate { get; set; }
+}
+
+//Set up our Field types. In our example we have a PDF Field but you could also have an API field or something similar.
+public class IndexablePdfField : Sitecore.ContentSearch.IIndexableDataField
+{
+    private readonly BaseDocument _pdfDocument;
+    private readonly PropertyInfo _fieldInfo;
+
+    public IndexablePdfField(BaseDocument pdfDocument, PropertyInfo fieldInfo)
+    {
+        _pdfDocument = pdfDocument;
+        _fieldInfo = fieldInfo;
+    }
+
+    public string Name
+    {
+    	get { return _fieldInfo.Name; }
+    }
+
+    public string TypeKey => string.Empty;
+    public Type FieldType => _fieldInfo.PropertyType;
+    public object Value => _fieldInfo.GetValue(_pdfDocument);
+    public object Id => _fieldInfo.Name.ToLower();
+}
+
+
+//configure an IIndexable type which is required by the crawler. This can be configured as you wish with your custom properties you can push data in to.
+public class IndexableDocumentType : Sitecore.ContentSearch.IIndexable
+{
+    private readonly SampleDocument _sampleDocument;
+
+    public IndexableDocumentType(SampleDocument sampleDocument)
+    {
+    	_sampleDocument = sampleDocument;
+    }
+
+    public void LoadAllFields()
+    {
+        Fields = _sampleDocument.GetType()
+        .GetProperties(BindingFlags.Public
+        | BindingFlags.Instance
+        | BindingFlags.IgnoreCase)
+        .Select(fi => new IndexablePdfField(_sampleDocument, fi));
+    }
+
+    public IIndexableDataField GetFieldById(object fieldId)
+    {
+    	return Fields?.FirstOrDefault(f => f.Id.Equals(fieldId));
+    }
+
+    public IIndexableDataField GetFieldByName(string fieldName)
+    {
+    	return Fields?.FirstOrDefault(f => f.Name.Equals(fieldName));
+    }
+
+    public IIndexableId Id => new IndexableId<string>(_sampleDocument.Id);
+    public IIndexableUniqueId UniqueId => new IndexableUniqueId<IIndexableId>(Id);
+    public string DataSource => "customDatasourcePropertyValue";
+    public string AbsolutePath => "";
+    public CultureInfo Culture => CultureInfo.CurrentCulture;
+    public IEnumerable<IIndexableDataField> Fields { get; private set; }
+    public DateTime LastUpdatedDate { get; set; }
+
+}
+
+//Create our Custom Crawler which implements the Sitecore.ContentSearch.FlatDataCrawler<T>
+public class MyCrawler : Sitecore.ContentSearch.FlatDataCrawler<IndexableDocumentType>
+{
+    private IIndexingSettingsService _indexingSettingsService;
+    private IDocumentIndexSettings _indexSettings;
+    private ILogService _logService;
+
+    public MyCrawler() : base()
+    {
+        _indexingSettingsService = ServiceLocator.ServiceProvider.GetService<IIndexingSettingsService>(); ;
+        _logService = ServiceLocator.ServiceProvider.GetService<ILogService>();
+        _indexSettings = _indexingSettingsService.GetIndexSettings();
+    }
+
+    protected override IndexableDocumentType GetIndexable(IIndexableUniqueId indexableUniqueId)
+    {
+    	throw new NotImplementedException();
+    }
+
+    protected override IndexableDocumentType GetIndexableAndCheckDeletes(IIndexableUniqueId indexableUniqueId)
+    {
+    	throw new NotImplementedException();
+    }
+
+    protected override IEnumerable<IIndexableUniqueId> GetIndexablesToUpdateOnDelete(IIndexableUniqueId indexableUniqueId)
+    {
+    	throw new NotImplementedException();
+    }
+
+    protected override IEnumerable<IndexableDocumentType> GetItemsToIndex()
+    {
+        //grab the list of simple objects to index
+        var docIndex = GetDocumentsToIndex();
+        if (docIndex == null || !docIndex.Any())
+        {
+        	return new List<IndexableDocumentType>();
+        }
+
+    	var myIndex = docIndex.Select(h => new IndexableDocumentType(h));
+        return myIndex;
+	}
+
+    protected override bool IndexUpdateNeedDelete(IndexableDocumentType indexable)
+    {
+    	throw new NotImplementedException();
+    }
+
+
+    private List<SampleDocument> GetDocumentsToIndex()
+    {
+        var documents = new List<SampleDocument>();
+        var documentRoot = _indexSettings?.DocumentRoot;
+        string indexName = _indexSettings.SolrCore?.SolrCoreName;
+        if (!string.IsNullOrEmpty(documentRoot))
+        {
+            foreach (var dir in Directory.GetDirectories(documentRoot))
+            {
+                foreach (var file in Directory.GetFiles(dir, "*.pdf"))
+                {
+                    try
+                    {
+                        var sampleDoc = PopulateDoc(file, indexName, _logService);
+                        documents.Add(sampleDoc);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logService.Error($"Unable to index this file: file name likely not able to be parsed to pull out meta data {file}. Error was: {ex}");
+                    }
+				}
+			}
+		}
+    	return documents;
+    }
+
+	//Static Helper method to Map the data to the document 'type' we want to index. This is static because it is also used by the File System Watcher to manage the Add/Update/Remove actions.
+    public static SampleDocument PopulateDoc(string file, string indexName, ILogService logService)
+    {
+        var fileName = Path.GetFileName(file);
+        var year = Int32.Parse(Path.GetFileName(Path.GetDirectoryName(file)));
+        var publishDate = ParseDateFromFileName(file, logService);
+        var id = string.Format("mydocument.{0}.{1}", year, fileName);
+        var lastUpdatedDate = File.GetLastWriteTime(file);
+
+        SampleDocument sampleDoc = new SampleDocument();
+        sampleDoc.FileName = fileName;
+        sampleDoc.Year = year;
+        sampleDoc.PublishDate = publishDate.ToUniversalTime().ToString("o");
+        sampleDoc.Id = id;
+        sampleDoc.LastUpdatedDate = lastUpdatedDate;
+        sampleDoc.IndexName = indexName;
+        sampleDoc.FileContents = PdfParsingService.ExtractText(file);
+
+        return sampleDoc;
+    }
+
+}
+
+```
+
+I have not included some of the helper/extension methods, and you can see that the sample code pulls in some additional services for logging, indexing settings such as the document root and the name of the Index/Solr Core. In addition the PDFParsingService is responsible for scraping the PDF and parsing the relevant content to a string which I won't cover here.
+
+Now that we have a Custom Sitecore Crawler, we can use it within our Custom Sitecore Search Index configuration. The configuration is a Sitecore Search Configuration so you can apply all your regular Sitecore Indexing options including [specifying the 'type' for the fields](https://doc.sitecore.com/developers/100/platform-administration-and-architecture/en/using-solr-field-name-resolution.html?ref=davegoosem.com) and things however this is the bare bones settings we need to have a running indexer. You can see where we add our custom crawler into the mix.
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:patch="http://www.sitecore.net/xmlconfig/" xmlns:role="http://www.sitecore.net/xmlconfig/role/" xmlns:search="http://www.sitecore.net/xmlconfig/search/">
+  <sitecore role:require="Standalone or ContentManagement" search:require="solr">
+    <contentSearch>
+      <configuration type="Sitecore.ContentSearch.ContentSearchConfiguration, Sitecore.ContentSearch">
+        <indexes hint="list:AddIndex">
+          <index id="sample_documents_index" type="Sitecore.ContentSearch.SolrProvider.SolrSearchIndex, Sitecore.ContentSearch.SolrProvider">
+            <param desc="name">$(id)</param>
+            <param desc="core">sample_documents_index</param>
+            <param desc="propertyStore" ref="contentSearch/indexConfigurations/databasePropertyStore" param1="$(id)" />
+
+            <configuration ref="contentSearch/indexConfigurations/defaultSolrIndexConfiguration">
+            </configuration>
+
+            <locations hint="list:AddCrawler">
+              <crawler type="SampleProject.Foundation.Indexing.Crawlers.MyCrawler, SampleProject.Foundation.Indexing"></crawler>
+            </locations>
+
+            <enableItemLanguageFallback>false</enableItemLanguageFallback>
+            <enableFieldLanguageFallback>false</enableFieldLanguageFallback>
+          </index>
+        </indexes>
+      </configuration>
+    </contentSearch>
+  </sitecore>
+</configuration>
+```
+
+## File System Data
+
+You might have noticed above that we haven't got an indexing strategy in place to manage the add/remove/updates for indexes as you might be familiar with in a typical Sitecore Database driven crawler. This is because it doesn't really make sense to do so here.
+
+For File System Data, we're looking at files within a directory structure somewhere and the actions that might occur would be:
+
+- Adding a new file
+- Removing a file
+- Replacing a file/updating a file
+- Renaming a file
+
+All of these actions require us to update the index to reflect these changes. To manage this we can use a File System Watcher which will ensure we only make updates to our indexes for the file(s) being modified as that happens.
+
+## File System Watchers
+
+Sitecore actually has a File Watcher class we can use here. I believe it's probably used for identifying updates to files like config files and things like that but it has all the things we need, so lets make use of it.
+
+```
+public class MyFileSystemWatcher : Sitecore.IO.FileWatcher
+{
+    private ILogService _logService;
+    private IIndexingSettingsService _indexingSettingsService;
+
+    public MyFileSystemWatcher() : base("watchers/DocumentStore") //point to the config setting path in the config settings. EG. <watchers><myDocumentStore> blah </myDocumentStore></watchers>
+    {
+        _logService = ServiceLocator.ServiceProvider.GetService<ILogService>();
+        _indexingSettingsService = ServiceLocator.ServiceProvider.GetService<IIndexingSettingsService>();
+    }
+
+    /// <summary>
+    /// Created() is invoked when a new file is dropped in a directory or subdirectory being monitored, or when a targeted file is changed.
+    /// </summary>
+    /// <param name="fullPath"></param>
+    protected override void Created(string fullPath)
+    {
+        _logService.Info($" Document created/modified: {fullPath}. Look for matching index update completed message to confirm indexes were updated");
+
+        try
+        {
+            //these can't be set in the constructor due to start up timings and registrations in IoC container
+            var index = _indexingSettingsService.GetSearchIndex();
+
+            //grab the indexable  object
+            var indexable = GetIndexable(fullPath, index.Name, _logService);
+
+            if (index != null)
+            {
+            	AddDocumentToIndex(index, indexable);
+
+            	// Index.Update(uniqueId);
+           		_logService.Info($" Document Solr index updated successfully for: {fullPath}.");
+        	}
+
+        }
+        catch (Exception ex)
+        {
+        	_logService.Warn($"Updating of the  Document Solr index and/or Combined Solr index failed for: {fullPath}. Error was {ex}");
+        }
+
+   }
+
+   private void AddDocumentToIndex(ISearchIndex index, IIndexable indexableDocument)
+   {
+        using (ISearchIndex solr = index)
+        {
+        	//use update context for add/udpates
+        	var updateContext = index.CreateUpdateContext();
+
+        	//lets udpates will add/update which is handy
+        	solr.Operations.Update(indexableDocument, updateContext, solr.Configuration);
+
+        	//you need to commit the changes or they don't stick
+        	updateContext.Commit();
+        }
+    }
+
+    private void DeleteDocumentFromIndex(ISearchIndex index, IIndexable indexableDocument)
+    {
+    	using (ISearchIndex solr = index)
+    	{
+            //use update context for add/udpates
+            var updateContext = index.CreateUpdateContext();
+
+            //lets udpates will add/update which is handy
+            solr.Operations.Delete(indexableDocument, updateContext);
+
+            //you need to commit the changes or they don't stick
+            updateContext.Commit();
+        }
+   	}
+
+    /// <summary>
+    /// Deleted() is invoked when a targeted file is deleted.
+    /// </summary>
+    /// <param name="filePath"></param>
+    protected override void Deleted(string filePath)
+    {
+    	_logService.Info($" Document deleted: {filePath}. Look for matching index update completed message to confirm indexes were updated");
+
+        try
+        {
+            //these can't be set in the constructor due to start up timings and registrations in IoC container
+            var index = _indexingSettingsService.GetSearchIndex();
+
+            //grab the indexable  object
+            var indexable = GetIndexable(filePath, index.Name, _logService);
+
+            if (index != null)
+            {
+                DeleteDocumentFromIndex(index, indexable);
+
+                _logService.Info($" Document successfully removed from Solr index for: {filePath}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logService.Warn($"Removal of the Document Solr index and/or Combined Solr index failed for: {filePath}. Error was {ex}");
+        }
+
+    }
+
+
+    /// <summary>
+    /// Renamed() is invoked when a targeted file is renamed.
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="oldFilePath"></param>
+    protected override void Renamed(string filePath, string oldFilePath)
+    {
+    	_logService.Info($" Document renamed from: {oldFilePath} to: {filePath}. Look for matching index update completed message to confirm indexes were updated");
+
+    	try
+    	{
+            //these can't be set in the constructor due to start up timings and registrations in IoC container
+            var Index = _indexingSettingsService.GetSearchIndex();
+
+            var oldIndexable = GetIndexable(oldFilePath, Index.Name, _logService);
+            var newIndexable = GetIndexable(filePath, Index.Name, _logService);
+
+            if (Index != null)
+            {
+                //first remove the old record
+                DeleteDocumentFromIndex(Index, oldIndexable);
+
+                //lets add the record back with the new file name
+                AddDocumentToIndex(Index, newIndexable);
+
+                _logService.Info($" Document successfully renamed in Solr index for: {filePath}.");
+            }
+        }
+    	catch (Exception ex)
+    	{
+    		_logService.Warn($"Renaming of the  Document Solr index and/or Combined Solr index failed for: {filePath}. Error was {ex}");
+    	}
+
+
+    }
+
+    private IndexableDocumentType GetIndexable(string fullPath, string indexName, ILogService _logService)
+    {
+        //get the record mapped to our POCO.
+        var Document = MyCrawler.PopulateDoc(fullPath, indexName, _logService);
+
+        //convert to the indexable version
+        var indexable = new IndexableDocumentType(Document);
+
+        return indexable;
+    }
+}
+```
+
+In order to register your File System Watcher, you will also need some configuration which looks like this:
+
+```
+<configuration xmlns:patch="http://www.sitecore.net/xmlconfig/" xmlns:role="http://www.sitecore.net/xmlconfig/role/">
+  <sitecore role:require="Standalone OR ContentManagement">
+
+    <settings>
+      <setting name="MyDocumentsFolderPath" value="C:\inetpub\wwwroot\SampleProject.Index.Documents\MyDocuments" />
+    </settings>
+    <watchers>
+      <myDocumentStore>
+        <folder ref="settings/setting[@name='MyDocumentsFolderPath']/@value"/>
+        <filter>*.pdf</filter>
+        <includeSubdirectories>true</includeSubdirectories>
+      </myDocumentStore>
+    </watchers>
+
+  </sitecore>
+</configuration>
+```
+
+## API Data
+There's nothing special here, the only difference between this and the File System Data is that within your crawler, you will instead make a call to your API endpoint and then map the response data back to your indexable object in the same way we did above for the file system documents.
+
+## Sitecore Scheduled Tasks & Sitecore Commands
+
+The management of API data can be handled in a couple of ways. The most ideal and efficient way would be for an integration layer to push updates directly to your solution so that you only have to perform updates when they happen and only for what you need to. This is not always possible so one good solution is to configure some Sitecore Scheduled Tasks to manage this for you. It's also a good idea to configure a Sitecore Command to manually invoke the index update logic so that if someone needs to trigger an update manually outside of the scheduled timings, they can do so quickly/easily. I won't cover that here, but may look at doing so in another article if there's enough interest in how that might work.
+
+## Taking it further
+
+- Try configuring Sitecore/Solr for [no-downtime indexing rebuilds](https://doc.sitecore.com/developers/100/platform-administration-and-architecture/en/switch-solr-indexes.html?ref=davegoosem.com)
+- Try [using a seperate indexing server](https://doc.sitecore.com/developers/100/platform-administration-and-architecture/en/enable-the-indexing-sub-role.html?ref=davegoosem.com) if you're managing a lot of data to take the load off your Content Management server.
+- Configure your indexing logic to use Async if you're managing multiple index rebuilds concurrently or if you want to speed up your rebuild/update times. You could take say... 200 records at a time and have multi-threaded updates.
