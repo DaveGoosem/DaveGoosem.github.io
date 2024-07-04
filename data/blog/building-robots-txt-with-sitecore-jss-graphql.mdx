@@ -1,0 +1,105 @@
+---
+title: Building a dynamic Robots.txt solution using Sitecore Headless Services / NextJs & GraphQL
+date: '2022-05-17'
+tags: ['Sitecore', 'SXA', 'JSS', 'Headless']
+draft: false
+summary: Recently I have been working on a 10.2 Sitecore JSS (NextJS/React) build using SXA for what I think it is best for which is adding Tenants and Sites and managing the Content Tree with Local Data and site-specific Media Library and Data Template management.
+layout: DaveLayout
+images: ['/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/robotsblogimage.jpg']
+authors: ['default']
+---
+Recently I have been working on a 10.2 Sitecore JSS (NextJS/React) build using SXA for what I think it is best for which is adding Tenants and Sites and managing the Content Tree with Local Data and site-specific Media Library and Data Template management.
+
+Something which I found interesting in the early stages of Development using a totally different rendering engine was building out a dynamic Robots.txt solution so I've decided to share the dynamic Robots.txt solution I put together using the power of NextJs and GraphQL. This article assumes you have set up your JSS application already.
+
+## The Problem
+
+Traditionally to build a dynamic Robots.txt solution with ASP.NET you would often see a solution which involved setting up a handler which would look after requests to "/robots.txt" and run it through a custom handler which would go and pull the robots.txt content from a template field in Sitecore and return the data to the robots.txt "page". In a Sitecore solution this often took advantage of a Sitecore Pipeline Processor.
+
+Since we are using NextJs and node as our rendering engine, we are no longer using ASP.NET to manage any rendering or page requests and a totally different tech stack. So how can we achieve something similar? I still wanted to supply the robots.txt content from a Sitecore Template Field dynamically but have the requests for robot.txt hit our node server and do it quickly and efficiently.
+
+## NextJs Rewrites and API Routes
+
+The beauty of NextJs is just how much you get for 'free'. It's heavily convention based but as long as you put things in the right place, it will do all the heavy lifting for you with minimal code required.
+
+The first step is to add a new rewrite to the next.config.js file located in the root of your JSS application.
+
+I'm using a Sitecore-first connected mode build approach so I added the following to the existing list of rewrites. Below you can see that we're rewriting requests for "/robots.txt" to "api/robots".
+
+![next.config.js settings](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image.png "next.config.js settings")
+
+NextJs will automatically wire up an API Route if you place files into the /src/pages/api directory.
+
+![next api page folder](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-1.png "next api page folder")
+
+To check it's working, I find it easiest to simply create a very basic API Route which just sends a simple string back to the page first.
+
+```
+import { NextApiRequest, NextApiResponse } from 'next';
+
+const Robots = async (req: NextApiRequest, res: NextApiResponse): Promise<any> => {
+    const { method } = req;
+    if (process.env.JSS_MODE === constants.JSS_MODE.DISCONNECTED || method !== 'GET') {
+        return null;
+    }
+
+    // test response simple content to confirm route works
+    return res.send("hello world");
+};
+
+export default Robots;
+```
+
+The aim of the game is to run the site locally on localhost:3000 (ie. independently of Sitecore) and show our response content. It should look like this:
+
+![hello world sample api route test](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-2.png "hello world sample api route test")
+
+## Plugging it into Sitecore using GraphQL
+
+You can of course create a Sitecore template and put it wherever you like to use for this however since we have SXA and have multiple sites in the solution, we ended up inheriting the existing SXA Headless Experience Accelerator templates onto the Headless Settings Item which is created for each Experience Accelerator "Site" here:
+
+![headless sxa settings item](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-4.png "headless sxa settings item")
+
+You can see our simple Robots.txt content is added above.
+
+![sitecore template field inheritance for robots field](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-3.png "sitecore template field inheritance for robots field")
+
+## Wiring up GraphQL
+
+The easiest way to go here is to refer to the sample GraphQL query. As part of getting your JSS app up and running and working in Connected Mode you should already have GraphQL working. I decided I wanted to set up a custom GraphQL configuration which excluded the Layout stuff to use for simple data lookups which don't require Layout data for better performance and less noise.
+
+To do this, you can create the following custom Sitecore Config and push it into your App_Config/zzz directory as per the Sitecore Doco [here](https://doc.sitecore.com/xp/en/developers/hd/190/sitecore-headless-development/start-using-sitecore-graphql-api.html?ref=davegoosem.com).
+
+You should have your API key configured here (the api key is the item id):
+
+![API Key Item](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-5.png "API Key Item")
+
+Using the GraphQL Query Testing UI documented [here](https://doc.sitecore.com/xp/en/developers/hd/190/sitecore-headless-development/start-using-sitecore-graphql-api.html?ref=davegoosem.com) you can load up your custom graphql endpoint and test your queries.
+
+Ours is very simple and just lets you plug in the datasource (in this case the Settings Item ID for the site we need) and the language. It looks for a field named "RobotsContent" and using the TextField template spits out the value.
+
+![Sitecore GraphQL Test UI](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-6.png "Sitecore GraphQL Test UI")
+
+## Making your GraphQL query work in your JSS Application
+
+Now that we have a query that works, lets get it rockin' in our app.
+
+There are some existing node packages which are responsible for converting a GraphQL query into an auto-generated file which contains all the type definitions etc which we won't go into. The important thing to note is that you can create your Graphql query file in the Graphql folder and when you next compile your app, it will attempt to build the auto-generated file. If there are any issues, you will have a build error and some information to refer to.
+
+In the screen below, the yellow file is our query file and the green file is the auto-generated one:
+
+![Adding query to code solution](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-7.png "Adding query to code solution")
+
+## Run the query and return the result in the api route
+
+Finally, lets get the query output returned in the api route response instead of that silly "hello world" text we put in there earlier...
+
+For brevity's sake I'm going to just hard-code the datasource ID but this should get the value from the current site's Settings Item...
+
+Below you can see I have imported the RobotsTextQueryDocument which is the exported class from the generated graphql file.  I've also pulled in the GraphQLRequstClient to run the request (using my custom graphql endpoint but you can substitute the default one in if you prefer which will just be config.GraphQLEndpoint)
+
+![Call query from api route](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-8.png "Call query from api route")
+
+That's it! Here's your robots.txt output:
+
+![Robots output from Head Application](/static/images/posts/2022/building-robots-txt-with-sitecore-jss-graphql/image-9.png "Robots output from Head Application")
