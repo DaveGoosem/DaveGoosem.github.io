@@ -1,0 +1,72 @@
+---
+title: Sitecore Send First Impressions
+date: '2021-11-23'
+tags: ['Sitecore', 'Sitecore Send']
+draft: false
+summary: Recently I had an opportunity to do some digging into Sitecore Send and thought I'd share a little bit of what I've uncovered.
+layout: DaveLayout
+images: ['/static/images/posts/2021/sitecore-send-first-impressions/SitecoreSendCoverImage.png']
+authors: ['default']
+---
+
+Recently I had an opportunity to do some digging into Sitecore Send and discovered that there isn't a huge amount of detail out there about it and it was a little bit of a challenge to outline what the offering was clearly when preparing for some thought leadership discussions with clients to help them plan for a rebuild of their website and digital marketing tooling.
+
+Since it wasn't clear to me where to find all the relevant detail I thought I'd share a little bit of what I've uncovered here. Most of this is built from tid-bits sourced from various sources such as the Sitecore Slack and some word of mouth in a recent Sitecore meetup.
+
+If you google "Sitecore Send" you will find some beautiful marketing collateral [here](https://www.sitecore.com/products/send?ref=davegoosem.com) which paints a picture of what the future will be. As it currently stands, my impression is that this is still simply wonderful marketing collateral in many ways but it does describe a lot of what Moosend currently can do - just with some Sitecore branding added on.
+
+It wasn't until I reached out to the community in Sitecore Slack that I was directed to this [page](https://developers.sitecore.com/learn/integrations/send-xm?ref=davegoosem.com) authored by Rob Earlam which starts to paint a picture of what can be done right now and how to integrate Sitecore Send with your Sitecore applications currently (keeping in mind it's been only a small amount of time since the aquisition). Essentially you can embed some simple Sitecore Send/Moosend generated scripts into your Sitecore pages to allow tracking to work in Sitecore Send. The doco provided on the [help.moosend.com](http://help.moosend.com/) site [here](https://help.moosend.com/hc/en-us/articles/115002454009-%CE%97ow-can-I-install-website-tracking-by-using-the-JS-tracking-library-?ref=davegoosem.com) is really great and describes what can be done and how simple it is to configure it all.
+
+You can also set up custom tracking events to enable you to track specific conversion actions which your email campaigns are trying to achieve such as "clicking a watch video CTA" for example to ensure it's all reportable from within Sitecore Send.
+
+It was also recommended to me to re-watch the Sitecore 2021 Product Keynote by Dave O'Flanagan where he goes on to describe where Sitecore Send (AKA Moosend) fits into the brave new composible Sitecore world and uses some great imagery to help paint a picture. I would encourage anyone interested in that to give it a [watch](https://www.youtube.com/watch?v=avVsCPEleWo&ref=davegoosem.com).
+
+My own key takeaways of this video were that the recent strategic aquistions are all aimed at being "best in breed" standalone products (which they already are today) with the aim to add some seamless native integrations <b><i>in the future</i></b>. It's still a little unclear as to exactly when that will be as I write this but hopefully there will be more announcements in the coming months.
+
+Another useful bit of video content to check out are the videos posted on YouTube by Dylan Young [here](https://www.youtube.com/channel/UC5krmrALirwZibfW9-c2JXw?ref=davegoosem.com) if you want to see Moosend in action and hear his thoughts.
+
+I was also able to stand up test account to have a look at Moosend in it's current state and I have to say, it's very exciting to see how intuitive it is and how great the user experience is. It has a library of sample templates for emails and forms which you can choose from to help get you started and it's all drag and drop to construct everything which is amazing. Something which has been on my wishlist for the Sitecore EXM product was a library of layout and simple components (an SXA for EXM if you will...) so Sitecore Send definately scratches that itch for me.
+
+
+![Sitecore Send UI-1](/static/images/posts/2021/sitecore-send-first-impressions/image-5.png "Sitecore Send UI-1")
+
+The preview on device option is a nice touch allowing you to get a feel for how your email or form will display at mobile and tablet sizes.
+
+![Sitecore Send UI-2 Mobile](/static/images/posts/2021/sitecore-send-first-impressions/image-3.png "Sitecore Send UI-2 Mobile")
+
+You can send tests without having to jump through hoops too
+
+![Sitecore Send UI-3 test sends](/static/images/posts/2021/sitecore-send-first-impressions/image-4.png "Sitecore Send UI-3 test sends")
+
+## List Management
+
+One of the questions I had was how you add people to and manage mailing lists and at this stage the approach is to use the Sitecore Send generated embedded forms, style it appropriately for your site and drop it onto your page such that you manage your lists within Sitecore Send directly. Anything further will require you to make use of the Moosend API's to move data around.
+
+![Sitecore Send List Mangement](/static/images/posts/2021/sitecore-send-first-impressions/image-6.png "Sitecore Send List Mangement")
+
+It's the same design approach as the email templates
+
+
+![Sign up form management 1](/static/images/posts/2021/sitecore-send-first-impressions/image-7.png "Sign up form management 1")
+
+![Sign up form management 2](/static/images/posts/2021/sitecore-send-first-impressions/image-8.png "Sign up form management 2")
+
+and once you've got your form looking nice at full width and mobile, you can set up some personalisation/conditions and embed it onto your page with another tag.
+
+![Embed Tag UI](/static/images/posts/2021/sitecore-send-first-impressions/image-10.png "Embed Tag UI")
+
+Mailing lists and segments can be managed from within Sitecore Send as well as marketing automation via a reasonably similar decision engine to the one which is currently within Sitecore.
+
+![Mailing list Dashboard](/static/images/posts/2021/sitecore-send-first-impressions/image-11.png "Mailing list Dashboard")
+
+In terms of native integrations, there isn't currently a Sitecore one but we would have to assume that something will come along soon..
+
+![Integrations list](/static/images/posts/2021/sitecore-send-first-impressions/image-12.png "Integrations list")
+
+## To Sum Up
+
+Although it was intially a bit of a mystery, after digging in a bit and having a proper look at what Sitecore Send can do I have to say I'm really excited about it. As suggested in the Keynote linked above, the product is already a fully fledged and powerful Email Marketing system in it's own right.
+
+Customers who want to de-couple from the baked in Sitecore Email Marketing option (EXM) can do so and there's a very well documented API available on the Moosend site to help developers set up any custom integrations required.
+
+The overhead of needing developers to build out your Sitecore EXM templates is no longer a problem thanks to all the built in drag-and-drop templating capabilties in Sitecore Send. All in all, a really slick addition to the Sitecore toolbelt.
