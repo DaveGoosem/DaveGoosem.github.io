@@ -1,0 +1,240 @@
+---
+title: Identifying Contacts in Sitecore CDP on Sitecore Send Form Submit using NextJS
+date: '2022-08-16'
+tags: ['Sitecore', 'Sitecore Send', 'CDP', 'Headless']
+draft: false
+summary: Recently I have been working on a 10.2 Sitecore JSS (NextJS/React) build using SXA for what I think it is best for which is adding Tenants and Sites and managing the Content Tree with Local Data and site-specific Media Library and Data Template management.
+layout: DaveLayout
+images: ['/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/CDP_Identify_Banner_Image-13.png']
+authors: ['default']
+---
+If you're building a composable Sitecore solution and using Sitecore CDP, you might find that you want to fire an Identity event when users complete a sign-up form. If the form isn't a native form, this becomes a little more complicated. This post will hopefully provide you with some sample code to get you started.
+
+<i>Note: All sample code in here should not be used directly in production and is Proof of Concept only code. This post assumes you have added your Sitecore CDP and Send scripts onto your page already and connected each product to your site.</i>
+
+At the time of writing this article there is not currently a NPM module available to simplify the set up of your Sitecore Send or CDP/Personalize in a NextJS application. This means that you will likely be adding some `<script>` tags into your pages to load in both product's Javascript and initialise them. This needs to happen before you try place the Sitecore Send form onto the page and also before you try to make your identity event calls to Sitecore CDP.
+
+The way I have achieved this is to use some `UseEffect()` React Hooks so that things happen at the right time - after render or after the form has then been inserted onto the page.
+
+When you add the CDP scripts to the page, you will notice that you are defning some global variables. In order to make these compile with Typescript, you may need to define some types to keep Typescript happy when you try to access the global variables. The ones shown below are the ones I needed to use for Both CDP (Boxever) and Send (mootrack).
+
+![Typescript Types file](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-1.png "Typescript Types file")
+
+First things first, we need to set up our Identity Event Logic. To do this I have defined the shape of our datatypes. The Identify and View event types matches the documented types [here](https://doc.sitecore.com/cdp/en/developers/sitecore-customer-data-platform--data-model-2-0/send-an-identity-event-to-sitecore-cdp.html?ref=davegoosem.com). The identify event data is the same as the view event data with some additions.
+
+You will need to get the BrowserID so that will happen first and then we will pass that to all our subsequent Event Calls as per the Sitecore CDP Documentation.
+
+```
+import axios from 'axios';
+
+export function GetBrowserId() {
+    if (window?.Boxever && window?.Boxever?.getID()) {
+        return window?.Boxever?.getID();
+    }
+    let broswerId;
+    const clientKey = process.env.SITECORE_BOXEVER_CLIENTKEY;
+    const boxeverAPIEndpoint = `https://api-ap-southeast-2-production.boxever.com/v1.2/browser/create.json?client_key=${clientKey}&message={}`;
+
+    const promise = axios.get<CreateBrowserRefResponse>(boxeverAPIEndpoint);
+    const response = promise
+        .then((res) => (broswerId = res.data))
+        .then((data) => {
+            broswerId = data.ref;
+        });
+
+    console.log('bid response: ', response);
+    return broswerId;
+}
+
+export function PushViewEvent(event: ViewEvent) {
+    //get the browser ID seperately and insert into the page view event object to use for our requests
+    const browserID = GetBrowserId();
+
+    event.browser_id = browserID;
+    console.log('CDP browserId: ', browserID);
+
+    const message = JSON.stringify(event);
+    console.log('campaign id (if present)', event.utm_campaign);
+    const clientKey = process.env.SITECORE_BOXEVER_CLIENTKEY;
+
+    const boxeverAPIEndpoint = `https://api-ap-southeast-2-production.boxever.com/v1.2/event/create.json?client_key=${clientKey}&message=${message}`;
+
+    axios
+        .get(boxeverAPIEndpoint)
+        .then(function (response) {
+            // handle success
+            console.log('boxever view event response was: ', response);
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        });
+}
+
+export function PushIdentifyEvent(event: IdentifyEvent) {
+    //get the browser ID seperately and insert into the page view event object to use for our requests
+    const browserID = GetBrowserId();
+
+    event.browser_id = browserID;
+    console.log('CDP browserId: ', browserID);
+
+    const message = JSON.stringify(event);
+    const clientKey = process.env.SITECORE_BOXEVER_CLIENTKEY;
+
+    console.log('event data: ', event);
+
+    const boxeverAPIEndpoint = `https://api-ap-southeast-2-production.boxever.com/v1.2/event/create.json?client_key=${clientKey}&message=${message}`;
+
+    axios
+        .get(boxeverAPIEndpoint)
+        .then(function (response) {
+            // handle success
+            console.log('boxever identify event response was: ', response);
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+        });
+}
+
+export type CreateBrowserRefResponse = {
+    status: string;
+    version: string;
+    client_key: string;
+    ref: string;
+    customer_ref: string;
+};
+
+// View Event Data Shape
+export type ViewEvent = {
+    channel?: string;
+    type?: string;
+    language?: string;
+    currency?: string;
+    page?: string;
+    pos?: string;
+    browser_id?: string;
+    utm_source?: string | string[] | null;
+    utm_medium?: string | string[] | null;
+    utm_campaign?: string | string[] | null;
+};
+
+//see: https://doc.sitecore.com/cdp/en/developers/sitecore-customer-data-platform--data-model-2-1/send-an-identity-event-to-sitecore-cdp.html
+export type IdentifyEvent = ViewEvent & {
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    identifiers: [
+        {
+            provider: string;
+            id: string;
+        }
+    ];
+};
+```
+
+Now that we have our Identify method ready to roll, we can make use of it in our Sitecore Send Form Rendering on our site. We have configured the form in Sitecore Send and we're using the simple drop in `<div>` to inject the form onto our page. You can see in the example we have a first name, last name and email address. We are going to use the email address as our identifier which is how we have set up the identify logic.
+
+![Send Form Rendering](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-2.png "Send Form Rendering")
+
+```
+import { ComponentWithContextProps } from 'lib/component-props';
+import { Field, useSitecoreContext } from '@sitecore-jss/sitecore-jss-nextjs';
+import React, { useState, useEffect } from 'react';
+import { PushIdentifyEvent } from 'lib/sitecore-cdp/sitecore-cdp';
+import { useRouter } from 'next/router';
+
+type SitecoreSendFormProps = ComponentWithContextProps & {
+    fields: {
+        FormID: Field<string>;
+    };
+};
+
+const SitecoreSendForm = ({ fields }: SitecoreSendFormProps): JSX.Element => {
+    const isEditing = useSitecoreContext()?.sitecoreContext?.pageEditing;
+    const [data, setData] = useState('');
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const router = useRouter();
+    const pageValue = router.asPath?.split('?')[0];
+
+    //useEffect to insert the sitecore send form into the page after the scripts it needs are loaded.
+    useEffect(() => {
+        setData('<div data-mooform-id="' + fields?.FormID?.value + '"></div>');
+    }, []);
+
+    //useEffect to attach additional events to the Sitecore send form Submit event to call Sitecore CDP Identify event as well
+    useEffect(() => {
+        setTimeout(() => {
+            console.log('Delay by 1 second to allow send form to be loaded first - for POC only! Fix this in your own app');
+
+			// access each of the sitecore send form fields from your form from the DOM and set their types for typescript to work.
+            const formEmailField = document.querySelectorAll('input[name="Email"]')?.[0];
+            const formButton = document.querySelectorAll('.moosend-designer-button')?.[0];
+            const formFirstNameField = document.querySelectorAll('input[name="First Name"]')?.[0];
+            const formLastNameField = document.querySelectorAll('input[name="Surname"]')?.[0];
+
+            const formButtonEl = formButton as HTMLButtonElement;
+            const formEmailFieldEl = formEmailField as HTMLInputElement;
+            const formFirstNameFieldEl = formFirstNameField as HTMLInputElement;
+            const formLastNameFieldEl = formLastNameField as HTMLInputElement;
+
+            if (formButtonEl && !formSubmitted) {
+                setFormSubmitted(true);
+
+                const handleClick = (event: MouseEvent) => {
+                    console.log('button event happened', event);
+                    PushIdentifyEvent({
+                        channel: 'WEB',
+                        type: 'IDENTITY',
+                        currency: 'AUD',
+                        language: 'EN',
+                        page: pageValue,
+                        pos: 'YOUR POS',
+                        email: formEmailFieldEl?.value,
+                        firstname: formFirstNameFieldEl?.value,
+                        lastname: formLastNameFieldEl?.value,
+                        identifiers: [
+                            {
+                                provider: 'email',
+                                id: formEmailFieldEl?.value,
+                            },
+                        ],
+                    });
+                };
+                console.log('add click event listener');
+                formButtonEl.addEventListener('click', handleClick);
+            }
+        }, 2000);
+    }, [data, formSubmitted]);
+
+    return (
+        <>
+            {!isEditing && fields?.FormID && (
+                <section id="booking-section" className="content-booking">
+                    <div className="container">
+                        <div className="form-container col-sm-12">
+                            {/* Sitecore Send Form*/}
+                            <div
+                                className="sendForm"
+                                dangerouslySetInnerHTML={{ __html: data }}
+                            ></div>
+                        </div>
+                    </div>
+                </section>
+            )}
+        </>
+    );
+};
+
+export default SitecoreSendForm;
+```
+
+This will console log some helpful values including the response for your Identify request. In Sitecore CDP, you can verify it worked by checking to see if you have a "Customer" with the email value you specified. Identified users will appear in the Customer List in CDP and unidentified users will appear in the Visitor List.
+
+
+![Sitecore Send Form Submitted](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-3.png "Sitecore Send Form Submitted")
+
+![Console of events firing](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-4.png "Console of events firing")
+
+![Guest search results for our submission in CDP](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-5.png "Guest search results for our submission in CDP")
+
