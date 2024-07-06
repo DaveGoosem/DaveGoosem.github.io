@@ -1,0 +1,95 @@
+---
+title: Headless Sitecore JSS Multi-site with NPM Workspaces
+date: '2022-09-19'
+tags: ['Sitecore', 'Architecture', 'JSS', 'Headless']
+draft: false
+summary: So you're building a headless solution in sitecore and you want to create a multi-site solution? How can you do this in a properly headless way? This article explores a simple/light-weight approach to setting this up using NPM Workspaces.
+layout: DaveLayout
+images: ['/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/SitecoreHeadlessMultiSite.png']
+authors: ['default']
+---
+
+So you're building a headless solution in sitecore and you want to create a multi-site solution? How can you do this in a properly headless way? This article explores a simple/light-weight approach to setting this up using NPM Workspaces. We're focusing primarily on the client-side solution here but will briefly run through the Sitecore configuration as well.
+
+## Solution Design
+
+We have 3 websites we need to create which will have some shared components and some unique components and different theming/content and our solution is using NextJS.
+
+We're looking to have multiple "heads" to manage each Site/App so that we can deploy each to it's own Vercel instance and have it ONLY contain what each App actually needs. This allows us to deploy each Head/Site independantly and scale it independantly. It's also nice to have the simple OOTB error page handling and rewrites etc all managed per-site without having to change it all to understand which site we care about etc. When we talk about "headless" this is essentially what we are trying to achieve here. The ability to detach things which should be seperated. We might want to have another head be deployed to a Kiosk device or another entirely different delivery channel but still share some componentry/logic (perhaps your grid or some other simple componets like Rich Text or a CTA Button for example). This kind of architecture will make this possible and allow us to deploy changes to each head independently. If you have all of your sites within one NextJS/Front End solution, you will quickly find that you have to do additional work to achieve things that would othewise be available OOTB and you won't be able to do fun things like have one head use Static Site Generation and another head use Server Side Rendering.
+
+Below is a simiplified diagram of our 3 sites/heads deployed to Vercel in one Account but as seperate 'projects'. Our Sitecore environment is using a typical Azure App Services deployment.
+
+![Sample Architecture](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image.png "Sample Architecture")
+
+We're using a pretty standard Sitecore Headless Services SXA Tenant/Sites structure here. Note the "shared" site which we are using to allow for sharing of content and settings and things like that between all the sites from a Sitecore Database/Content management perspective. We're going to do something very similar in the Front End Solution Set up.
+
+![SXA Tentant/Site Structure](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-2.png "SXA Tentant/Site Structure")
+
+Our Sitecore .NET Solution is a typical Helix-centric solution which aligns to this structure as well:
+
+![Sitecore Code Solution Structure](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-3.png "Sitecore Code Solution Structure")
+
+Finally, we've set up our Front End Solution such that we have an entirely seperate NextJS Sitecore JSS application for each Site as well as our "shared" one. We've used the Sitecore NextJS site creating tooling and provided the necessary config to use the Headless SXA tooling.
+
+Note: the "shared" site could just as easily be a slimmed down react project however we are considering using the 'shared' site as a potential test/styleguide space as well as being a shared component/code solution which is why we've chosen to run it up as another NextJS Sitecore JSS application.
+
+![Front End Code Solution Structure](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-4.png "Front End Code Solution Structure")
+
+Everything matches up nicely so far, things are looking good. We can build each site independently and link them up to the Sitecore Backend easily. We've got JUST the Visit site's code in the Visit front end project and we've got JUST the Corporate site's code in the Corporate front end project and so on..
+
+## Time to share stuff
+
+There are a bunch of options for sharing code between different projects/apps/packages available. The major players at the time of writing this being [Lerna](https://lerna.js.org/?ref=davegoosem.com), [Yarn Workspaces](https://classic.yarnpkg.com/lang/en/docs/workspaces/?ref=davegoosem.com) and [NPM Workspaces](https://docs.npmjs.com/cli/v7/using-npm/workspaces?ref=davegoosem.com). Each has their pros and cons which are worth consideration however I decided to keep things as light-weight and simple as possible and so we're going to focus on NPM Workspaces.
+
+Following the doco linked above you can pretty quickly get this up and running by adding a packages.json file to the root directory (in our case /JSS ) and add the workspace configuration like so:
+
+![NPM Workspaces package.json](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-5.png "NPM Workspaces package.json")
+
+We only want to share the 'shared' site to each of the individual sites so the other steps we need to make this possible are to add a dependency in each site's packages.config file for the "shared" site as shown:
+
+![head-specific package.json](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-6.png "head-specific package.json")
+
+We also made good use use of the next-transpile-modules library which you can read about [here](https://https//github.com/martpie/next-transpile-modules) to add our "shared module" to make it available within our application. This is done in each site's `next.config.js` file as shown.
+
+![Transpiler code before updates to next.config.js](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-7.png "Transpiler code before updates to next.config.js")
+
+Something to note here is that we want to wrap the module exports for the OOTB plugins (along with any others you might have) with the Transpiler logic too. Thankfully they provide a mechanism for this so we're going to update the module.exports to do this now by updating it to look like this:
+
+![Transpiler code updates to next.config.js](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-8.png "Transpiler code updates to next.config.js")
+
+Since we now have a NPM Workspace defined and we've configured each project with the new dependency in the packages.json files we can now run NPM Install in the /JSS (root directory). What this is going to do is install all the node packages into the main node_packages folder and keep track of which project needs which dependencies. Pretty neat.
+
+Once you've run npm i you will see that in the generated packages-lock.json file at the top level that you have an entry for each of your Sites (in our case, visit, choose, corporate) similar to this:
+
+![package.lock file example](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-9.png "package.lock file example")
+
+Using workspaces like this will make deploying your sites much easier as the shared site won't need to have it's packages installed seperately as long as you have ths same versions used across the board for each site as they'll already exist at the root level of your Front End solution. It's also easy to track/ensure package versions are the same at this top level.
+
+## Sharing Components between Sites
+
+Now that all the configuration is sorted, we can look at making the shared components available in each site. A good example which we'll use here is the SEO Meta Data components. Given that I want to share the SEO Meta Data Components on all 3 sites, I can create these as "components" within the Shared App and then just register these to be used within each individual site.  So let's look at how to do this.
+
+We're going to take a convention based approach here and say that anything which lives in the standard JSS "components" directory in the Shared App will be auto-added to each other individual App to make life easy. For our example we're going to look at the configuration for just one of the sites (Visit) which will combine components from Visit and from Shared.
+
+In the Shared Site we have a set of components in our Feature layer including our SEO Feature components.
+
+![Shared Site Code example](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-10.png "Shared Site Code example")
+
+In the Visit Site we have just one Sample component named "VisitContentBlock" (just to give us something to use in our example here).
+
+![Site-specific component Code example](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-11.png "Site-specific component Code example")
+
+In order for each Site to be able to use the site-specific components as well as the shared components we need them to be registered in the ComponentFactory.ts which gets generated when we run a build. By default when you run a build using the Sitecore Starter App it targets just the current site's /src/components/* items and writes these out to the ComponentFactory.ts file which looks like this:
+
+![updates to sitecore componentFactory.ts script file](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-12.png "updates to sitecore componentFactory.ts script file")
+
+As you might have guessed, we now need to also add the shared site items to make them available. Thanks to the transpiler and module set up stuff we set up earlier, we can achieve this by adding some additional logic into the `/scripts/generate-component-factory.ts` file.
+
+Lets look at the changes we can make (left) to the original file (right). The important things to note here are that when this file is loading the files in, <b>the file paths need to be relative to the generate-component-factory.ts file in order for the files to be found correctly</b>. When the final `componentFactory.ts` file is generated from within this file however, the paths to the same files must be relative to the output file's location (remember this script is responsible for generating and writing the contents of another file). This is why you'll see we are replacing the component path value string to make the path correct for the output file AFTER we've loaded all the files in with `comp.path = comp.path.replace('../', '../../../');`
+
+
+![Diff of componentFactory.ts script file](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-13.png "Diff of componentFactory.ts script file")
+
+Let's take a look at our handiwork... Here we can see that the componentFactory.ts file contains the VisitContentBlock as well as the shared metadata components and the file locations are correct for the 4 shared components and also correct for the single native component. Great success!
+
+![final output of componentFactory.ts file](/static/images/posts/2022/sitecore-jss-multi-site-with-npm-workspaces/image-14.png "final output of componentFactory.ts file")
