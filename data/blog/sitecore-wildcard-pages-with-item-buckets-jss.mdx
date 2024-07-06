@@ -1,0 +1,60 @@
+---
+title: Sitecore Wildcard Pages with Item Buckets & JSS
+date: '2022-07-20'
+tags: ['Sitecore', 'SXA', 'JSS', 'Headless']
+draft: false
+summary: Sitecore Wildcard Pages with Item Buckets & JSS. If you're new to JSS/Sitecore Headless Services, this article covers the key differences you should know about to make this work.
+layout: DaveLayout
+authors: ['default']
+---
+Recently we've been doing a bunch of Sitecore Headless work and I thought it might be nice to make another post similar to my previous one but this time through a JSS lens. It's something that gets used a lot and if you're new to JSS/Sitecore Headless Services, this article covers the key points and differences you should know about to make this work using JSS.
+
+My [previous post](/blog/wildcard-pages-with-item-buckets-azure-search/) in this area is worth a quick look to help understand the background and concepts if you're not already completely across what a Wildcard page and the problems we're trying to solve here.
+
+Lets get started..
+
+This post assumes that you have your Bucket and Data Templates set up already. We also are using React/NextJS as our front end stack.
+
+Be aware that the wildcard page use-case is something you would use only when you are able to utilise the exact same page layout for each item in the Bucket. In some cases there are some components which we want to use different data sources for and in order to solve this, we've added template fields on the bucketed item template which users can point to a different datasource of their choice. This is the easiest way to enable some customisation while still using Wildcard pages. All that is requried is some logic to pass to the relevant renderings to advise that it should take it's datasource/context item value from your new field instead if we identify the page as a wildcard page.
+
+## Configuring JSS Renderings for Wildcard Page usage
+
+There are a few things we need to set up in order to be able to utilise the wildcard page pattern effectively in a headless website.
+
+- A URL resolver which is able to understand if the page being requested is a wildcard page and fetch the associated data item to be used by all the renderings on the wildcard page.
+- A Client-side equivalent?
+- JSS Layout Service Content Resolvers
+- Sitemap/Sitemap.xml lgic to ensure that we populate the sitemaps with the  bucketed item pages data for SEO purposes etc.
+
+## Content Resolvers
+
+In a Headless/JSS site, a content resolver allows you to modify the data returned from layout service requests. This is important as it ensures that you only have to extend the volume of data and the shape of that data if/when you need to do so. This should be done sparingly and only data you need should be returned so as to maintain performance.
+
+To configure a Content Resolver, it's as simple as creating the Resolver, pointing it to the relevant file/binary in your solution and then assigning it to the renderings you want it to be used on. Content Resolvers can be found in System > Modules > Layout Service. You'll see a bunch of existing ones you might like to make use of but in this case, we're in need of a custom Wildcard Bucket Item Contents Resolver to allow to do what we want to do so let's create the item and tell it where to find the logic we're going to use as shown.
+
+
+![Contents Resolver](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-1.png "Contents Resolver")
+
+We're going to be using the same resolver on a number of pages such that one bucket's content items is acutally presented on multiple wildcard pages and so for our example, we want to be able to have a wildcard page which lets us point to the related bucket. This is going to be a Staff Profiles listing page which displays all the staff members for a company sourced from a bucket/index which when you click through to the details page, we're using a single details page and presenting each staff member's details on the single wildcard page (denoted by the use of the * name as shown).
+
+![Wildcard * page](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-2.png "Wildcard * page")
+
+The Staff Profiles page has our listing rendering on it and the wildcard * page has our details rendering on it. We need to tell the Staff Details rendering to use our Content Resolver so let's do that like so:
+
+![Rendering Item using contents resolver](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-3.png "Rendering Item using contents resolver")
+
+If you think about what is happening with Headless/JSS and it's layout service, it's sending back your data and the presentation information in json form to your client side application. So in order to make this work, rather than what normally would happen which is just to grab all of this information from the same page and it's related data items, we're instead going to be taking the DATA from our bucket item but the LAYOUT/presentation information from the wildcard page.
+
+The code below describes how we are achieving this. A Content Resolver needs to be of type RenderingContentsResolver and return what you need it to by overriding the ResolveContents() method as shown below.
+
+![WildcardBuketItemContentsResolver class](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-4.png "WildcardBuketItemContentsResolver class")
+
+![ProcessWildcardItem method](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-5.png "ProcessWildcardItem method")
+
+![GetContextItem method](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-6.png "GetContextItem method")
+
+There are a couple of things I've left out here as they're pretty self-explainatory by the names of the methods and what I've already described but this is our Contents Resolver logic which you can see we are returning as JSON.
+
+We now have data in the same format you would normally recieve from layoutservice requests but we have constructed it ourselves such that the datasource data is merged from bucket item and wildcard page and we can use this in the same way you would any other front end component. These "fields" are all sourced from the bucket item and the rendering data is all sourced from the Wildcard Page item. Neat.
+
+![Staff Details Mapped Typescript Type](/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/image-7.png "Staff Details Mapped Typescript Type")
