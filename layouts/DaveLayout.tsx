@@ -86,13 +86,13 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
 
 
                           {author.twitter && (
-                            <div className='flex items-center'>
-                              <div className="inline-block mr-2">
-                                <SocialIcon href={author.twitter} kind='twitter' size={5} />
+                            <div className="flex items-center">
+                              <div className="mr-2 inline-block">
+                                <SocialIcon href={author.twitter} kind="twitter" size={5} />
                               </div>
                               <Link
                                 href={author.twitter}
-                                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 inline-block align-center"
+                                className="inline-block text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                               >
                                 {author.twitter
                                   .replace('https://twitter.com/', '@')
