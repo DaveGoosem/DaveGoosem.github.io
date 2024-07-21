@@ -119,7 +119,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </div>
             <footer>
               <div className="flex flex-wrap">
-                <div className="pl-1 pt-1 w-1/4 sm:w-1/4 md:w-1/2">
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/2">
                   <Image
                     src={'/static/images/Logos/2024-Sitecore-MVP-Technology.png'}
                     alt="2024 Sitecore Technology MVP"
@@ -127,7 +127,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     height={500}
                   />
                 </div>
-                <div className="pl-1 pt-1 w-1/4 sm:w-1/4 md:w-1/2">
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/2">
                   <Image
                     src={'/static/images/Logos/2023-Sitecore-MVP-Technology.jpg'}
                     alt="2023 Sitecore Technology MVP"
@@ -135,7 +135,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     height={500}
                   />
                 </div>
-                <div className="pl-1 pt-1 w-1/4 sm:w-1/4 md:w-1/2">
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/2">
                   <Image
                     src={'/static/images/Logos/2022-Sitecore-MVP-Technology.jpg'}
                     alt="2022 Sitecore Technology MVP"
@@ -143,7 +143,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     height={500}
                   />
                 </div>
-                <div className="pl-1 pt-1 w-1/4 sm:w-1/4 md:w-1/2">
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/2">
                   <Image
                     src={'/static/images/Logos/2021-Sitecore-MVP-Technology.jpg'}
                     alt="2021 Sitecore Technology MVP"
