@@ -83,8 +83,6 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                         <dd className="text-gray-900 dark:text-gray-100">{author.name}</dd>
                         <dt className="sr-only">Twitter</dt>
                         <dd>
-
-
                           {author.twitter && (
                             <div className="flex items-center">
                               <div className="mr-2 inline-block">
