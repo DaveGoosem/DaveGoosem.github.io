@@ -1,0 +1,107 @@
+---
+title: Configuring SSO for Sitecore Cloud Portal with Azure AD
+date: '2024-05-13'
+tags: ['Sitecore', 'Azure', 'XMCloud']
+draft: false
+summary: It's been quite some time since we started our journey using Sitecore 8.2 and Azure PaaS. There has been no small amount of experimentation, failings and most importantly, learnings as we worked towards an automated build and release pipeline using VSTS so I thought I would take the opportunity at long last to share some of my experiences.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+So you've made the leap or are about to make the leap to Sitecore SaaS and you want to understand how Single Sign-on (SSO) will work for you using Azure AD/Entra ID? This post is a quick walk through to get you going.
+
+## Overview
+As of the date of writing this post, Sitecore XMCloud doesn't currently support RBAC for the products within your SaaS Environments however you CAN have Single Sign On (SSO) configured to the Sitecore Cloud Portal itself. In order for users to be able to access the various Cloud Portal resources, you will need to have someone with the Organsation Admin or Admin Sitecore Cloud Portal roles invite users and select their access rights to each tool.
+
+[Configuring SAML single sign-on | Sitecore Documentation](https://doc.sitecore.com/portal/en/developers/sitecore-cloud-portal/configuring-saml-single-sign-on.html)
+
+In order to enable SSO for the Sitecore Cloud Portal, there’s a simple UI to manage this from the Sitecore Cloud Portal side and currently it will support
+
+- SAML
+- OpenID
+
+In our example, we're going to have a look at Sitecore XMC Projects/Environments and Sitecore Personalize (Prod and Non-Prod) and we're going to use SAML
+
+### Azure AD Role Groups
+As mentioned previously, we're only using SSO to auth to the Sitecore Cloud Portal which means that we only need one AD Group to manage this.
+
+
+## Skills/Personell and Access Required
+
+In order to be able to make this happen, you generally need a couple of specialists from various parts of your business. This is a coming together of two systems which are your orginasational Azure Active Directory/ Entra ID and your Sitecore Cloud Portal so it should be reasonably obvious however you will need:
+
+- Someone who has access to your Azure AD/Entra ID who can provide the relevant Connection values and configure your AD Roles
+- An Orgnaisation Owner or Organisation Admin within the Sitecore Cloud Portal. This is often the people noted down on your SaaS licensing agreement or a person they've given access to on their behalf.
+
+![Sitecore Cloud Portal Roles](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/image.png "Sitecore Cloud Portal Roles")
+*Sitecore Cloud Portal Roles*
+
+The Doco page references we care about are shared at the bottom of the article however of note before we get started is the detail on [this page](https://doc.sitecore.com/portal/en/developers/sitecore-cloud-portal/roles.html):
+
+## Configuration
+
+It's SaaS. Which means it's UI driven and it's simple. We're populating fields and following the directions as they're given to us.
+
+Start by going to the Admin Tab and hitting "Add SSO connection" and we're choosing SAML for our example.
+
+![Add SAML Connection](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/Add_Connection.jpg "Add SAML Connection")
+
+You'll be prompted for the the email domain you want to use. Fill that in and you'll be presented with the configuration field shown below:
+
+![Sitecore Cloud Portal SAML SSO Config](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/Connection_Settings.png "Sitecore Cloud Portal SAML SSO Config")
+
+Provide the values displayed in the connection window to the Identity Provider (we're using Azure AD)
+
+The Identity Provider will have the Metadata XML or URL value you can paste into the field that calls for it.
+
+Submit that and you should be presented with the following unverified line item:
+![Sitecore Cloud Portal SAML SSO Unverified](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/SSO_Unverified.png "Sitecore Cloud Portal SAML SSO Unverified")
+
+You can run the Test option to confirm the SAML configuration is correct and in place:
+
+![Sitecore Cloud Portal SAML SSO Connection Test](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/SSO_Connection_test.png "Sitecore Cloud Portal SAML SSO Connection Test")
+
+To enable the SSO connection, you will need to verify the domain ownership first. You do this by selecting the "Verify domain" option and following the details.
+You need to add a text record with the value provided do your domain to verify ownership.
+
+Once that has been added, you can click vefify domain and a popup will appear which you can then click “verify”
+
+If successful, you will see this:
+![Sitecore Cloud Portal Domain Verfied](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/Domain_Verified.jpg "Sitecore Cloud Portal Domain Verified")
+
+
+You can then Enable the SSO by clicking Enable - this will take a few minutes.
+
+![Sitecore Cloud Portal SAML Click Enable](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/Click_Enable.png "Sitecore Cloud Portal SAML Click Enable")
+
+If all goes well, you should green lights across the board...
+![Sitecore Cloud Portal SAML SSO Verfied](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/image-1.jpg "Sitecore Cloud Portal SAML SSO Verified")
+
+To test, ensure you have a user who has been added to the relevant AD Group and then in the cloud portal, send them an invite and set their portal access rights:
+
+![Sitecore Cloud Portal invite](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/invite_to_portal.jpg "Sitecore Cloud Portal invite")
+
+The will receieve an invitation email and can ‘accept’ the invite and SSO should be in place. If the user is not authenticated with their AD Creds, they will be prompted when they supply their domain email and if they are logged in, just be presented with an account choice:
+
+![Sitecore Cloud Portal SSO Account Selection](/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/SSO_Account_Selection.jpg "Sitecore Cloud Portal SSO account selection")
+
+You will likely see an agreement with licensing and T's and C's which you need to accept if you're a first time user.
+
+That's it.. You should now have access with SSO!
+
+## References & Reading
+
+Roles | Sitecore Documentation
+Overview of the different roles in the Sitecore Cloud Portal.
+https://doc.sitecore.com/portal/en/developers/sitecore-cloud-portal/roles.html
+
+Single sign-on (SSO) | Sitecore Documentation
+Describes the available SSO options for the Sitecore Cloud Portal and technical details related to enabling or deleting SSO connections in the Sitecore Cloud Portal.
+https://doc.sitecore.com/portal/en/developers/sitecore-cloud-portal/single-sign-on--sso-.html
+
+Configuring OpenID Connect (OIDC) | Sitecore Documentation
+Describes how to set up an OIDC provider in the Sitecore Cloud Portal.
+https://doc.sitecore.com/portal/en/developers/sitecore-cloud-portal/configuring-openid-connect--oidc-.html
+
+
