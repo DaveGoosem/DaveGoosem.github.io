@@ -1,0 +1,69 @@
+---
+title: Sitecore XM Cloud Front End Framework Selection
+date: '2024-07-31'
+tags: ['Sitecore', 'JSS', 'XMCloud', 'Headless']
+draft: false
+summary: If you're currently considering a Composable SaaS migration to Sitecore XM Cloud, you're more than likely going to fit into one of the following categories described in this article. Let's take a look at how you might make an educated decision.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+If you're currently considering a Composable SaaS <b>migration</b> to Sitecore XM Cloud, you're more than likely going to fit into one of the following categories:
+
+- Sitecore MVC Era (Classic or SXA)
+- Sitecore Headless/JSS
+- Combination of the above
+- New Sitecore/Greenfields build (no previous Sitecore solution)
+
+Depending on your situation, you're either looking to choose a new Front End Framework OR you're trying to determine if you should Upgrade your existing Front End Solution and possibly re-assess your previous JSS Sitecore Framework selection. If you speak to Sitecore or ask around, the current prevailing position or recommendation you will almost always hear at the time or writing this article is to consider using Next.js as your Front End Framwork to build your Heads.
+
+In this article we're going to have a bit of a look at some of the reasons that factor into this recommendation and what is involved in migrating to a Composable SaaS Architecture, whether that be migrating from an existing Sitecore Headless solution or moving to a Sitecore Headless solution for the first time.
+
+## What's Different in the XM Cloud world to traditional Headless Sitecore Solutions?
+
+From a Front End/Head Solution perspective we need to understand that there's no longer a Content Delivery Server. We now use Edge for XM which is essentially a CDN which stores JSON. This is accessed via GraphQL from our Front End Application. The newer version of the Sitecore Headless Services Front End libraries contain a whole host of additional out of the box(OOTB) capability to help with enabling all of this as well as support for Headless SXA.
+
+Given the move to Sitecore Edge for XM any solutions which are using an older version of Sitecore Headles Services and which have significant Server-side manipulations of the Sitecore Layout Service, these will need to be reviewed and potentially updated so they can run at Publish time. Any usage of downstream API's which may have been auchestrated in the CD server previously are no longer able to be managed there and you will likely need to find a Middleware solution or another way to manage the usage of 3rd party data.
+
+## Ok so a fair bit is changing, where does that land us if we have an existing Headless Solution?
+
+We want to determine if we should upgrade, migrate or rebuild.
+<br />It depends on a few things.. Let's take a look at the major ones.
+
+### How old is your headless solution and how is it constructed?
+Does an upgrade/migration of your existing Headless solution make sense. A lot has changed in a short space of time and XMCloud with Edge means you can leverage a lot of newer capabilities. A straight upgrade could end up requiring significant effort and you might be better served to migrate/rebuild it into a newer version. Is the current solution going to work with XMCloud and GraphQL without major changes? A couple of these major considerations might be:
+- If you're using Web API calls with heavy search usage and custom Sitecore indexes, that's not possible anymore and you'll need to move to a different search product such as Sitecore Search.
+- Are you making heavy use of Server-side API's on your CD server currently? There's no CD in XMCloud so these need to be moved to a middleware solution.
+- Current Forms usage?
+
+Are you already using Headless SXA? If not, you're probably missing out on things like:
+- Headless Tenants, Sites and auto-configuration within Sitecore backend
+- Page Designs, Partial Designs, Page Branch Templates (now with site-targeting!)
+- Shared Site configuration and OOTB template queries etc.
+- OOTB Styles settings
+- OOTB Rendering Variants set up
+
+### How is it being hosted?
+We're moving to XMCloud SaaS and offloading a bunch of overheads for hosting and CI/CD so do we want to ensure our Front End Applications are also SaaS-driven and make a Vercel/Netlify play?
+
+### Which Framework are you using currently?
+This is probably the biggest one. There's alot of power in hosting a NextJS solution on Vercel for example. We'll take a look at some framework selection considerations below.
+
+## Framework Considerations
+- Do we need SSG, ISR, or SSR?
+- Do we need Edge Personalisation with Sitecore Personalize (only available in NextJS OOTB currently)
+- Market share/Popularity of framework. There are some great resources [here](https://sitecore.myget.org/gallery/sc-npm-packages) (Note: metrics only from when they moved from the old MyGet to NPM) on volume of downloads for good trend data and this site is fantastic https://exdst.com/sitecore/statistics
+- Skill set in the market - will you be able to hire skilled folk to work on your solution without major upskilling costs constantly?
+- Component library support - if we want to make use of some of the benefits of component libraries, how many use the framework and how good are they?
+- Image optimisation capabilities
+- Unit Testing support - what does this look like?
+- Mono-repo support - do we want/need one and how complicated is it to do this with the framework?
+- Configuration, and environment variable management should be simple
+- Hosting options - can it be hosted on next-gen SaaS hosting providers? If this is not immediate, are there plans to get to this in future?
+- Framework roadmap - should be strong and consistently updated/maintained
+
+
+## Summary
+
+As a general rule of thumb, unless you've only just completed a headless build and considered some of these things as part of that work, you're more than likely going to get the most benefit from a migration/rewrite. There's no avoiding that however the benefits of Sitecore SaaS and hosting your Heads in a SaaS provider are such a compelling set of long-term benefits that its going to be worth it.
