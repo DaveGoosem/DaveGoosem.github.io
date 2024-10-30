@@ -54,7 +54,7 @@ Each Vercel Project will define similar rules using the Vercel Rules-based Firew
 
 - Non-Production and Production all have their standard security managed at the external company WAF/Edge layer
 - Non-Production environments are locked down using the IP-Based restrictions mentioned above
-- Production is generally "open" so we don't need to apply IP restrictions (unless we're managing an Intranet or interal application)
+- Production is generally "open" so we don't need to apply IP restrictions (unless we're managing an Intranet or internal application)
 
 
 ## Non-Prod Environments Deployment Protection
@@ -74,12 +74,12 @@ This means the `Environment Equals Preview` conditional below caters to all non-
 
 ![Vercel Firewall Standard](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image3.jpg "Vercel Firewall Standard")
 
-On the surface this seems nice and easy, however as you will discover, the incoming IPs are always your Extenral WAF/Edge proxy layer IPs and so we cannot do this when we have an external WAF/Edge layer in play...
+On the surface this seems nice and easy, however as you will discover, the incoming IPs are always your External WAF/Edge proxy layer IPs and so we cannot do this when we have an external WAF/Edge layer in play...
 
 ### What then?
 
 This was a little bit of a challenge to work out and the fantastic team at Vercel were very accommodating with discussion and exploration of what might work best.
-At first, we thought we could make use of the X-Forwarded-For headers however as mentioned in their doco [here](https://vercel.com/docs/edge-network/headers/request-headers#x-forwarded-for) if you are behind a proxy like we are in this scenario,
+At first, we thought we could make use of the X-Forwarded-For headers however as mentioned in their documentation [here](https://vercel.com/docs/edge-network/headers/request-headers#x-forwarded-for) if you are behind a proxy like we are in this scenario,
 Vercel override the header and do not forward external IPs to prevent IP spoofing. There is also another [x-vercel-forwarded-for](https://vercel.com/docs/edge-network/headers/request-headers#x-vercel-forwarded-for) header however this also wasn't able to work for the same reasons.
 
 The Vercel Firewall Conditional list of options includes:
@@ -100,10 +100,10 @@ The Vercel Firewall Conditional list of options includes:
 
 
 In the end, we solved this problem by using a custom Request Header which only is applied at the external Firewall layer and is read at the Vercel Firewall layer and does not get passed through any further. Perfect.
-Becasue we were using Imperva as our external Firewall, they even include an OOTB custom header that contained the same values as the X-Forwarded-For contents for us in a header called "Incap-Client-Ip". Even better!
+Because we were using Imperva as our external Firewall, they even include an OOTB custom header that contained the same values as the X-Forwarded-For contents for us in a header called "Incap-Client-Ip". Even better!
 
 ### More complications
-The trouble with X-Forwarded-For headers and the InCap-Client-IP header is that it is a string and actually contains a series of IPs in a comma seperate list as described [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For).
+The trouble with X-Forwarded-For headers and the InCap-Client-IP header is that it is a string and actually contains a series of IPs in a comma separate list as described [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For).
 It uses a format
 
 ```
@@ -142,6 +142,6 @@ We had to get creative with some Regex (use ChatGPT for this) to allow for "does
 ![Vercel Firewall Settings2](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image5.jpg "Vercel Firewall Settings2")
 
 You can also add a conditional for Environment to set it to only apply the rule to Vercel "Preview" (IE. Non-Prod) environments as well as required.
-This means that we're now happily only allowing access to the Vercel Application Non-Prod environments from the Companies internal network.
+This means that we're now happily only allowing access to the Vercel Application Non-Prod environments from the organisation's internal network.
 
 Give it a test and confirm all is well and you should be golden.
