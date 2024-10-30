@@ -19,12 +19,13 @@ When you're using SaaS based offerings, they are managing the infrastructure and
 
 Vercel uses DNS and it's own edge networking layer to configure environments and as a result, the DNS routing hop which is targeting Vercel must be publically available for Vercel to be able to hit the DNS endpoint to validate/complete it's own set up.
 You simply point your DNS to Vercel's provided target endpoint and it will auto generate Certificates and allow you to point each record to a Git Branch which is how you can then manage environments (via GitOps).
-![Vercel Environment DNS Configuration](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image2.jpg "Vercel Environment DNS Configuration")
+
+![Vercel Environment DNS Configuration](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image2.jpg "Vercel Environment DNS Configuration")
 
 
 Let's consider a topology like the one shown below...
 
-![Sample Composbale Sitecore Architecture with an Edge network fronting Vercel](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image1.png "Sample Composbale Sitecore Architecture with an Edge network fronting Vercel")
+![Sample Composable Sitecore Architecture with an Edge network fronting Vercel](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image1.png "Sample Composable Sitecore Architecture with an Edge network fronting Vercel")
 
 As mentioned above, Vercel is a SaaS based offering and as with most SaaS products, it doesn't have static IPs to white list at the external Edge/WAF end (or we're not prepared to pay the big $$ for private networking).
 As a result, it is not possible to block traffic by IP address at the external Edge/WAF layer as we need that to be open so that Vercel and external Edge/WAF can communicate and complete their DNS configuration.
