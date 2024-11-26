@@ -14,6 +14,7 @@ const siteMetadata = {
   email: 'address@yoursite.com',
   github: 'https://github.com/DaveGoosem',
   twitter: 'https://twitter.com/DaveGoosem',
+  bluesky: 'https://bsky.app/profile/davegoosem.bsky.social',
   facebook: 'https://facebook.com',
   youtube: 'https://youtube.com',
   linkedin: 'https://www.linkedin.com/in/davidgoosem',
