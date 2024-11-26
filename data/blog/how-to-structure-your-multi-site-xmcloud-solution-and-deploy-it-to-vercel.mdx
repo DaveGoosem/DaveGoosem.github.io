@@ -1,0 +1,89 @@
+---
+title: How to structure your multi-site Sitecore XM Cloud solution and deploy it to Vercel
+date: '2024-11-04'
+tags: ['XMCloud', 'Sitecore', 'Vercel', 'SaaS', 'Architecture']
+draft: false
+summary: Building Headless components for Sitecore XM Cloud has some notable differences in the way you construct your end-to-end component to ensure it supports Pages. This article is an end-to-end walkthrough for a simple CTA Button Component.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+Recently, I've been part of looking at a rescue mission for a failed XM Cloud build and as part of doing a review of their solution, there were some solution design and configuration pieces which stood out as potential knowledge gaps for first-timers which I thought would make a good topic for an article.
+
+When building any Sitecore solution, you should ALWAYS assume that you are building for multi-site, even if you're only launching with one site initially. Headless Architecture makes this even more important as part of the power of Headless is that you can spin up new 'heads' quickly/easily. This only works if you're prepared and have given it some thought.
+
+Coupled with this is the way we lay out our Environments with XM Cloud and your Hosting for your Heads (we're looking at [Vercel](https://vercel.com/) in this article).
+
+## Concepts and High Level Decisions
+
+To begin with, we need answers to the following questions to help set us up for success when it comes to Solution and Environments Structure. ***These questions are ones you need to answer as part of licensing for both Sitecore and Vercel***
+- How many sites/heads are we going to have initially?
+- How many sites/heads are we going to have eventually/potentially?
+- How many project streams do we have or need to cater for?
+    - BAU and another larger project stream (for example)?
+- How many environments do we need for our typical build/release workflow
+    - Prod
+    - UAT
+    - DEV/CI
+    - any other Test environments?
+
+
+## Sitecore's XM Cloud Environment Structure
+
+Sitecore breaks up it’s Environments using [Projects](https://doc.sitecore.com/xmc/en/developers/xm-cloud/create-a-project-in-the-deploy-app.html). Each Project can have up to 3 [Environments](https://doc.sitecore.com/xmc/en/developers/xm-cloud/manage-an-environment.html) within them.
+
+Each XM Cloud Projects allows for the following:
+- 1 x Prod Environment
+- 2 x Non-Prod Environment
+
+This means that we have 3 slots per Sitecore project to use for environments with one prod-like slot per project so plan your licensing accordingly.
+
+## Vercel's Environment Structure
+
+Vercel breaks up its Spaces using [Teams](https://vercel.com/docs/accounts/create-a-team). Each Team can have a series of [Projects](https://vercel.com/docs/projects/overview) within them.
+
+Vercel allows us to have any number of "Projects" per "Team" which is very nice.
+
+In a Headless world, we can have many Heads/Sites/Apps which align to a Sitecore Environment and we should. This gives us the best flexiblity. See my previous posts https://davegoosem.com/blog/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13 and https://davegoosem.com/blog/sitecore-jss-multi-site-with-npm-workspaces for how this can be achieved.
+
+Some Key call outs:
+- Each head/app only containing what it NEEDS rather than the entire CSS/JS for all sites.
+- Each head/app can utilise different rendering approaches (SSR or SSG or ISR for example)
+- Each head/app can be deployed to seperately depending on what's changing/being released
+- Each head/app can have it's own firewall/security/loggging/environment variables configured etc. etc.
+
+See here for details on how how some of this set up is achieved, we're looking higher-level for this article): https://davegoosem.com/blog/configuring-your-sitecore-heads-in-vercel-for-multi-site
+
+
+## So what does it look like if we structure it well?
+
+Consider the example shown below...
+
+![Sample Multi-Headed Multi-site Environment Structure](/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/Image1.png "Sample Multi-Headed Multi-site Environment Structure")
+
+In the Environments Diagram shown above, we can can see the following which was based on the requirements and answers to the questions posed above:
+- There are 7 total XM Cloud "environments" depicted by the coloured stripes labelled with environment names that span the width:
+    - Production (has it's own Project and uses the "production" slot)
+    - SVT (pre prod) (has it's own Project so it can use it's own "prod-like" slot with room for other env's when we need to flex up)
+    - Regression 1 (in the RGR project which has 1 slot spare)
+    - Regression 2 (in the RGR project which has 1 slot spare)
+    - Systems integration Testing 1 (in the SIT project which has 1 slot spare)
+    - Systems integration Testing 2 (in the SIT project which has 1 slot spare)
+    - DEV (CI) (in the DEV project which has 2 slots spare)
+
+- There are 4 apps/heads in our multi-site solution which are hosted Vecel in their own Project.
+- Each Vercel Project has all it's environments defined with in it which track a unique environment git-branch
+
+- There is 1x Prod Sitecore Personalize instance used for production by the Production Vercel and XMC environments
+- There is 1x Non-Prod Sitecore Personalize instance used by all non-prod environments (each has their own POS configuration)
+
+- There is 1x Prod Sitecore Search instance used for production by the Production Vercel and XMC environments
+- There is 1x Non-Prod Sitecore Search instance used by all non-prod environments (each has their own collection configurations)
+
+
+Keeping things aligned like this is definately the way to go. Obviously this is quite a large number of environments and most often you would have much fewer but it's shows how this architecture pattern can scale which is important.
+
+
+Notice that Vercel uses only one Project per-app/head so that we can neatly manage environments with things like environment variables and security and logging rules and DNS effectively.
+
