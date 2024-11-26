@@ -99,6 +99,22 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                             </div>
                           )}
                         </dd>
+                        <dt className="sr-only">Twitter</dt>
+                        <dd>
+                          {author.bluesky && (
+                            <div className="flex items-center">
+                              <div className="mr-2 inline-block">
+                                <SocialIcon href={author.bluesky} kind="bluesky" size={5} />
+                              </div>
+                              <Link
+                                href={author.bluesky}
+                                className="inline-block text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                              >
+                                {author.bluesky.replace('https://bsky.app/profile/', '@')}
+                              </Link>
+                            </div>
+                          )}
+                        </dd>
                       </dl>
                     </li>
                   ))}
