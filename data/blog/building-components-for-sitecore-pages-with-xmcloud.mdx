@@ -237,33 +237,33 @@ An example of this was for our CTA Button when we introduced icons we had initia
 In the example below, you can see the `<Link>` tag has no children and no CSS classes applied in edit mode:
 ```
 {isEditing ? (
-        <div className={`component ${ctaClasses}`}>
-          <Link field={link}></Link>
-          {isButtonIcon && iconName && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={iconPath} alt={altTextValue} />
-          )}
-        </div>
-      ): (
-        <div>
-          <NextLink
-            legacyBehavior
-            href={{
-              pathname: currentUrl,
-              hash: link?.value?.anchor,
-              query: link?.value?.querystring,
-            }}
-          >
-            <a
-              aria-label={ariaLabelValue}
-              className={ctaClasses}
-              target={link?.value?.target ?? '_self'}
-            >
-              {ButtonRender()}
-            </a>
-          </NextLink>
-        </div>
-      )}
+    <div className={`component ${ctaClasses}`}>
+        <Link field={link}></Link>
+        {isButtonIcon && iconName && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={iconPath} alt={altTextValue} />
+        )}
+    </div>
+    ): (
+    <div>
+        <NextLink
+        legacyBehavior
+        href={{
+            pathname: currentUrl,
+            hash: link?.value?.anchor,
+            query: link?.value?.querystring,
+        }}
+        >
+        <a
+            aria-label={ariaLabelValue}
+            className={ctaClasses}
+            target={link?.value?.target ?? '_self'}
+        >
+            {ButtonRender()}
+        </a>
+        </NextLink>
+    </div>
+)}
 ```
 
 
