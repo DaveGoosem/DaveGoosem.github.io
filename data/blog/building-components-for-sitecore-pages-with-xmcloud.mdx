@@ -101,8 +101,8 @@ When a user selects the Button Size, Style and whether it's an icon button or no
 
 ### Using the "component" CSS class
 
-You may have noticed when you set up a new NextJS Sitecore Headless application that the OOTB components all have the "component" css class applied on their outtermost wrapping container.
-Examples of this are shown here (although not made super clear) [here](https://developers.sitecore.com/learn/accelerate/xm-cloud/implementation/developer-experience/creating-new-components):
+You may have noticed when you set up a new NextJS Sitecore Headless application that the OOTB components all have the "component" css class applied on their outermost wrapping container.
+Examples of this are shown (although not made super clear) [here](https://developers.sitecore.com/learn/accelerate/xm-cloud/implementation/developer-experience/creating-new-components):
 
 ![component wrapping class](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image9.jpg "component wrapping class")
 
@@ -118,7 +118,7 @@ When you can manage all your styling through the outermost container element in 
 
 #### When is it not so great?
 
-When you can't apply ALL styles to the outermost container element in your component or if you need to nest some styles WITHIN the outtermost container element in your component.
+When you can't apply ALL styles to the outermost container element in your component or if you need to nest some styles WITHIN the outermost container element in your component.
 When you're in this scenario, if you update an SXA Styles setting/option in the editor but you don't 'change' any styles on the same node as the 'component' class, the refresh won't trigger and you need to refresh the editor window to see your changes reflected.
 
 #### How do you fix this?
