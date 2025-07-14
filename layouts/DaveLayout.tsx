@@ -110,7 +110,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                                 href={author.bluesky}
                                 className="inline-block text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                               >
-                                {author.bluesky.replace('https://bsky.app/profile/', '@')}
+                                {author.bluesky.replace('https://bsky.app/profile/', '@').split('.bsky.social')[0]}
                               </Link>
                             </div>
                           )}
