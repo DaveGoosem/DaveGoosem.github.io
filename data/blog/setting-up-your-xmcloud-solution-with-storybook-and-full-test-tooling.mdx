@@ -1,0 +1,328 @@
+---
+title: Setting up your Sitecore XMCloud Solution with Storybook and Storybook Testing Addons
+date: '2025-03-24'
+tags: ['XMCloud', 'Sitecore', 'Storybook', 'SaaS', 'NextJS', 'Unit Testing']
+draft: false
+summary: Learn how to set up a Sitecore XMCloud solution with Storybook and testing addons to streamline component development and testing in a SaaS environment using NextJS.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+Setting up a Sitecore XMCloud solution with Storybook and testing addons can significantly enhance your development workflow. This guide walks you through the process of integrating Storybook into your XMCloud solution, configuring testing addons, and ensuring seamless component development and testing.
+
+## Why Storybook for Sitecore XMCloud?
+
+Storybook is a powerful tool for developing and testing UI components in isolation. When working with Sitecore XMCloud, Storybook allows you to:
+- Build and test components independently of the Sitecore backend.
+- Create a living documentation for your components.
+- Streamline collaboration between developers and designers.
+
+## Prerequisites
+
+Before starting, ensure you have the following:
+- A Sitecore XMCloud solution set up with NextJS.
+- Node.js and npm installed on your machine.
+- Basic knowledge of any CSS tooling you might be using (Eg. Tailwind or other if you're using it for styling).
+
+## Step 1: Installing Storybook
+
+To add Storybook to your NextJS project, run the following command in your project directory:
+
+```bash
+npx storybook@latest init
+```
+
+This command initializes Storybook and configures it for your NextJS project. Once the setup is complete, you can start Storybook with:
+
+```bash
+npm run storybook
+```
+
+## Step 2: Configuring Storybook for Sitecore Components
+
+I'd recommend to focus on a Solution Design that does not soley bake all your front end logic into Sitecore Renderings. I particularly love the [Atomic Design approach](https://atomicdesign.bradfrost.com/chapter-2/). 
+Building your solution this way means that you're set up for re-use and can do things like create Sitecore Rendering Variants with minimal duplication as you just import your component into your rendering and wrap it or pass in the data that you need. 
+It also means you can import it into Storybook with mock data that lets us test and validate our UI externally to Sitecore. This is best practice, especially when you consider reuse of your UI for other things like Sitecore Search or Sitecore Personalize where you want to achieve the same
+look and feel but without the Sitecore rendering wrapping code potentially (using Sitecore Search UI library or copying your componment over to Sitecore Personalize).
+
+There are always going to be scenarios where you do want to have your entire Sitecore Rendering pulled into Storybook however. Whether that be to aid in page composition testing or due to the layering/nesting of elements being particulaly complicated for whatever reason.
+
+To work with Sitecore XMCloud components, you'll need to configure Storybook to handle Sitecore-specific data structures.
+If you take a look in your Sitecore Layout file, we're going to be wrapping storybook up with mocks of these pieces (just the parts we absolutely need) so that the shape of the layoutservice data we get from our renderings will match correctly
+
+![Sitecore Context In Path Page](/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/SitcoreContextInPathPage.png "Sitecore Context In Path Page")
+
+This will let us provide mocked versions of the standard layoutservice json data to our components.
+
+Note: In your Storybook app, you will need to install the sitecore packages that we don't have already from the list of imports below**
+
+We also need to create a the MockContextData.tsx file and populate it with the mock data we need to pass to the wrapping Sitecore pieces shown below.
+
+Create a `preview.js` file in your `.storybook` directory (if not there already) and add the following:
+
+```javascript
+// filepath: .storybook/preview.js
+import React from 'react';
+import { Preview } from '@storybook/react';
+import { I18nProvider } from 'next-localization';
+import { SitecoreContext, ComponentPropsContext } from '@sitecore-jss/sitecore-jss-nextjs';
+import {
+  mockComponentProps,
+  mockComponentFactory,
+  mockLayoutData,
+  mockDictionary,
+} from '../stories/MockContextData';
+
+export const decorators = [
+  (Story) => (
+      <I18nProvider lngDict={mockDictionary} locale='en'>
+        <ComponentPropsContext value={mockComponentProps}>
+          <SitecoreContext layoutData={mockLayoutData} componentFactory={mockComponentFactory}>
+            <Story />
+          </SitecoreContext>
+        </ComponentPropsContext>
+      </I18nProvider>
+    ),
+];
+```
+
+### MockContextData.tsx
+
+The Mock Context Data Looks like this
+
+```
+/* eslint-disable prettier/prettier */
+import { Default as MegaMenu } from '@company/ui/src/components/navigation/MegaMenu';
+import { Default as MobileNavigation } from '@company/ui/src/components/navigation/MobileNavigation';
+import { Default as Breadcrumb } from '@company/ui/src/components/navigation/Breadcrumb';
+import Heading from '@company/ui/src/components/common/Heading';
+import { CTAButtonComponent } from '@company/ui/src/components/navigation/CTAButton';
+import { MediaBannerCarouselNoStyleWatcher as MediaBannerCarousel } from '@company/ui/src/components/composite/MediaBannerCarousel'; 
+import { MediaBannerCarouselItemNoStyleWatcher as MediaBannerCarouselItem } from '@company/ui/src/components/composite/MediaBannerCarouselItem';
+import Richtext from '@company/ui/src/components/common/Richtext';
+import { InPageAnchorLinksComponent } from '@company/ui/src/components/navigation/InPageAnchorLinks';
+import OneColumnContainer from '@company/ui/src/components/page-layout/OneColumnContainer';
+import ThreeColumnSplitContainer from '@company/ui/src/components/page-layout/ThreeColumnSplitContainer';
+import FourColumnSplitContainer from '@company/ui/src/components/page-layout/FourColumnSplitContainer';
+import { AccordionNoStyleWatcher as Accordion } from '@company/ui/src/components/composite/Accordion';
+import { AccordionItemNoStyleWatcher as AccordionItem } from '@company/ui/src/components/composite/AccordionItem';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const mockComponentFactory = function (componentName: string): any {
+  const components = new Map();
+  components.set('MegaMenu', MegaMenu);
+  components.set('MobileNavigation', MobileNavigation);
+  components.set('Breadcrumb', Breadcrumb);
+  components.set('Heading', Heading);
+  components.set('CTAButton', CTAButtonComponent);
+  components.set('MediaBannerCarousel', MediaBannerCarousel);
+  components.set('MediaBannerCarouselItem', MediaBannerCarouselItem);
+  components.set('Richtext', Richtext);
+  components.set('InPageAnchorLinks', InPageAnchorLinksComponent);
+  components.set('OneColumnContainer', OneColumnContainer);
+  components.set('ThreeColumnSplitContainer', ThreeColumnSplitContainer);
+  components.set('FourColumnSplitContainer', FourColumnSplitContainer);
+  components.set('Accordion', Accordion);
+  components.set('AccordionItem', AccordionItem);
+
+
+  const component = components.get(componentName);
+
+  // check that component should be dynamically imported
+  if (component?.element) {
+    return component.element();
+  }
+
+  return component?.default || component;
+};
+
+//For getServerSideProps and getStaticProps
+export const mockComponentProps = {};
+export const mockLayoutData: any = {
+  sitecore: {
+    context: {
+      pageEditing: false,
+      isStorybook: true,
+      site: {
+        name: 'BrandSite',
+      },
+    },
+    setContext: () => {
+      // nothing
+    },
+    route: {
+      itemId: 'edbe0b42-c76f-4759-9aa1-b5959971ab6e',
+      name: '',
+      placeholders: {},
+    },
+  },
+};
+
+export const mockRouter = {
+  path: '/',
+  asPath: '/',
+  query: {
+    id: '',
+  },
+  prefetch: () => undefined,
+};
+
+export const mockDictionary = {
+  '/Components/Favourites/SaveItem': 'Save',
+  '/Components/Favourites/RemoveItem': 'Remove',
+};
+
+//Corporate LayoutData
+export const mockLayoutDataCorporate = {
+  sitecore: {
+    context: {
+      pageEditing: false,
+      site: {
+        name: 'Corporate',
+      },
+      breadcrumb: {
+        label: 'About Us',
+        url: '/about-us',
+        itemId: '0a82542e-34a3-4c6b-9ab2-8e10c21d3221',
+      },
+
+      siteSetting: {
+        id: 'd01f3b9e-2381-4b29-82c2-085dcf79cf52',
+        searchPageUrl: '/search',
+        tagsPageUrl: '/tags',
+        socialShareId: 'abc123',
+        googleGTMId: 'UA-xxxxx-2',
+        favouritesPageUrl: '/favourites',
+      },
+    },
+    setContext: () => {
+      // nothing
+    },
+    route: {
+      itemId: 'edbe0b42-c76f-4759-9aa1-b5959971ab6e',
+      name: '',
+      placeholders: {},
+    },
+  },
+};
+
+export function getEditableContext(context = mockLayoutDataCorporate, pageEditing = false) {
+  const clone = JSON.parse(JSON.stringify(context));
+  clone.sitecore.context.pageEditing = pageEditing;
+  return clone;
+}
+```
+
+Let's dive into this file above...
+
+Here you can see we have 2 examples of our MockLayoutData. `mockLayoutData` is the bare minimum you need while `mockLayoutDataCorporate` is an example of when you might have extended the layoutservice with some addional data for whatever reason you might have.
+Finally, there is an example of enabling the Edit Mode for sitecore if for any reason you wanted to set that up in Storybook. We're not currently using this much/at all but it's possible...
+
+
+At the top of the file, you will see a series of Sitecore Compoonent imports and registrations for the componentFactory which we use. If you've followed any of my other articles about setting up multi-site/mono-repo solutions with Sitecore, you might be familiar with this already 
+(see: [Sitecore JSS Multi-Site with NPM Workspaces](https://davegoosem.com/blog/sitecore-jss-multi-site-with-npm-workspaces) ) but this is how Sitecore registers all our components and marries them up to the Database Rendering Definitions in the solution.
+
+If we have rendering Variants, we can be specific about which variant we need etc. here. If you want to work out what to import, the Sitecore Generated file is generated as part of it's bootstraper start scripts
+and the output is in your app folder within `/src/temp/componentBuilder.ts` (see my linked article above for more detail). We're mimicing the output of the Sitecore Boostrapper scripts ourselves to pass to our Mock Component Factory so that our Sitecore Components will work.
+
+`// (look for these lines in the sample code above)`
+
+`import { CTAButtonComponent } from '@company/ui/src/components/navigation/CTAButton';`
+
+`components.set('CTAButton', CTAButtonComponent);`
+
+Now we have all the data we need to pass to the Wrappers we added around the Storybook Preview `<Story />` node above.
+
+This ensures that your components render correctly in Storybook as long you're providing your mock data in the correct fashion.
+
+## Mock Data Concepts for Sitecore Components in Storybook
+
+<b>Note:</b> If you have a Rendering which doesn't contain nested placeholders and placeholder data, and you're only presenting it in isolation within Storybook, you won't need to configure the mock registration for those usages and you don't really need to do much more than just set up your mock data to satisfy your props. 
+
+You <b>only</b> need to register the Sitecore renderings/components if you're creating Stories with nested Renderings within placeholders.
+
+I typcially work using a Sitecore-first approach for setting up data templates/placeholders and things to verify my thinking. This is a good opportunity to lay things out and confirm the Sitecore Authoring Experience is the best it can be while still in a "white site" phase
+
+
+
+## Step 3: Adding Storybook Testing Addons
+
+Storybook testing addons, such as `@storybook/addon-interactions` and `@storybook/testing-library`, allow you to write and run tests directly in Storybook.
+
+Install the addons:
+
+```bash
+npm install @storybook/addon-interactions @storybook/testing-library --save-dev
+```
+
+Update your `.storybook/main.js` file to include the addons you need:
+
+```javascript
+// filepath: .storybook/main.js
+module.exports = {
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
+  ],
+};
+```
+
+## Step 4: Writing Stories for Your Components
+
+Create a `Button.stories.js` file for your CTA Button component:
+
+```javascript
+// filepath: components/Button/Button.stories.js
+import React from 'react';
+import Button from './Button';
+
+export default {
+  title: 'Components/Button',
+  component: Button,
+};
+
+const Template = (args) => <Button {...args} />;
+
+export const Default = Template.bind({});
+Default.args = {
+  label: 'Click Me',
+  variant: 'primary',
+};
+```
+
+## Step 5: Adding Unit Tests
+
+To add unit tests for your components, use a testing library like Jest. Install Jest and its dependencies:
+
+```bash
+npm install jest @testing-library/react @testing-library/jest-dom --save-dev
+```
+
+Create a test file for your Button component:
+
+```javascript
+// filepath: components/Button/Button.test.js
+import { render, screen } from '@testing-library/react';
+import Button from './Button';
+
+test('renders the button with the correct label', () => {
+  render(<Button label="Click Me" />);
+  expect(screen.getByText('Click Me')).toBeInTheDocument();
+});
+```
+
+Run your tests with:
+
+```bash
+npm test
+```
+
+## Step 6: Integrating with Sitecore XMCloud
+
+Finally, ensure your components are integrated with Sitecore XMCloud by using the `withDatasourceCheck` and `withSitecoreContext` HOCs provided by `@sitecore-jss/sitecore-jss-nextjs`. This ensures your components work seamlessly in both Storybook and the Sitecore Pages editor.
+
+---
+
+By following these steps, you can set up a robust development environment for your Sitecore XMCloud solution with Storybook and testing addons. This setup not only improves your development workflow but also ensures high-quality, testable components for your SaaS solution.
