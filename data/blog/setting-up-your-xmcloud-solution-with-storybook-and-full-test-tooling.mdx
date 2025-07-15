@@ -43,13 +43,15 @@ npm run storybook
 
 I'd recommend to focus on a Solution Design that does not soley bake all your front end logic into Sitecore Renderings. I particularly love the [Atomic Design approach](https://atomicdesign.bradfrost.com/chapter-2/). 
 Building your solution this way means that you're set up for re-use and can do things like create Sitecore Rendering Variants with minimal duplication as you just import your component into your rendering and wrap it or pass in the data that you need. 
-It also means you can import it into Storybook with mock data that lets us test and validate our UI externally to Sitecore. This is best practice, especially when you consider reuse of your UI for other things like Sitecore Search or Sitecore Personalize where you want to achieve the same
+It also means you can import it into Storybook with mock data that lets us test and validate our UI externally to Sitecore. 
+
+This is best practice, especially when you consider reuse of your UI for other things like Sitecore Search or Sitecore Personalize where you want to achieve the same
 look and feel but without the Sitecore rendering wrapping code potentially (using Sitecore Search UI library or copying your componment over to Sitecore Personalize).
 
 There are always going to be scenarios where you do want to have your entire Sitecore Rendering pulled into Storybook however. Whether that be to aid in page composition testing or due to the layering/nesting of elements being particulaly complicated for whatever reason.
 
 To work with Sitecore XMCloud components, you'll need to configure Storybook to handle Sitecore-specific data structures.
-If you take a look in your Sitecore Layout file, we're going to be wrapping storybook up with mocks of these pieces (just the parts we absolutely need) so that the shape of the layoutservice data we get from our renderings will match correctly
+If you take a look in your Sitecore Layout file, we're going to be wrapping storybook up with mocks of these pieces (just the parts we absolutely need) so that the shape of the layoutservice data we get from our renderings will match correctly.
 
 ![Sitecore Context In Path Page](/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/SitcoreContextInPathPage.png "Sitecore Context In Path Page")
 
@@ -102,9 +104,6 @@ import { MediaBannerCarouselNoStyleWatcher as MediaBannerCarousel } from '@compa
 import { MediaBannerCarouselItemNoStyleWatcher as MediaBannerCarouselItem } from '@company/ui/src/components/composite/MediaBannerCarouselItem';
 import Richtext from '@company/ui/src/components/common/Richtext';
 import { InPageAnchorLinksComponent } from '@company/ui/src/components/navigation/InPageAnchorLinks';
-import OneColumnContainer from '@company/ui/src/components/page-layout/OneColumnContainer';
-import ThreeColumnSplitContainer from '@company/ui/src/components/page-layout/ThreeColumnSplitContainer';
-import FourColumnSplitContainer from '@company/ui/src/components/page-layout/FourColumnSplitContainer';
 import { AccordionNoStyleWatcher as Accordion } from '@company/ui/src/components/composite/Accordion';
 import { AccordionItemNoStyleWatcher as AccordionItem } from '@company/ui/src/components/composite/AccordionItem';
 
@@ -120,9 +119,6 @@ export const mockComponentFactory = function (componentName: string): any {
   components.set('MediaBannerCarouselItem', MediaBannerCarouselItem);
   components.set('Richtext', Richtext);
   components.set('InPageAnchorLinks', InPageAnchorLinksComponent);
-  components.set('OneColumnContainer', OneColumnContainer);
-  components.set('ThreeColumnSplitContainer', ThreeColumnSplitContainer);
-  components.set('FourColumnSplitContainer', FourColumnSplitContainer);
   components.set('Accordion', Accordion);
   components.set('AccordionItem', AccordionItem);
 
@@ -226,10 +222,9 @@ At the top of the file, you will see a series of Sitecore Compoonent imports and
 If we have rendering Variants, we can be specific about which variant we need etc. here. If you want to work out what to import, the Sitecore Generated file is generated as part of it's bootstraper start scripts
 and the output is in your app folder within `/src/temp/componentBuilder.ts` (see my linked article above for more detail). We're mimicing the output of the Sitecore Boostrapper scripts ourselves to pass to our Mock Component Factory so that our Sitecore Components will work.
 
-`// (look for these lines in the sample code above)`
+`// (look for these lines in the sample code above for ane example)`
 
 `import { CTAButtonComponent } from '@company/ui/src/components/navigation/CTAButton';`
-
 `components.set('CTAButton', CTAButtonComponent);`
 
 Now we have all the data we need to pass to the Wrappers we added around the Storybook Preview `<Story />` node above.
@@ -271,58 +266,126 @@ module.exports = {
 
 ## Step 4: Writing Stories for Your Components
 
-Create a `Button.stories.js` file for your CTA Button component:
+Let's take a look at our breadcrumbs navigational component as our example here as we're looking specifically at Storybook with Sitecore Renderings. 
+This is a Sitecore Rendering in which we have some presentation logic which we need to consider whereby we want to display an epllipsis in the middle of the breadcrumbs when we have 4 or more navigation items to display.
+In order to help us understand the component, I therefor want 2 stories to cover this. One I will pass in only a few navigation items and the other I'll use significantly more items so we can present and test the 2 scenarios we care about here.
+
+The output of my stories will look like this:
+
+![Sitecore Breadcrumbs rendering Storybook example](/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/Breadcrumbs-Storybook.png "Sitecore Breadcrumbs rendering Storybook example")
+
+We can see I've got the breadcrumbs in the mock registration above, so now my stories are as simple as importing the the mock data 
+(you can see here i'm just recycling some mega menu data we already had) and i've picked a node from that to use by setting them up with the 
+right number of path items to satisfy the 2 scenarios..
 
 ```javascript
-// filepath: components/Button/Button.stories.js
+import type { Meta, StoryObj } from '@storybook/react';
+import { Default as Breadcrumbs } from '@csr/ui/src/components/navigation/Breadcrumb';
 import React from 'react';
-import Button from './Button';
+import { MegaMenuData, defaultRenderingData } from './Navigation-data';
+import { expect } from '@storybook/test';
 
-export default {
-  title: 'Components/Button',
-  component: Button,
+// More on how to set up stories at: https://storybook.js.org/docs/writing-stories#default-export
+const meta: Meta<typeof Breadcrumbs> = {
+  title: '4 Sitecore Renderings/Navigation/Breadcrumbs',
+  component: Breadcrumbs,
+  parameters: {
+    docs: {
+      description: {
+        component: 'Breadcrumbs Navigation used by all brands.',
+      },
+    },
+    backgrounds: { default: 'Light' },
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  args: {},
+} satisfies Meta<typeof Breadcrumbs>;
+
+export default meta;
+
+type Story = StoryObj<typeof Breadcrumbs>;
+
+// More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
+export const BreadCrumbsLong: Story = {
+  args: {},
+  render: () => {
+    return (
+      <Breadcrumbs
+        fields={MegaMenuData.fields[1].Children || []}
+        handleClick={MegaMenuData.handleClick}
+        rendering={defaultRenderingData.RenderingWithDatasource.rendering}
+        relativeLevel={MegaMenuData.relativeLevel}
+        params={MegaMenuData.params || {}}
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    //check to confirm the ellipsis item is presented in the breadcrumbs
+    const breadcrumbEllipsis = canvasElement.querySelector('.breadcrumb-ellipsis');
+    expect(breadcrumbEllipsis).toBeInTheDocument();
+
+    // confirm the breadcrumb home item is present and uses the home icon presented
+    const homeIcon = canvasElement.querySelector('.csr-icon-font-homerounded');
+    expect(homeIcon).toBeInTheDocument();
+
+    //confirm the number of breadcrumb items is exactly 5 as we have more than 5 in the list and we're formatting it to present only 5 including the ellipsis
+    const breadcrumbItems = canvasElement.querySelectorAll('.breadcrumbs-item');
+    expect(breadcrumbItems.length).toEqual(5);
+  },
 };
 
-const Template = (args) => <Button {...args} />;
+export const BreadCrumbsShort: Story = {
+  args: {},
+  render: () => {
+    return (
+      <Breadcrumbs
+        fields={MegaMenuData.fields[4].Children?.slice(0, 3) || []}
+        handleClick={MegaMenuData.handleClick}
+        rendering={defaultRenderingData.RenderingWithDatasource.rendering}
+        relativeLevel={MegaMenuData.relativeLevel}
+        params={MegaMenuData.params || {}}
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    // confirm the breadcrumb home item is present and uses the home icon presented
+    const homeIcon = canvasElement.querySelector('.csr-icon-font-homerounded');
+    expect(homeIcon).toBeInTheDocument();
 
-export const Default = Template.bind({});
-Default.args = {
-  label: 'Click Me',
-  variant: 'primary',
+    //check to confirm the ellipsis item is not presented in the breadcrumbs as we have 3 or fewer items
+    const breadcrumbEllipsis = canvasElement.querySelector('.breadcrumb-ellipsis');
+    expect(breadcrumbEllipsis).not.toBeInTheDocument();
+
+    //confirm the number of breadcrumb items is less or equal to 4
+    const breadcrumbItems = canvasElement.querySelectorAll('.breadcrumbs-item');
+    expect(breadcrumbItems.length).toBeLessThanOrEqual(4);
+  },
 };
+
 ```
 
 ## Step 5: Adding Unit Tests
 
-To add unit tests for your components, use a testing library like Jest. Install Jest and its dependencies:
+You may have already picked it up in the sample code above for our Breadcrumbs but it's possible to utilise Storybook to manage our Unit Tests and 
+make use of our existing DOM created for Storybook. When you set up traditional [JEST unit testing](https://jestjs.io/) you need to 'create' a virtual DOM 
+to allow us to then traverse and locate elements and test against and provide Mock Data and context etc to. 
 
-```bash
-npm install jest @testing-library/react @testing-library/jest-dom --save-dev
-```
+Given we already have this with Storybook, it makes a lot of sense to use this and just layer unit tests on top. Happily this is very possible and this is what
+the purpose of the additional Storybook Addons we installed in Step 3 above.
 
-Create a test file for your Button component:
+Let's look at the Sample stories above for the Breadcrumbs. You can see that there is a "play:" section below our "render:" section and this is where the unit testing happens.
+We've got the ability to use the canvas/DOM that is on the page and traverse our Storybook DOM to write tests against. 
 
-```javascript
-// filepath: components/Button/Button.test.js
-import { render, screen } from '@testing-library/react';
-import Button from './Button';
+You can see we have imported "expect" from storybook/test and we're using this with some nice library of comparision tooling.
 
-test('renders the button with the correct label', () => {
-  render(<Button label="Click Me" />);
-  expect(screen.getByText('Click Me')).toBeInTheDocument();
-});
-```
+This will then do some pretty neat stuff  where we can see the output of our tests within storybook while it's running via the Interactions Tab (see below).
+This lets us  step through the tests and re-run them as we make changes live for immediate feedback!
 
-Run your tests with:
+![Storybook interactions tab](/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/StorybookInteractionsTab.png "Storybook interactions tab")
 
-```bash
-npm test
-```
+We can still run our tests as its own task if we want to (say for a CI check in Github or whatever pipeline tooling you're using so you can run unit tests on PR's as part of your review process using:
 
-## Step 6: Integrating with Sitecore XMCloud
+```npm run test-storybook```
 
-Finally, ensure your components are integrated with Sitecore XMCloud by using the `withDatasourceCheck` and `withSitecoreContext` HOCs provided by `@sitecore-jss/sitecore-jss-nextjs`. This ensures your components work seamlessly in both Storybook and the Sitecore Pages editor.
-
----
-
-By following these steps, you can set up a robust development environment for your Sitecore XMCloud solution with Storybook and testing addons. This setup not only improves your development workflow but also ensures high-quality, testable components for your SaaS solution.
+We'll do a deeper dive into this in another article but this gets you well on your way to having your solution set up with Storybook and Unit Testing.
