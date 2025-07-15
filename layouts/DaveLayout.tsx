@@ -110,7 +110,11 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                                 href={author.bluesky}
                                 className="inline-block text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                               >
-                                {author.bluesky.replace('https://bsky.app/profile/', '@').split('.bsky.social')[0]}
+                                {
+                                  author.bluesky
+                                    .replace('https://bsky.app/profile/', '@')
+                                    .split('.bsky.social')[0]
+                                }
                               </Link>
                             </div>
                           )}
@@ -141,7 +145,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </div>
             <footer>
               <div className="flex flex-wrap">
-              <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/4 xl:w-1/2">
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/4 xl:w-1/2">
                   <Image
                     src={'/static/images/Logos/2025-Sitecore-MVP-Technology.png'}
                     alt="2025 Sitecore Technology MVP"
