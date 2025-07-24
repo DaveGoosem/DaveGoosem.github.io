@@ -14,7 +14,7 @@ Setting up a Sitecore XMCloud solution with Storybook and testing addons can sig
 ## Why Storybook for Sitecore XMCloud?
 
 Storybook is a powerful tool for developing and testing UI components in isolation. When working with Sitecore XMCloud, Storybook allows you to:
-- Build and test components independently of the Sitecore backend.
+- Build and test components independently of the Sitecore backend with mock data for nicer separation of concerns when testing.
 - Create a living documentation for your components.
 - Streamline collaboration between developers and designers.
 
@@ -27,7 +27,7 @@ Before starting, ensure you have the following:
 
 ## Step 1: Installing Storybook
 
-To add Storybook to your NextJS project, run the following command in your project directory:
+To add Storybook to your NextJS project, run the following command in your project directory (depending on your preference you might like to do set up storybook as it's own standalone "application" or include it into your existing application):
 
 ```bash
 npx storybook@latest init
@@ -55,7 +55,7 @@ If you take a look in your Sitecore Layout file, we're going to be wrapping stor
 
 ![Sitecore Context In Path Page](/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/SitcoreContextInPathPage.png "Sitecore Context In Path Page")
 
-This will let us provide mocked versions of the standard layoutservice json data to our components.
+This will let us provide mocked versions of the standard layout service json data to our components.
 
 Note: In your Storybook app, you will need to install the sitecore packages that we don't have already from the list of imports below**
 
@@ -280,7 +280,7 @@ right number of path items to satisfy the 2 scenarios..
 
 ```javascript
 import type { Meta, StoryObj } from '@storybook/react';
-import { Default as Breadcrumbs } from '@csr/ui/src/components/navigation/Breadcrumb';
+import { Default as Breadcrumbs } from '@brand/ui/src/components/navigation/Breadcrumb';
 import React from 'react';
 import { MegaMenuData, defaultRenderingData } from './Navigation-data';
 import { expect } from '@storybook/test';
@@ -326,7 +326,7 @@ export const BreadCrumbsLong: Story = {
     expect(breadcrumbEllipsis).toBeInTheDocument();
 
     // confirm the breadcrumb home item is present and uses the home icon presented
-    const homeIcon = canvasElement.querySelector('.csr-icon-font-homerounded');
+    const homeIcon = canvasElement.querySelector('.brand-icon-font-homerounded');
     expect(homeIcon).toBeInTheDocument();
 
     //confirm the number of breadcrumb items is exactly 5 as we have more than 5 in the list and we're formatting it to present only 5 including the ellipsis
@@ -350,7 +350,7 @@ export const BreadCrumbsShort: Story = {
   },
   play: async ({ canvasElement }) => {
     // confirm the breadcrumb home item is present and uses the home icon presented
-    const homeIcon = canvasElement.querySelector('.csr-icon-font-homerounded');
+    const homeIcon = canvasElement.querySelector('.brand-icon-font-homerounded');
     expect(homeIcon).toBeInTheDocument();
 
     //check to confirm the ellipsis item is not presented in the breadcrumbs as we have 3 or fewer items
