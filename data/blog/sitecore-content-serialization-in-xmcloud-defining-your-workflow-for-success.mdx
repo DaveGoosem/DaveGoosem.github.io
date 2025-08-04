@@ -1,0 +1,150 @@
+---
+title: Sitecore Content Serialization in XMCloud - Defining your workflow for success
+date: '2025-05-12'
+tags: ['XMCloud', 'Sitecore', 'Storybook', 'SaaS', 'NextJS', 'Unit Testing']
+draft: false
+summary: Take an inside look at a battle-tested enterprise Sitecore Content Serialization (SCS) multi-site workflow and discuss key decision points to help define your own
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+In this article, we'll take a look at a battle-tested enterprise Sitecore Content Serialization (SCS) multi-site workflow and discuss key decision points to help define your own.
+
+## What is Sitecore Content Serialization and why do we need it?
+
+Serializing database items is one of Sitecore's strongest assets in the game of solutioning for enterprise solutions and automation for safe/reliable CI/CD release pipelines, as well as for quick movement of content between environments.
+It's been around since the earliest versions of Sitecore, and it's been one of the biggest reasons for me to enjoy working with the platform for so long.  
+
+Sitecore Content Serialization (SCS) is the latest installment in serialization tooling for Sitecore. In the past, we've had TDS and Unicorn as options for managing.
+
+### Key concepts
+
+1. Defining ownership of areas of the Sitecore Content Tree.
+2. A new environment should be able to run the first `dotnet sitecore ser push` and have no errors and have all the key items required to run your sites (minus content).
+3. Using separate SCS config files for ease of maintaining your solution and sequencing the execution of serialization.
+4. Sitecore XMCloud local vs higher environments and IAR gotchas.
+
+## Structuring our SCS with multi-site solutions
+
+A couple of important design concepts and considerations we want to employ:
+
+#### Who 'owns' what?
+The Development Team is always going to 'own' Templates, Renderings, Placeholders, Layouts, and Settings, etc. However, depending on your situation, 
+the key considerations we need to make are going to be whether you are going to allow your content authors to change anything in the Presentation area of 
+the content tree. 
+
+
+### SCS Config Structure and Patterns
+If you're setting up a multi-site solution with multiple site collections and sites, it's much, <i>much</i> easier to manage things in separated SCS modules/files. I really like to number the SCS Module files so they appear in the file system in the order that they need to be synced in as a visual aid to 
+divide things up into logical pieces. Using the numbering currently also enforces the ordering of the sync. However, you will still want to make use of the 'references' configuration in your SCS Module as documented [here](https://doc.sitecore.com/xp/en/developers/latest/developer-tools/create-a-sitecore-content-serialization-module.html) to control the order that your SCS modules are synced.
+
+We have used a simple pattern whereby we have global shared and base global pieces synced in their own modules first, followed by the shared site for each site collection, and then each site's own pieces clearly defined like so:
+
+![SCS Modules File Structure](/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/scs-modules-file-structure.png "SCS Modules File Structure")
+
+Above you can see that we're "owning" the entire Presentation section of the tree and syncing everything in there (`ItemAndDescendants`) while we are syncing the Data folder and JUST its direct child items (i.e., the targets for all our renderings' data templates) such that nothing WITHIN the individual data folders is synced (that's content owned by the Content Team).
+Notice that didn't need to create separate config for all the data folders here just by following a pattern that adheres to one of the SCS config settings nicely. This makes life much easier.
+
+The Settings area we want to use `CreateOnly` so that we can update the settings for our higher environments to use their own Domains and config. This means that if the item doesn't exist, it'll create it, otherwise it'll ignore it when syncs run.
+
+It's all aimed at having the least amount of config in the SCS modules as possible. This is very easy, but you MUST use common patterns/processes to make this work.
+
+In our example image above, you'll notice that we have config files set for the global shared items that we want to run first. This is because other configs are going to rely on these being synced first to be able to run sucessfully.
+
+Next we have site collection shared sites for each Site Collection using a nice easy naming convention followed by the site-specific configs within the site collection (when required).
+
+A couple of the sites only have one site within the collection but we've still defined them the same way to help future-proof things. If/when we add another site to the collection, we can easily spin up the shared site and set those configs nice and easily following our pattern.
+
+## Setting up your main `sitecore.json` config to run the show
+
+In the root of your site, you'll find the `sitecore.json` config file which is what is looked at when you run scs commands. In here, you can configure how you want SCS to work for you.
+
+The 'modules' points to locations where it should look for all your SCS module config files. 
+
+Within the `serialization' config node, you'll notice that you can set a lot of helpful config values as desired. The one I wanted to quickly call out is the `excludedFields` collection
+which is where you can tell SCS to exclude a series of fields from being tracked/captured in the serialized yaml files. Take a look at the sample config below: 
+
+```JSON {
+  "$schema": "./.sitecore/schemas/RootConfigurationFile.schema.json",
+  "modules": [
+    "src/serialization/*.module.json"
+  ],
+  "plugins": [
+    "Sitecore.DevEx.Extensibility.Serialization@5.2.113",
+    "Sitecore.DevEx.Extensibility.Publishing@5.2.113",
+    "Sitecore.DevEx.Extensibility.Indexing@5.2.113",
+    "Sitecore.DevEx.Extensibility.ResourcePackage@5.2.113",
+    "Sitecore.DevEx.Extensibility.XMCloud@1.1.30"
+  ],
+  "serialization": {
+    "defaultMaxRelativeItemPathLength": 100,
+    "defaultModuleRelativeSerializationPath": "items",
+    "removeOrphansForRoles": true,
+    "removeOrphansForUsers": true,
+    "continueOnItemFailure": false,
+    "excludedFields": [
+      {
+        "fieldId": "badd9cf9-53e0-4d0c-bcc0-2d784c282f6a",
+        "description": "__Updated by"
+      },
+      {
+        "fieldId": "d9cf14b1-fa16-4ba6-9288-e8a174d4d522",
+        "description": "__Updated"
+      },
+      {
+        "fieldId": "5dd74568-4d4b-44c1-b513-0af5f4cda34f",
+        "description": "__Created by"
+      },
+      {
+        "fieldId": "25bed78c-4957-4165-998a-ca1b52f67497",
+        "description": "__Created"
+      },
+      {
+        "fieldId": "{52807595-0F8F-4B20-8D2A-CB71D28C6103}",
+        "description": "__Owner"
+      },
+      {
+        "fieldId": "{001DD393-96C5-490B-924A-B0F25CD9EFD8}",
+        "description": "__Lock"
+      }
+    ]
+  },
+  "settings": {
+    "telemetryEnabled": false,
+    "cacheAuthenticationToken": true,
+    "versionComparisonEnabled": true,
+    "apiClientTimeoutInMinutes": 5
+  }
+}
+```
+
+The Sitecore doco [here](https://doc.sitecore.com/xp/en/developers/latest/developer-tools/configure-excluded-fields.html) describes this nicely 
+but setting these values ensures that when you're using SCS and working on things locally or packaging content back to your local from higher 
+environments, you're not constantly seeing a ton of 'changes' that aren't really changes when you do a pull due to metadata fields that we don't really care about in our repository.
+If values of fields change we do want to serialize and commit those, but not for purely meta data changes if content/values haven't changed. 
+
+Please use these for the sanity of all!
+
+## IAR Gotchas with Content Serialization
+
+This is an important (and relatively new) concept to wrap your head around and make sure you're 100% across when you're deploying changes to XMCloud environments.
+
+XMCloud enforces IAR when it deploys to higher environments by default. This is a different way to package your serialized items and you can read about it [here](https://doc.sitecore.com/xmc/en/developers/xm-cloud/using-items-as-resources.html)
+
+### What is Information as Resources (IAR)? 
+In a nutshell, it's content that 'shows' in your database but is really sourced from the file system (resource files).
+
+If you make a change to an IAR item, you're essentially overriding the filesystem reference version with the DB version and the DB version will be used instead. If an item is overridden, this means that Sitecore reads the item from the database. If you delete an overridden item, it is only deleted from the database, and Sitecore reads the item from the resource file.
+
+You can toggle on this field (and you should) in XMCloud environments to give you some extra information about an item. If you do, you will see this extra row in the Quick Info section for any item that either shows "Database" or "Resources" to indicate which is used.
+![Identifying items using IAR](/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/IAR-Item-Source.png "Identifying items using IAR")
+
+### Why is this important? 
+When you package content to move between environments or someone changes an item "owned" by the development team, this will result in the environment using the database version.
+You may need to do this from time to time to quickly fix an issue however it's important to package these changes back to your local environment and push them into your repository.
+
+The next very important thing of note here is that when you do your next deployment, if you've made changes to an item and it's been updated in the XMC environment so that it's using Database, you won't see your changes even though they've been deployed as your changes are in the IAR version.
+To pull these into the environment, you need to delete the Database version (you will see a warning to say that it's going to restore the Resources version) and then you can publish the IAR version back to get your latest changes to show.
+
+
