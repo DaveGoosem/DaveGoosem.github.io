@@ -24,7 +24,7 @@ const Header = () => {
             {typeof siteMetadata.headerTitle === 'string' ? (
               <>
                 <div className="font-semibold sm:block">
-                  <div className="h-6 text-2x2 sm:text-4xl mb-[10px] sm:mb-4">
+                  <div className="text-2x2 mb-[10px] h-6 sm:mb-4 sm:text-4xl">
                     {siteMetadata.headerTitle}
                   </div>
                   <div className="h-6 text-xs sm:text-lg">Incubating Sitecore Solutions</div>
