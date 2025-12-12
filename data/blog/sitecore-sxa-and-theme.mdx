@@ -17,13 +17,12 @@ The error you'll likely see indicating this looks something like this:
 Error - 403.0 - The request could not be completed because the service is disabled.
 ```
 
-![Service Disabled error when running gulp default in a Sitecore SXA theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-2.png "Service Disabled error when running gulp default in a Sitecore SXA theme")
+![Service Disabled error when running gulp default in a Sitecore SXA theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-2.png 'Service Disabled error when running gulp default in a Sitecore SXA theme')
 
 <i> Above: Service Disabled error when running gulp default in a Sitecore SXA theme </i>
 
 To resolve this, the easiest thing to do is generally to do a "search all" within your App_config folder for `<powershell>` to locate the sync patch file which is disabled and remove the .disabled extension to enable the patch.
 
-
-![powershell config for sxa theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-1.png "powershell config for sxa theme")
+![powershell config for sxa theme](/static/images/posts/2020/sitecore-sxa-and-theme/image-1.png 'powershell config for sxa theme')
 
 This will enable the sync to work in your local development environment.

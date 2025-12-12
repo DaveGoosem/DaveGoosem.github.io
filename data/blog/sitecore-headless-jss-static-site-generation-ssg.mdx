@@ -28,8 +28,7 @@ The default Static Site Generation with Sitecore Headless Services and NextJS is
 
 Given what we now know, this means that as long as we're not explicitly telling the application that we NEED to request the data server side, during build, one of your existing components would therefor work. Let's take a look at our super simple RichText component where we can see that it doesn't include the getServerSidePros method. This means that at build time, it will happily fetch the data and be usable in our Static site:
 
-
-![Rich Text Sample Component](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-1.png "Rich Text Sample Component")
+![Rich Text Sample Component](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-1.png 'Rich Text Sample Component')
 
 ## Static Site Application items of note
 
@@ -37,7 +36,7 @@ Given what we now know, this means that as long as we're not explicitly telling 
 
 If you're building any kind of navigation, you'll need to make sure you're using absolute URLs instead of relative paths. IE. Where in the past you might have set a navigation link to be `/page1/childpage` you will instead need to ensure you are using https://mysite/page1/childpage for the links to be guaranteed to work. This just avoids pain in some hosting scenarios.
 
-### Content Authoring  Considerations
+### Content Authoring Considerations
 
 If you consider that Static Site Generation is generating static files at Build time, this should be pretty obvious but a Static Site doesn't offer us the ability to use Inline Editing (eg. Experience Editor) as there's no 'live' rendering engine which means the Authors don't have access to an easy page construction approach. For this reason, it's a 'nice' idea to firstly configure a "preview" site for Content Authors along with a "bake" button which triggers the preview build. In our scenario we're using a Vercel Hosted Preview site and we've configured a simple deployment WebHook which we have then added to a custom Ribbon Button for Content Authors to be able to run out a Preview build to review their changes. This is particularly handy if you're target hosting environment is an Offline Kiosk Device or something like that where your authoring lifecycle would otherwise be very long-winded to make changes and review / iterate.
 
@@ -51,15 +50,15 @@ As documented [here](https://doc.sitecore.com/xp/en/developers/hd/211/sitecore-h
 
 It's as simple as following the steps outlined in [this linked Sitecore Doco page](https://doc.sitecore.com/xp/en/developers/hd/211/sitecore-headless-development/walkthrough--exporting-a-jss-next-js-app-to-static-html-files-with-next-export.html?ref=davegoosem.com) to ensure:
 
-1. Media Library urls include the server URL (same issue we discussed above about ensuring you don't have only relative URLs). This is a simple Sitecore  config Patch /update.
+1. Media Library urls include the server URL (same issue we discussed above about ensuring you don't have only relative URLs). This is a simple Sitecore config Patch /update.
 2. Set up a new EXPORT_MODE env variable to be used to allow us to switch bewteen pure export mode or not (useful if you're looking to configure preview/authoring environments as described above)
 3. Use this variable in your next.config.js file to include/exclude some settings we need based on if we are building as static export or not
 4. add some new package.json 'scripts' to the list for `"next:export": "next export"` and `"export:connected": "cross-env-shell EXPORT_MODE=true \"npm-run-all --serial bootstrap next:build next:export\""`
 5. Disable any usage of Image Compression you might have set (eg. if you've used Next/Image components). I've found a simple way to do this is to jump into your `next.config.js` once again and add another property which is enabled by the `EXPORT_MODE` env variable that sets the unoptimised flag to true. You'll also see I have increased the staticpageGenerationTimeout to give me more than 1 min of build time for my pages before it times out. Given we are generating static pages, I'm totally fine with waiting a bit longer for my build as I know the final result is a static/speedy page (see below):
 
-![package json scripts](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-2.png "package json scripts")
+![package json scripts](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-2.png 'package json scripts')
 
-![next.config settings](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-3.png "next.config settings")
+![next.config settings](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-3.png 'next.config settings')
 
 Finally when you are running your CI/CD pipeline, if you're deploying it to your own hosting solution, or need to test locally, you can simply run this command:
 
@@ -69,12 +68,12 @@ This is similar to what you would normally use for SSR local builds where you ru
 
 As a simple test I have set up a new IIS Slot on a development machine and point it to the /out directory to verify it works as it should. Note, you will need to ensure you pass the correct url for your target hosting inside your environment variables so that the fully generated (non-relative) links and assets links will work:
 
-![out folder example](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-4.png "out folder example")
+![out folder example](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-4.png 'out folder example')
 
-![public url env variable](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-5.png "public url env variable")
+![public url env variable](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-5.png 'public url env variable')
 
-![Running static site from IIS](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-6.png "Running static site from IIS")
+![Running static site from IIS](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-6.png 'Running static site from IIS')
 
-![Static Site running from IIS](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-7.png "Static Site running from IIS")
+![Static Site running from IIS](/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/image-7.png 'Static Site running from IIS')
 
 Voila!

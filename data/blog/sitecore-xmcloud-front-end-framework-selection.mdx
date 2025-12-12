@@ -29,15 +29,20 @@ Given the move to Sitecore Edge for XM any solutions which are using an older ve
 ## Ok so a fair bit is changing, where does that land us if we have an existing Headless Solution?
 
 We want to determine if we should upgrade, migrate or rebuild.
-<br />It depends on a few things.. Let's take a look at the major ones.
+
+<br />
+It depends on a few things.. Let's take a look at the major ones.
 
 ### How old is your headless solution and how is it constructed?
+
 Does an upgrade/migration of your existing Headless solution make sense. A lot has changed in a short space of time and XMCloud with Edge means you can leverage a lot of newer capabilities. A straight upgrade could end up requiring significant effort and you might be better served to migrate/rebuild it into a newer version. Is the current solution going to work with XMCloud and GraphQL without major changes? A couple of these major considerations might be:
+
 - If you're using Web API calls with heavy search usage and custom Sitecore indexes, that's not possible anymore and you'll need to move to a different search product such as Sitecore Search.
 - Are you making heavy use of Server-side API's on your CD server currently? There's no CD in XMCloud so these need to be moved to a middleware solution.
 - Current Forms usage?
 
 Are you already using Headless SXA? If not, you're probably missing out on things like:
+
 - Headless Tenants, Sites and auto-configuration within Sitecore backend
 - Page Designs, Partial Designs, Page Branch Templates (now with site-targeting!)
 - Shared Site configuration and OOTB template queries etc.
@@ -45,12 +50,15 @@ Are you already using Headless SXA? If not, you're probably missing out on thing
 - OOTB Rendering Variants set up
 
 ### How is it being hosted?
+
 We're moving to XMCloud SaaS and offloading a bunch of overheads for hosting and CI/CD so do we want to ensure our Front End Applications are also SaaS-driven and make a Vercel/Netlify play?
 
 ### Which Framework are you using currently?
+
 This is probably the biggest one. There's alot of power in hosting a NextJS solution on Vercel for example. We'll take a look at some framework selection considerations below.
 
 ## Framework Considerations
+
 - Do we need SSG, ISR, or SSR?
 - Do we need Edge Personalisation with Sitecore Personalize (only available in NextJS OOTB currently)
 - Market share/Popularity of framework. There are some great resources [here](https://sitecore.myget.org/gallery/sc-npm-packages) (Note: metrics only from when they moved from the old MyGet to NPM) on volume of downloads for good trend data and this site is fantastic https://exdst.com/sitecore/statistics
@@ -62,7 +70,6 @@ This is probably the biggest one. There's alot of power in hosting a NextJS solu
 - Configuration, and environment variable management should be simple
 - Hosting options - can it be hosted on next-gen SaaS hosting providers? If this is not immediate, are there plans to get to this in future?
 - Framework roadmap - should be strong and consistently updated/maintained
-
 
 ## Summary
 

@@ -15,7 +15,6 @@ The error will look something like this:
 
 `Sitecore on Azure PaaS File I/O errors "Too many changes at once in directory:D:\home\site\wwwroot\"`
 
-
 Each time I've had to trawl through the Azure Kudo powershell file system view looking for where on earth some files are being written to so I thought I'd share a couple of (seemingly obvious upon reflection) places where I've had to work around this.
 
 **Logging** - ensure you're using Application Insights and that all other logging is routed to AI and definitely not to the file system.
@@ -25,7 +24,7 @@ https://sitecore.stackexchange.com/questions/6384/filewatcher-error-internal-buf
 
 On a local instance we're referring to these logs/artefacts which is controlled by the `\App_config\Include\Sitecore.Diagnostics.config` file so set this to `".disabled"` by default for PaaS environments.
 
-![Azure PaaS Diagnostic logs folder](/static/images/posts/2019/sitecore-on-azure-paas-file-io-errors/paas-errors.png "Azure PaaS Diagnostic logs folder")
+![Azure PaaS Diagnostic logs folder](/static/images/posts/2019/sitecore-on-azure-paas-file-io-errors/paas-errors.png 'Azure PaaS Diagnostic logs folder')
 
 **Unicorn Serialisation** - if you're using it, ensure that there is nothing which is being tracked by unicorn in the content tree (or anywhere else) which a content author might be making updates to (and therefor writing to the unicorn file). Seems obvious but a simple bit of configuration somewhere which is not set quite right can have you scratching your head...
 

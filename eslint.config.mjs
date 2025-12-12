@@ -5,9 +5,9 @@ import reactPlugin from 'eslint-plugin-react'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import prettierPlugin from 'eslint-plugin-prettier'
 import prettierConfig from 'eslint-config-prettier'
+import * as mdx from 'eslint-plugin-mdx'
 
 export default [
-  // Global ignores (all file types)
   {
     ignores: [
       'node_modules/**',
@@ -20,25 +20,20 @@ export default [
       '**/*.d.ts',
     ],
   },
-
-  // Base JS rules
   js.configs.recommended,
-
-  // Base TS rules (non-type-checked)
   ...tseslint.configs.recommended,
 
-  // JS/JSX/MJS/CJS: keep default parser, add plugins/rules
+  // JS/JSX/MJS/CJS
   {
     files: ['**/*.{js,jsx,mjs,cjs}'],
-    languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
-    },
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
     plugins: { react: reactPlugin, 'jsx-a11y': jsxA11y, prettier: prettierPlugin },
     rules: {
       'prettier/prettier': 'error',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       'react/no-unescaped-entities': 'off',
+      'react/jsx-no-target-blank': ['error', { enforceDynamicLinks: 'always' }],
       'jsx-a11y/anchor-is-valid': [
         'error',
         { components: ['Link'], aspects: ['invalidHref', 'preferButton'] },
@@ -46,7 +41,7 @@ export default [
     },
   },
 
-  // TS/TSX: use TS parser with project service
+  // TS/TSX
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -75,6 +70,25 @@ export default [
     },
   },
 
+  // Use eslint-plugin-mdx flat config
+  mdx.configs.flat,
+
+  // Project-specific MDX rules
+  {
+    files: ['**/*.mdx'],
+    plugins: { mdx, 'jsx-a11y': jsxA11y, react: reactPlugin, prettier: prettierPlugin },
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+    rules: {
+      'prettier/prettier': 'error',
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-no-target-blank': ['error', { enforceDynamicLinks: 'always' }],
+      'jsx-a11y/anchor-is-valid': [
+        'error',
+        { components: ['a', 'Link'], aspects: ['invalidHref', 'preferButton'] },
+      ],
+    },
+  },
+
   // Prettier compatibility
   { name: 'prettier-config', rules: { ...prettierConfig.rules } },
 
@@ -89,8 +103,6 @@ export default [
       '**/*.config.cjs',
       '**/scripts/**/*.js',
     ],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 ]

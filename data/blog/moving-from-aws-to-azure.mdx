@@ -5,13 +5,17 @@ tags: ['Azure', 'AWS', 'Sitecore', 'Cloud']
 draft: false
 summary: For quite a few months now, my workplace has been looking at moving our website from a fully automated, cloud-based AWS solution over to Azure. Every person I've mentioned this to has had a similar reaction, mostly of disbelief. "AWS is far more mature and robust cloud offering".
 layout: DaveLayout
-images: ['/static/images/posts/2017/aws-to-azure/microsoft-azure-vs-amazon-aws-comparison-between-two-cloud-computing-giants-1.jpg']
+images:
+  [
+    '/static/images/posts/2017/aws-to-azure/microsoft-azure-vs-amazon-aws-comparison-between-two-cloud-computing-giants-1.jpg',
+  ]
 authors: ['default']
 ---
 
 For quite a few months now, my workplace has been looking at moving our website from a fully automated, cloud-based AWS solution over to Azure. Every person I've mentioned this to has had a similar reaction, mostly of disbelief. "AWS is far more mature and robust cloud offering". Comments like this have been made to me numerous times. Hell, I was of the same opinion at first however lets explore some of the reasoning behind this business decision to move to Azure after spending 1.5 years and a considerable amount of money getting to the cloud and AWS in teh first place..
 
 ## PCI & Security and IaaS in AWS
+
 Our business has an e-commerce website collects credit card information and as a result we everything connected to the environments that make up this website are required to be compliant. It's a huge job and cost getting to a compliant state and then there is an ongoing large amount of overhead and cost to maintain this. The website is using the Sitecore CMS so it's an ASP.NET IIS based solution and needs to run in a Windows environment.
 
 AWS currently only supports an IaaS (Infrastructure as a Service) type model for Windows based solutions. This means that we are required to maintain the servers, keep them patched and totally secure for all of our AWS based infrastructure.
@@ -21,21 +25,23 @@ A considerable amount of time and effort was put into automating as much as we c
 This has been no mean feat and it's taken upwards of 1.5years for the business to get to this level of maturity in this space.
 
 ## Business Alignment
+
 Another factor, although admittedly not one that concerns me as much, is that the rest of the business is very Microsoft Tech stack based. There is all the latest platforms in place in the operations space including some existing Azure infrastructure so there is a driver for the higher-ups to see consistency across the business.
 
 ## Azure has come a long way in recent times
-When I last had a *'proper'* look at Azure, I have to say that I was less than impressed. It was not very easy to use and AWS blew it out of the park in nearly every way. It's only now that I've looked at it again that I can see some seriously cool changes coming through that truely do excite me here. They've partnered up with a lot of big players. One that makes the most impact to me personally and this particular business case being that Sitecore's 8.2.1 CMS release can now be deployed natively into a Azure PaaS solution. They are also beginning to finally (in my opinion) not be so stringent about "everything must be Microsoft" and you can do things like integrate GitHub or Linux components or a bunch of other platforms/solutions with Azure technology.
+
+When I last had a _'proper'_ look at Azure, I have to say that I was less than impressed. It was not very easy to use and AWS blew it out of the park in nearly every way. It's only now that I've looked at it again that I can see some seriously cool changes coming through that truely do excite me here. They've partnered up with a lot of big players. One that makes the most impact to me personally and this particular business case being that Sitecore's 8.2.1 CMS release can now be deployed natively into a Azure PaaS solution. They are also beginning to finally (in my opinion) not be so stringent about "everything must be Microsoft" and you can do things like integrate GitHub or Linux components or a bunch of other platforms/solutions with Azure technology.
 
 ## Limitations with our AWS configuration
+
 I mentioned earlier about the automation that we have going on with taking a base AMI in AWS and putting on top of it, our own security hardening, installing services and agents and deploying the application into it, configuring IIS etc etc. This is all pretty neat and convenient however this comes at a cost.
 
 The cost I'm talking about is time. We have configured Auto-scaling and it works which is cool however (and this is a big however), on average it takes around **40mins** for a new instance to come up and become healthy/usable within our AWS Load balancer. This means that while it technically works, it's also completely useless to us when we have a peak in traffic because by the time 40mins has elapsed and we have our new instances in the Load balancers, it's far too late and we've already had an outage or the traffic may have died off again.
 
 ## Platform as a Service (PaaS)
+
 Azure's PaaS offerings is where I really see the biggest benefits for us in moving from AWS to Azure. Platform as a Service, will allow us to take advantage of a number of key things which help the business.
 
 PaaS is managed my Microsoft. We don't need to do any of the pesky server maintenance. This is great as it also means we can offload the greater portion of the security aspects to Microsoft and concentrate solely on ensuring the application is secure. It also means that to deploy, we can take advantage of the fact that Microsoft essentially has all the infrastructure sitting there waiting and we just need to deploy our code into a Deployment slot in each PaaS instance.
 
 This wasn't possible in the past with out using an Infrastructure as a Service (IaaS) type configuration due to Sitecore not being able to support PaaS 100% but happily they have started fully supporting PaaS with the Sitecore 8.2.1 release late last year. Since we're now only having to deploy our code and a few other small things, Auto-scaling is actually a possibility now as this takes **2-5mins** rather than 40mins.
-
-

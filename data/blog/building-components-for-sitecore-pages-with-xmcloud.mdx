@@ -14,6 +14,7 @@ Building Headless components for Sitecore XM Cloud has some notable differences 
 ## Concepts and High Level Decisions
 
 To begin with, we need to make some high level design decisions to help set us up for success. For the purposes of the article, we're going to use the following:
+
 - We're using Tailwind as our CSS framework so grids/styles will all be using Tailwind styling
 - We're using NextJS as our Front End framework
 - All Page Layout composition (including white space and positioning) will be managed on our Page Layout (Grid) components and not baked into every component we're building.
@@ -23,26 +24,31 @@ To begin with, we need to make some high level design decisions to help set us u
 These high level decisions need to be made and understood by the entire build team (especially how we're controlling layout/white space and page composition) so that everyone is on the same page and tackling component build in the same manner.
 
 ## The Shared Site and it's role in Site-Specific Configuration
+
 When you set up your SXA Sites for Multi-site, you will have a 'shared' site of some kind in the mix typically. This is how we can allow for the sharing of content and configuration between sites.
 In this case, we're able to share the SXA Styles and rendering variants and similar values such that we can have:
+
 - Shared CSS Styles values
 - Site-specific additional styles values
 
 This is controlled by using the same named folders in both Shared and Specific sites. This pattern holds true for Rendering Variants and other Presentation related things (shown below):
 
-![Shared Site Shareable Items](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image1.png "Shared Site Shareable Items")
+![Shared Site Shareable Items](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image1.png 'Shared Site Shareable Items')
 
 ## SXA Styles Concepts
+
 Given the above, we're going to make a component that takes some shared/global style options but also include some site-specific options for different Icons on our CTA Button.
 
 What does this look like?
 
-![Shared Site Shareable styles](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image2.jpg "Shared Site Shareable styles")
+![Shared Site Shareable styles](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image2.jpg 'Shared Site Shareable styles')
 Above you can see that we have the common styles in the Shared site and then the site-specific styles up above where we've added an additional "Extra Large" button size style just for that site.
 
 Note that we've set the "Allowed Renderings" to be the CTA Button rendering.
 
-<b>If you don't set a value here, these styles will appear for ALL renderings which we don't want.</b>
+<b>
+  If you don't set a value here, these styles will appear for ALL renderings which we don't want.
+</b>
 
 ## Template and Rendering set up
 
@@ -63,33 +69,41 @@ Outside of these, you will need to create some custom functionality to support t
 
 You can see their specialty field type code references below. If you wanted to create your own field type, you would need to do something similar to this and cloning one of these would be a good starting point.
 
-This is super important when building for Sitecore Pages (or Page Builder) as failing to use supported fields results in the editing experience being disjointed where authors either can't see fields (<b>***I don't feel it's an acceptable solution make authors switch to content editor for some changes***</b>)  or don't see their changes reflected in the editor right away.
+This is super important when building for Sitecore Pages (or Page Builder) as failing to use supported fields results in the editing experience being disjointed where authors either can't see fields (<b>**_I don't feel it's an acceptable solution make authors switch to content editor for some changes_**</b>) or don't see their changes reflected in the editor right away.
 
 Below is an example of one of the Sitecore Headless SXA custom field types which is supported by Sitecore Pages:
-![Custom Styling field type](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image7.jpg "Custom Styling field type")
+![Custom Styling field type](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image7.jpg 'Custom Styling field type')
 
 The default SXA Components when you copy them all tend to include the Layout placeholder settings on them which we ONLY want on our Page Layout (grid) renderings/components so we want to set up our own base parameter template which inherits the other base param fields which are useful, but doesn't include the grid ones.
 
-![Base Rendering Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image3.jpg "Base Rendering Parameter Template Inheritance")
+![Base Rendering Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image3.jpg 'Base Rendering Parameter Template Inheritance')
 
 Below is the Layout styles which we want to ONLY have as options for Grid Components..
-![Layout param fields](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image4.jpg "Layout param fields")
+![Layout param fields](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image4.jpg 'Layout param fields')
 
 Below is what IStyling will inherit which is the SXA Styles options we configured above:
-![IStyling Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image5.jpg "IStyling Rendering Parameter Template Inheritance")
+![IStyling Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image5.jpg 'IStyling Rendering Parameter Template Inheritance')
 
 Below is the Variant and ID Sitecore fields which are for selecting rendering variants and assigning custom ID's to components (when set on the component).
-![Variant and ID Rendering Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image6.jpg "Variant and ID Rendering Parameter Template Inheritance")
+![Variant and ID Rendering Parameter Template Inheritance](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image6.jpg 'Variant and ID Rendering Parameter Template Inheritance')
 
 You'll notice that there a lot more usage of Parameter Templates when building for Sitecore Pages (or at least more than I'm accustomed to) and this is more than likely due to them being more easily accessible through the Sitecore Pages UI stacked next to the data source fields rather than rolled up in the presentation details which is nice.
 
-<i>It's important to remember that a Parameter template is used for providing Settings/Parameter values unique to an INSTANCE/USAGE of a component. A DataSource Template is used for providing content fields. The same Datasource can be used by MANY instances/usages of a component however parameter template values are only related to one occurrence.</i>
+<i>
+  It's important to remember that a Parameter template is used for providing Settings/Parameter
+  values unique to an INSTANCE/USAGE of a component. A DataSource Template is used for providing
+  content fields. The same Datasource can be used by MANY instances/usages of a component however
+  parameter template values are only related to one occurrence.
+</i>
 
 ## Content changes updating live in the Pages Editor
 
 This section is going to cover a few useful tips and ways of ensuring that when an author changes something in the Pages Editor for their Data Sources or Parameter Templates that the changes are reflected immediately.
 
-<b>*** We want to do our absolute best to avoid the need for a refresh of the page being authored within Pages when users are adjusting values.*** </b>
+<b>
+  *** We want to do our absolute best to avoid the need for a refresh of the page being authored
+  within Pages when users are adjusting values.***{' '}
+</b>
 
 In our example CTA Button component, we want to give the authors the ability to change the link (part of the datasource template) as well as update a series of styling options (all part of parameter templates as agreed during requirements phase).
 
@@ -97,14 +111,14 @@ We are managing these as we saw above via the SXA Styles options which we've ass
 
 When a user selects the Button Size, Style and whether it's an icon button or not etc. etc. we want those changes to update live for the CTA Button component and not refresh the entire page.
 
-![CTA Button Styling Parameters](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image8.jpg "CTA Button Styling Parameters")
+![CTA Button Styling Parameters](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image8.jpg 'CTA Button Styling Parameters')
 
 ### Using the "component" CSS class
 
 You may have noticed when you set up a new NextJS Sitecore Headless application that the OOTB components all have the "component" css class applied on their outermost wrapping container.
 Examples of this are shown (although not made super clear) [here](https://developers.sitecore.com/learn/accelerate/xm-cloud/implementation/developer-experience/creating-new-components):
 
-![component wrapping class](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image9.jpg "component wrapping class")
+![component wrapping class](/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/image9.jpg 'component wrapping class')
 
 What this is doing is providing a selector for refreshing whatever is contained within it when any other css classes are updated on the component. Whenever you update a SXA Style setting here, we're also modifying the css class list via `props.params.Styles` next to the 'component' class and that's what allows for simple refreshing of the component within the pages editor.
 
@@ -228,13 +242,14 @@ This is a gotcha that needs to be discussed and means that we need to design our
 
 Let's look at the link text field which is provided when you use a General Link data type on your template. When an author updates the Link Text field, the entire `<a>` tag shown below will be replaced. If you have put css classes on the `<a>` tag, these WILL NOT BE REAPPLIED when it's re-created. (Doh!).
 
-For this reason, you want to avoid doing this and also avoid having any child items of your link in the editor mode as they will also not be re-generated. *** This might require you to make some specialty adjustments to your rendering wrapped in a Edit Mode only conditional so that you can better service authors***
+For this reason, you want to avoid doing this and also avoid having any child items of your link in the editor mode as they will also not be re-generated. **_ This might require you to make some specialty adjustments to your rendering wrapped in a Edit Mode only conditional so that you can better service authors_**
 
 As a general rule of them, wherever possible, for General Links an editor scenario, you want to target them with styling from outer components and design them to not wrap things when you don't absolutely have to.
 
 An example of this was for our CTA Button when we introduced icons we had initially set it up with the icons sitting as child items of the `<Link>` field however they would get removed entirely when someone updated the Link Text field so we managed to resolve it by putting the Icon "Next" to the `<Link>` field:
 
 In the example below, you can see the `<Link>` tag has no children and no CSS classes applied in edit mode:
+
 ```
 {isEditing ? (
     <div className={`component ${ctaClasses}`}>
@@ -266,6 +281,6 @@ In the example below, you can see the `<Link>` tag has no children and no CSS cl
 )}
 ```
 
-
 <br />
-These are a few helpful pointers for building for Sitecore Pages/Page Builder which hopefully are helpful to anyone trying to get started.
+These are a few helpful pointers for building for Sitecore Pages/Page Builder which hopefully are
+helpful to anyone trying to get started.

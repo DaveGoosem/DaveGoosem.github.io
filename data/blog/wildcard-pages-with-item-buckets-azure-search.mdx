@@ -12,40 +12,53 @@ authors: ['default']
 I've used the Wildcard Page concept within Sitecore in a couple of solutions for clients in the past and have always enjoyed the clever piece of design that they are each time I've done so. I recently proposed using a Wildcard page solution in our Sitecore 8.2 Azure PaaS solution using Azure Search and decided to share some of my initial thoughts and learnings here.
 
 ## What is a Wildcard page?
-Essentially a Wildcard page is a special page within your solution which is often denoted by having the item name "*" or a specific page template. The idea being that when you have a lot of content pages you need to create and you can get away with using the same page template for all the content (or some simple variations), instead of having hundreds of individual content pages, you can use a single page made up of Sitecore components which can be configured to point to the same special data source item.
+
+Essentially a Wildcard page is a special page within your solution which is often denoted by having the item name "\*" or a specific page template. The idea being that when you have a lot of content pages you need to create and you can get away with using the same page template for all the content (or some simple variations), instead of having hundreds of individual content pages, you can use a single page made up of Sitecore components which can be configured to point to the same special data source item.
 
 Usually the data source items all reside within a Sitecore Item Bucket.
 
 <em>Below: Sample Wildcard page and settings pointing to an item bucket</em>
-![Sample Wildcard page and settings pointing to an item bucket](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-1.png "Sample Wildcard page and settings pointing to an item bucket")
+![Sample Wildcard page and settings pointing to an item
+bucket](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-1.png
+"Sample Wildcard page and settings pointing to an item bucket")
 
 This means your content tree is not full of hundreds of pages which would have otherwise needed to assembled but instead you're managing a few content pieces within an item bucket which is indexed and searchable quickly and easily through the Content Editor. You can still mange the content through the experience editor with a small amount of effort and everyone wins :)
 
 <em>Below: Sample item bucket with a few 'event' items within it</em>
-![Sample item bucket with a few 'event' items within it](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-2.png "Sample item bucket with a few 'event' items within it")
+![Sample item bucket with a few 'event' items within
+it](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-2.png "Sample
+item bucket with a few 'event' items within it")
 
 ## The Wildcard Item Service
+
 In order to be able to use renderings on a Wildcard page which are also used on your regular pages, we need to be able to identify if the page is a 'Wildcard page' within your renderings. We also then want to be able to pull the Wildcard item from the item bucket based on the URL path. To do this I have a couple of methods defined in a WildcardItemService. Before we look at some sample code, we also need to consider that a page may have many renderings which are all going to be trying to do a lookup to see if the page is a Wildcard page and then subsequently attempt to query the item bucket and pull back the item. This is where you may want to consider caching.
 
 ## Performance and Caching when content gets big...
+
 When an item bucket get's big enough, having many Sitecore components all performing a lookup to see if they're on a Wildcard page and then querying in the bucket for their Datasource item can become expensive (n x number of components on Wildcard page). A simple way to combat this is to enable caching whereby you cache the item name and item path so that you only need to perform the look up the first time a page component searches for the Bucket item. All subsequent items will be able to use the item name (from the URL) as the key and directly pull the item data it needs without having to perform the query again and again.
 
 ## Sample Code
+
 Note: Using GlassMapper and some other services which require us to supply the Sitecore Context which you may not need..
 
-
 <em>Below: Model for use within the service methods</em>
-![Model for use within the service methods](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-3.png "Model for use within the service methods")
+![Model for use within the service
+methods](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-3.png
+"Model for use within the service methods")
 
 <em>Below: Code to check if page is a wildcard page</em>
-![Code to check if page is a wildcard page](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-4.png "Code to check if page is a wildcard page")
+![Code to check if page is a wildcard
+page](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-4.png "Code
+to check if page is a wildcard page")
 
-<em>Below: Sample code for obtaining data source item from within a bucket by item name defined in URL with caching</em>
-![Sample code for obtaining data source item from within a bucket by item name defined in URL with caching](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-5.png "Sample code for obtaining data source item from within a bucket by item name defined in URL with caching")
+<em>
+  Below: Sample code for obtaining data source item from within a bucket by item name defined in URL
+  with caching
+</em>
+![Sample code for obtaining data source item from within a bucket by item name defined in URL with
+caching](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-5.png
+"Sample code for obtaining data source item from within a bucket by item name defined in URL with
+caching")
 
 In order to generate a URL to use for listings pages and wherever else you may need to do so, you can construct a URL with something like this shown in the image below..
-![Bucket Item Wildcard Page Url Contruction](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-6.png "Bucket Item Wildcard Page Url Contruction")
-
-
-
-
+![Bucket Item Wildcard Page Url Contruction](/static/images/posts/2019/wildcard-pages-with-item-buckets-and-azure-search/image-6.png 'Bucket Item Wildcard Page Url Contruction')

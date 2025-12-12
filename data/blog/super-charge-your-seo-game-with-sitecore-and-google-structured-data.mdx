@@ -5,9 +5,13 @@ tags: ['Sitecore', 'SEO', 'SXA']
 draft: false
 summary: There is often a situation where you have common types of data on a set of pages on your site which form the main purpose of your website.
 layout: DaveLayout
-images: ['/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/1690.jpg']
+images:
+  [
+    '/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/1690.jpg',
+  ]
 authors: ['default']
 ---
+
 Depending on the type of website you're building, there is often a situation where you have a bunch of products or repeated data elements which you want to present as pages on your site. Typically these pieces of data form the main purpose of your website and contain the most valuable data which you want to promote and attract users to consume.
 
 Whenever this is the case, it's worth looking into enhancing your SEO using Google Structured Data.
@@ -16,11 +20,11 @@ Whenever this is the case, it's worth looking into enhancing your SEO using Goog
 
 Ever been browsing the web and wondered how some search results came to be presented like this?
 
-![Google Results](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image.png "Google Results")
+![Google Results](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image.png 'Google Results')
 
 It's likely that the page the search result links to has been set up to use Structured Data as shown below.
 
-![Structured data example markup](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-1.png "Structured data example markup")
+![Structured data example markup](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-1.png 'Structured data example markup')
 
 Summarising the documenation [here](https://developers.google.com/search/docs/advanced/structured-data/intro-structured-data?ref=davegoosem.com#structured-data), Structured Data helps google understand the content of the page and in doing so in a standardised data structure, gain some SEO advantages and perks like the results formatting. Google has defined the data structure based on Schema.org which will be interpreted and it's up to us as the developers to map our data to this structure and include it on the page if you want to make use of it.
 
@@ -233,8 +237,7 @@ and finally, the View which as you can see is very clean and simple and just use
 
 This rendering was then simply added to the relevant page and the end result is something which looks like this:
 
-
-![Page markup with our data in it](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-2.png "Page markup with our data in it")
+![Page markup with our data in it](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-2.png 'Page markup with our data in it')
 
 Once you pull out the json and put it in a nice formatter:
 
@@ -283,6 +286,6 @@ It's worth noting that if you don't adhere to the data structure, it may not wor
 
 To do this, fire up the testing tool [here](https://search.google.com/structured-data/testing-tool?ref=davegoosem.com) and you can either use a URL if that will work for you, or paste in your output data snippet. If there are any issues, the output window will contains some detail about the problem and you can fix it up. Easy as.
 
-![Google Structured data testing tool](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-3.png "Google Structured data testing tool")
+![Google Structured data testing tool](/static/images/posts/2021/super-charge-your-seo-game-with-sitecore-and-google-structured-data/image-3.png 'Google Structured data testing tool')
 
 This isn't a super complicated process... Honestly, the most challenging part is working out what schema.org data types to use but well worth implementing into your solution where possible.
