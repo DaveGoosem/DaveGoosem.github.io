@@ -8,12 +8,11 @@ layout: DaveLayout
 authors: ['default']
 ---
 
-In order to protect against "the baddies of the internet" in this day and age, you are going to want to ensure you have the best security you can in and around your overall Solution. The best security involves a number of layers of security at both an infrastructure layer utilising tools such Firewalls/WAFS and point-to-point/VPN connections between your infrastructure as well as at the application layer. Given the current movement away from the 'monolith' solution towards headless architecture and SaaS, this is more and more important as we now required to protect more than just a couple of things and  integrate with a couple of external services - our headless solution is more likely to deploy a number of client facing applications and when we're looking at SaaS solutions, its not always possible to just turn lock down our own infrastructure and white list a few IPs as most SaaS offerings don't offer a private constant connection and IPs to whitelist unless you are willing to pay big money. This can leave us a little exposed and in need of ensuring that we have done everything we can at the application layer as our last line of defence to protect ourselves.
+In order to protect against "the baddies of the internet" in this day and age, you are going to want to ensure you have the best security you can in and around your overall Solution. The best security involves a number of layers of security at both an infrastructure layer utilising tools such Firewalls/WAFS and point-to-point/VPN connections between your infrastructure as well as at the application layer. Given the current movement away from the 'monolith' solution towards headless architecture and SaaS, this is more and more important as we now required to protect more than just a couple of things and integrate with a couple of external services - our headless solution is more likely to deploy a number of client facing applications and when we're looking at SaaS solutions, its not always possible to just turn lock down our own infrastructure and white list a few IPs as most SaaS offerings don't offer a private constant connection and IPs to whitelist unless you are willing to pay big money. This can leave us a little exposed and in need of ensuring that we have done everything we can at the application layer as our last line of defence to protect ourselves.
 
 This article covers what you need to know to apply the necessary Security Headers to lock down your Headless Sitecore solution at the application layer. We're using a NextJS Headless solution deployed to Vercel and Sitecore CMS deployed to Azure PaaS.
 
 Before you start, it's generally easiest to ensure you have a decent infrastructure architecture/topology diagram which lists what is communicating with what as well as any 3rd party integration points you have.
-
 
 ## Security Headers for JSS and NextJS
 
@@ -76,14 +75,14 @@ The first is within the `next.config.js` file. For reusabilities sake, we have a
 
 `const headersConfig = require('./src/lib/next-config/headers');`
 
-![NextJS Headers](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-1.png "NextJS Headers")
+![NextJS Headers](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-1.png 'NextJS Headers')
 
-![NextJS Headers part 2](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-2.png "NextJS Headers part 2")
+![NextJS Headers part 2](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-2.png 'NextJS Headers part 2')
 
 The second location which you need to include these headers is within any of your `getServerSideProps` methods. The most notable of these being the Sitecore Headless 'page' located under `/src/pages/[[...path]].tsx`.
 
 I've put these together in the same file for ease of capturing but anywhere where we are calling out for something simlar to this should be reviewed to ensure you're including the correct security headers when appropirate.
 
-![NextJS Headers part 3](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-3.png "NextJS Headers part 3")
+![NextJS Headers part 3](/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/image-3.png 'NextJS Headers part 3')
 
 It's worth noting that having these enabled on your local development machine can be a pain. You may want to provide an env variable to toggle it on and off in your local development environment and just enable it when testing locally and obviously in your higher level environments and production.

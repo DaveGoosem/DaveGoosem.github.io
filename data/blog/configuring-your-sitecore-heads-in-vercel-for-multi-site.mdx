@@ -12,13 +12,14 @@ authors: ['default']
 
 If you haven't already, have a quick read of this post which covers one of the ways we can utilise multi-headed multi-site with Sitecore.
 
-![Multi-headed JSS Site diagram](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image.png "Multi-headed JSS Site diagram")
+![Multi-headed JSS Site diagram](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image.png 'Multi-headed JSS Site diagram')
 
 Let's assume we have 3-4 seperate heads and a shared site to manage the shared components/logic and you now want to configure Vercel to manage this nicely for you.
 
 Managing multiple heads means you have multiple env variable files and need to have environment-specific values for a lot of these as you move between environments.
 
 Let's also assume you want to have 3 seperate environments on top of your own local development environment:
+
 - Dev/QA Environment
 - UAT/Pre-Prod Environment
 - Production Environment
@@ -37,7 +38,7 @@ We are going to use a branching strategy and GitOps mapping as follows:
 
 If you have lots of heads but you're sharing some capabilities between them, there might be some environment variables you wish to share between all the heads. You can do this via the main team level settings shown below.
 
-![Vercel Env Variables](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-1.png "Vercel Env Variables")
+![Vercel Env Variables](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-1.png 'Vercel Env Variables')
 
 ## App-specific Environment Variables
 
@@ -47,11 +48,10 @@ For our example we have Preview on `uat` for UAT and then Preview on `develop` f
 
 Simply punch in all the environment values against the correct environment/branch combination and that's it.
 
-![Vercel Env Variables app specific](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-2.png "Vercel Env Variables app specific")
+![Vercel Env Variables app specific](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-2.png 'Vercel Env Variables app specific')
 
 Add the shared variables you want to use in each head like so:
 
-![Vercel Env Variables add shared](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-3.png "Vercel Env Variables add shared")
+![Vercel Env Variables add shared](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-3.png 'Vercel Env Variables add shared')
 
-![Vercel Env Variables add shared 2](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-4.png "Vercel Env Variables add shared 2")
-
+![Vercel Env Variables add shared 2](/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/image-4.png 'Vercel Env Variables add shared 2')

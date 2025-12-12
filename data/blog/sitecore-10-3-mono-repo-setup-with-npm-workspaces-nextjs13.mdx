@@ -24,7 +24,7 @@ In the previous version, we needed to install 2 additional modules to support Tr
 
 If you are upgrading, you'll want to remove these modules, otherwise we just don't need them now..
 
-![package.json versions image](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-1.png "package.json versions image")
+![package.json versions image](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-1.png 'package.json versions image')
 
 So we now need to make some changes to the `next.config.js` file to allow for our tranpilation to work so we can add a dependency for our 'shared' libaries/apps in the `packages.json` file.
 
@@ -32,11 +32,11 @@ The changes are pretty straight forward. There is a new property available to se
 
 We can also simplify the exports area now. The changes which show the old and new are below:
 
-![next.config.js updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-3.png "next.config.js updates")
+![next.config.js updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-3.png 'next.config.js updates')
 
 The Scripts folder which we need to make some changes within now looks like this:
 
-![Sitecore scripts updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image.png "Sitecore scripts updates")
+![Sitecore scripts updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image.png 'Sitecore scripts updates')
 
 As we can see there are a bunch of additions/changes to this area. The file we care about in this new layout is located here (relative to the root of your aplication) `/scripts/generate-component-builder/plugins/components.ts`. In this file, you'll see some comments from the Sitecore team about ways in which to use the file which is now expecting modifications (hurray!).
 
@@ -44,8 +44,7 @@ We still have the same problem to solve with the pathing to the shared component
 
 You can see you can either point to a directory which will take ALL the components in there or you can specify specific components via path by populating the necessary object properties and passing that in. This allows us to share only what we care about to each app which is going to be including shared components.
 
-![Sitecore components.ts file updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-4.png "Sitecore components.ts file updates")
-
+![Sitecore components.ts file updates](/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/image-4.png 'Sitecore components.ts file updates')
 
 ```
 import { ComponentBuilderPlugin, ComponentBuilderPluginConfig } from '..';

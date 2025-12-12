@@ -12,6 +12,7 @@ authors: ['default']
 If you're using your own DNS and Firewall in front of Vercel, this article looks at how you can effectively secure your non-production environments so that they're only accessible from within your organisation's network using Vercel's Firewall.
 
 ## The problem statement
+
 If you have an existing edge-network/Firewall layer which you manage your DNS through and you can't easily re-locate that to or don't wish to move all of that security over to Vercel you will find that it's not possible to
 restrict access to Vercel hosted applications/environments from the outer edge layer.
 
@@ -20,12 +21,11 @@ When you're using SaaS based offerings, they are managing the infrastructure and
 Vercel uses DNS and it's own edge networking layer to configure environments and as a result, the DNS routing hop which is targeting Vercel must be publically available for Vercel to be able to hit the DNS endpoint to validate/complete it's own set up.
 You simply point your DNS to Vercel's provided target endpoint and it will auto generate Certificates and allow you to point each record to a Git Branch which is how you can then manage environments (via GitOps).
 
-![Vercel Environment DNS Configuration](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image2.jpg "Vercel Environment DNS Configuration")
-
+![Vercel Environment DNS Configuration](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image2.jpg 'Vercel Environment DNS Configuration')
 
 Let's consider a topology like the one shown below...
 
-![Sample Composable Sitecore Architecture with an Edge network fronting Vercel](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image1.png "Sample Composable Sitecore Architecture with an Edge network fronting Vercel")
+![Sample Composable Sitecore Architecture with an Edge network fronting Vercel](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image1.png 'Sample Composable Sitecore Architecture with an Edge network fronting Vercel')
 
 As mentioned above, Vercel is a SaaS based offering and as with most SaaS products, it doesn't have static IPs to white list at the external Edge/WAF end (or we're not prepared to pay the big $$ for private networking).
 As a result, it is not possible to block traffic by IP address at the external Edge/WAF layer as we need that to be open so that Vercel and external Edge/WAF can communicate and complete their DNS configuration.
@@ -39,16 +39,16 @@ The answer is to use Vercel's Firewall layer to manage JUST the environment acce
 As a general rule of thumb, we can therefor employ an approach as follows:
 
 - All security controls that do no require IP-based configuration should be configured at the External WAF layer.
-    - DDOS protection
-    - Request monitoring
-    - Logging
-    - Any other security controls required
+  - DDOS protection
+  - Request monitoring
+  - Logging
+  - Any other security controls required
 
 - All security controls that require IP-based configuration should be configured at the Vercel layer
-    - IP Restrictions to non-prod environments to block all traffic with allowances ONLY for:
-    - Internal Company network
-    - Any additional networks which aren't routed through your internal company network
-    - Any additional specialty rules/exceptions which we need to add and manage
+  - IP Restrictions to non-prod environments to block all traffic with allowances ONLY for:
+  - Internal Company network
+  - Any additional networks which aren't routed through your internal company network
+  - Any additional specialty rules/exceptions which we need to add and manage
 
 Each Vercel Project will define similar rules using the Vercel Rules-based Firewall configurations here such that:
 
@@ -56,8 +56,8 @@ Each Vercel Project will define similar rules using the Vercel Rules-based Firew
 - Non-Production environments are locked down using the IP-Based restrictions mentioned above
 - Production is generally "open" so we don't need to apply IP restrictions (unless we're managing an Intranet or internal application)
 
-
 ## Non-Prod Environments Deployment Protection
+
 Non-Production Vercel Environments could be configured to only allow a range of [Trusted IPs](https://vercel.com/docs/security/deployment-protection/methods-to-protect-deployments/trusted-ips).
 
 [Deployment Protection](https://vercel.com/docs/security/deployment-protection) Enabling this requires that you also enable Vercel Authentication protection which requires anyone that needs to access the non-prod environments would also need to be a Vercel user.
@@ -72,7 +72,7 @@ At a glance, you would think that you could just dive into the Vercel Firewall a
 In Vercel, environments are defined by “Preview” or “Production” such that anything which isn’t a “Production” environment (there is only one per project) is configured as “Preview on XXXX Branch”.
 This means the `Environment Equals Preview` conditional below caters to all non-prod environments.
 
-![Vercel Firewall Standard](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image3.jpg "Vercel Firewall Standard")
+![Vercel Firewall Standard](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/image3.jpg 'Vercel Firewall Standard')
 
 On the surface this seems nice and easy, however as you will discover, the incoming IPs are always your External WAF/Edge proxy layer IPs and so we cannot do this when we have an external WAF/Edge layer in play...
 
@@ -83,6 +83,7 @@ At first, we thought we could make use of the X-Forwarded-For headers however as
 Vercel override the header and do not forward external IPs to prevent IP spoofing. There is also another [x-vercel-forwarded-for](https://vercel.com/docs/edge-network/headers/request-headers#x-vercel-forwarded-for) header however this also wasn't able to work for the same reasons.
 
 The Vercel Firewall Conditional list of options includes:
+
 - Request Path
 - Target Path
 - Method
@@ -98,11 +99,11 @@ The Vercel Firewall Conditional list of options includes:
 - location-based string values
 - some other specific things which aren't relevant
 
-
 In the end, we solved this problem by using a custom Request Header which only is applied at the external Firewall layer and is read at the Vercel Firewall layer and does not get passed through any further. Perfect.
 Because we were using Imperva as our external Firewall, they even include an OOTB custom header that contained the same values as the X-Forwarded-For contents for us in a header called "Incap-Client-Ip". Even better!
 
 ### More complications
+
 The trouble with X-Forwarded-For headers and the InCap-Client-IP header is that it is a string and actually contains a series of IPs in a comma separate list as described [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For).
 It uses a format
 
@@ -131,15 +132,16 @@ This meant that we had to check a string for ips in an x-forwarded-for like stri
 ## The final solve
 
 The Logic as mentioned to make this work is as follows:
+
 - If the request that comes into Vercel from the external Imperva WAF has a Request Header "Incap-Client-IP" (will always be the case and enforced by the Imperva WAF)
 - AND that request header DOES NOT CONTAIN one of our accepted IP's that we want to white list / Allow.
 - THEN Deny/Block the request
 
-![Vercel Firewall Settings1](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image4.jpg "Vercel Firewall Settings1")
+![Vercel Firewall Settings1](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image4.jpg 'Vercel Firewall Settings1')
 
 We had to get creative with some Regex (use ChatGPT for this) to allow for "does not contain" with IP ranges
 
-![Vercel Firewall Settings2](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image5.jpg "Vercel Firewall Settings2")
+![Vercel Firewall Settings2](/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/Image5.jpg 'Vercel Firewall Settings2')
 
 You can also add a conditional for Environment to set it to only apply the rule to Vercel "Preview" (IE. Non-Prod) environments as well as required.
 This means that we're now happily only allowing access to the Vercel Application Non-Prod environments from the organisation's internal network.

@@ -17,9 +17,9 @@ This was the first time I'd tried using Azure PaaS and to be fair, it was very e
 
 > Automation. Everywhere.
 >
-We grabbed the Sitecore XP2 artefacts from the 8.2 Release 4 downloads area and started from that. Into Azure went fully at scale version of Sitecore on PaaS with Redis Cache and Azure Search and Application Insights working. We opted for a SaaS Mongo solution.
+> We grabbed the Sitecore XP2 artefacts from the 8.2 Release 4 downloads area and started from that. Into Azure went fully at scale version of Sitecore on PaaS with Redis Cache and Azure Search and Application Insights working. We opted for a SaaS Mongo solution.
 
-Using VSTS we deploy this into our Azure solution and it has a pre-configured, working vanilla Sitecore 8.2 Release 4 website running with 4 Sitecore instances for Content Mangement (CM) Content Delivery (CD) Processing (Proc) and Reporting (Rpt). There are a lot of variables which were pulled out and tokenised in order to ensure we can deploy this infra release multiple times for our environment setup for *Continuous Integration*.
+Using VSTS we deploy this into our Azure solution and it has a pre-configured, working vanilla Sitecore 8.2 Release 4 website running with 4 Sitecore instances for Content Mangement (CM) Content Delivery (CD) Processing (Proc) and Reporting (Rpt). There are a lot of variables which were pulled out and tokenised in order to ensure we can deploy this infra release multiple times for our environment setup for _Continuous Integration_.
 
 Insert first hurdle.
 
@@ -34,7 +34,7 @@ What does this mean?
 
 It means that we can create a single build task to package up our custom application code and deploy that same code into all four Sitecore instance roles and have configuration take care of the rest.
 
-If you're like me and started using the Helix development approach there is some fun to be had with getting your build working effectively and in a timely fashion. I will create a seperate post describing the evolution our Build process has taken. For now, let's look at the approach and the Release portion of this. VSTS guides you into approaching build and release in two parts. Firstly **Build**. This is typically checking out your source code and compiling it and dropping your artifacts somewhere that you can then pick up as part of your **Release**. We ended up having one repo with the Sitecore source code in it and the Role Based config placed on top, which I've  I'll cover why below.
+If you're like me and started using the Helix development approach there is some fun to be had with getting your build working effectively and in a timely fashion. I will create a seperate post describing the evolution our Build process has taken. For now, let's look at the approach and the Release portion of this. VSTS guides you into approaching build and release in two parts. Firstly **Build**. This is typically checking out your source code and compiling it and dropping your artifacts somewhere that you can then pick up as part of your **Release**. We ended up having one repo with the Sitecore source code in it and the Role Based config placed on top, which I've I'll cover why below.
 
 The Sitecore Source Code repository is "built" and pushed up as an artefact. Once we had this set up you rarely change it and just pick it up in your Releases. Another Build is responsible for pulling down the custom application code and pushing that up as another artefact. These are both set up with automation to trigger a build every time any code changes come in.
 
@@ -45,16 +45,3 @@ Azure deployment slots is where we inevitably ended up. Deployment slots are qui
 I will look at writing something covering deployment slots in more detail in the near future. The key points to be made here however are simply that we can deploy to a seperate 'staging slot' and warm it up, do some smoke tests and be sure the latest release is working as expected before swapping it into Production and making it 'live'.
 
 So far, so good with our approach. There are still some pain-points but they're suprisingly smaller than you might expect and I can see a bright future using the technology stack we're committed to currently.
-
-
-
-
-
-
-
-
-
-
-
-
-

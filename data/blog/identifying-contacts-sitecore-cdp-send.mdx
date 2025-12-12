@@ -5,12 +5,20 @@ tags: ['Sitecore', 'Sitecore Send', 'CDP', 'Headless']
 draft: false
 summary: Recently I have been working on a 10.2 Sitecore JSS (NextJS/React) build using SXA for what I think it is best for which is adding Tenants and Sites and managing the Content Tree with Local Data and site-specific Media Library and Data Template management.
 layout: DaveLayout
-images: ['/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/CDP_Identify_Banner_Image-13.png']
+images:
+  [
+    '/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/CDP_Identify_Banner_Image-13.png',
+  ]
 authors: ['default']
 ---
+
 If you're building a composable Sitecore solution and using Sitecore CDP, you might find that you want to fire an Identity event when users complete a sign-up form. If the form isn't a native form, this becomes a little more complicated. This post will hopefully provide you with some sample code to get you started.
 
-<i>Note: All sample code in here should not be used directly in production and is Proof of Concept only code. This post assumes you have added your Sitecore CDP and Send scripts onto your page already and connected each product to your site.</i>
+<i>
+  Note: All sample code in here should not be used directly in production and is Proof of Concept
+  only code. This post assumes you have added your Sitecore CDP and Send scripts onto your page
+  already and connected each product to your site.
+</i>
 
 At the time of writing this article there is not currently a NPM module available to simplify the set up of your Sitecore Send or CDP/Personalize in a NextJS application. This means that you will likely be adding some `<script>` tags into your pages to load in both product's Javascript and initialise them. This needs to happen before you try place the Sitecore Send form onto the page and also before you try to make your identity event calls to Sitecore CDP.
 
@@ -18,7 +26,7 @@ The way I have achieved this is to use some `UseEffect()` React Hooks so that th
 
 When you add the CDP scripts to the page, you will notice that you are defning some global variables. In order to make these compile with Typescript, you may need to define some types to keep Typescript happy when you try to access the global variables. The ones shown below are the ones I needed to use for Both CDP (Boxever) and Send (mootrack).
 
-![Typescript Types file](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-1.png "Typescript Types file")
+![Typescript Types file](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-1.png 'Typescript Types file')
 
 First things first, we need to set up our Identity Event Logic. To do this I have defined the shape of our datatypes. The Identify and View event types matches the documented types [here](https://doc.sitecore.com/cdp/en/developers/sitecore-customer-data-platform--data-model-2-0/send-an-identity-event-to-sitecore-cdp.html?ref=davegoosem.com). The identify event data is the same as the view event data with some additions.
 
@@ -135,7 +143,7 @@ export type IdentifyEvent = ViewEvent & {
 
 Now that we have our Identify method ready to roll, we can make use of it in our Sitecore Send Form Rendering on our site. We have configured the form in Sitecore Send and we're using the simple drop in `<div>` to inject the form onto our page. You can see in the example we have a first name, last name and email address. We are going to use the email address as our identifier which is how we have set up the identify logic.
 
-![Send Form Rendering](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-2.png "Send Form Rendering")
+![Send Form Rendering](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-2.png 'Send Form Rendering')
 
 ```
 import { ComponentWithContextProps } from 'lib/component-props';
@@ -231,10 +239,8 @@ export default SitecoreSendForm;
 
 This will console log some helpful values including the response for your Identify request. In Sitecore CDP, you can verify it worked by checking to see if you have a "Customer" with the email value you specified. Identified users will appear in the Customer List in CDP and unidentified users will appear in the Visitor List.
 
+![Sitecore Send Form Submitted](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-3.png 'Sitecore Send Form Submitted')
 
-![Sitecore Send Form Submitted](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-3.png "Sitecore Send Form Submitted")
+![Console of events firing](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-4.png 'Console of events firing')
 
-![Console of events firing](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-4.png "Console of events firing")
-
-![Guest search results for our submission in CDP](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-5.png "Guest search results for our submission in CDP")
-
+![Guest search results for our submission in CDP](/static/images/posts/2022/identifying-contacts-sitecore-cdp-send/image-5.png 'Guest search results for our submission in CDP')

@@ -9,12 +9,13 @@ layout: DaveLayout
 authors: ['default']
 ---
 
-![](/static/images/posts/2019/configuring-solr-for-sitecore/sitecore-solr.png "Solr and Sitecore")
+![](/static/images/posts/2019/configuring-solr-for-sitecore/sitecore-solr.png 'Solr and Sitecore')
 
 Setting up a Production-ready Solr instance can be a bit of a pain. Here is a quick guide to get you up and running with a Solr instance ready for your Sitecore 9.x solution.
 Depending on the version of Sitecore you are installing it's a good idea to find the Sitecore page related to your Sitecore version and confirm version of Solr you need. This document describes the process for installing version 7.2.1 which is used for Sitecore 9.1 +.
 
 ## Install Java Runtime
+
 Grab the latest version (currently 1.8) from the website
 https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 
@@ -90,7 +91,9 @@ While you're here, it's worth uncommenting the Port config setting and setting t
 <i>Note: for the above steps, replace the password "secret" with your own secure value.</i>
 
 ## Configure Solr to run as a Windows Service
+
 You don't want to have to manually run commands and rely on that to have Solr running, so set it to be a Window Service and ensure it's enabled on start up of the machine. You can use a tool called NSSM http://nssm.cc/download which will also manage uninstalling/removal of services nicely too, or you can use powershell once again with the following command (subbing in your own values). It should look like this if done successfully:
+
 ```
 $serviceName = "Solr"
 $binaryPath = "Z:\Solr\solr-7.2.1\bin\solr.cmd -f -p 8984"
@@ -195,7 +198,7 @@ Should you wish to, you can also move your Solr instance's logs and indexes loca
 
 Stop Solr if it’s still running.
 
-Open the Solr Config once more (see above for details). Set the value of SOLR_ HOME to a new directory we’ve created here:
+Open the Solr Config once more (see above for details). Set the value of SOLR\_ HOME to a new directory we’ve created here:
 
 `set SOLR_HOME=D:\SolrIndexes`
 

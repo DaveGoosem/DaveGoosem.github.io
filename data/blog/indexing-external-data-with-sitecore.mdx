@@ -5,9 +5,11 @@ tags: ['Sitecore', 'SOLR']
 draft: false
 summary: In this article we'll take a look at a realtively simple way in which you can utilise Sitecore to look after managing the indexing of external data for you using Solr as the Search Provider.
 layout: DaveLayout
-images: ['/static/images/posts/2020/indexing-external-data-with-sitecore/Solr-Sitecore-Search-Terms.png']
+images:
+  ['/static/images/posts/2020/indexing-external-data-with-sitecore/Solr-Sitecore-Search-Terms.png']
 authors: ['default']
 ---
+
 Often when you're building a Sitecore site which has an advanced search capability, there is a need to index some data which does not reside within Sitecore.
 
 In this article we'll take a look at a realtively simple way in which you can utilise Sitecore to look after a lot of this for you using Solr as the Search Provider. This could of course also apply to any Search Provider supported by Sitecore.
@@ -426,6 +428,7 @@ In order to register your File System Watcher, you will also need some configura
 ```
 
 ## API Data
+
 There's nothing special here, the only difference between this and the File System Data is that within your crawler, you will instead make a call to your API endpoint and then map the response data back to your indexable object in the same way we did above for the file system documents.
 
 ## Sitecore Scheduled Tasks & Sitecore Commands

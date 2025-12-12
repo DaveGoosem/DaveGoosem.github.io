@@ -7,6 +7,7 @@ summary: If you've started delving into the world of Composable SaaS in recent t
 layout: DaveLayout
 authors: ['default']
 ---
+
 If you've started delving into the brave new world of Composable SaaS in recent times, you may have encountered a common issue when it comes to security and the typical existing Security Posture businesses have which doesn't quite align to the way in which Composable SaaS architectures need to work.
 
 Traditionally, it's been common practice to route all traffic through a WAF/Security layer by default and be done with it. In order to do this, a classic Firewall will use IP based routing/networking to plumb traffic from point A to point B via the Firewall. You punch a hole for specific IP's to allow traffic in and out as required. A lot of businsses have also adopted Change Management practices whereby a change gets raised, reviewed and released on a specific cadence. Eg. once a day or week.
@@ -15,7 +16,11 @@ Traditionally, it's been common practice to route all traffic through a WAF/Secu
 
 As trends move more towards composable SaaS, the problem which we encounter is that most SaaS products won't offer IPs which you can White List or route for their traditional offerings. This is becuase they are managing releases and upgrades for the software and the underlying infrastructure behind the scenes and likely moving your application around. Even if you had IP's and ranges, there's a high chance that things will change and you'll be forever raising emergency changes to update the rules in your firewall.
 
-<i>Note: It might be possible if you pay for Custom/Enterprise offerings you could get a privately hosted/secure arrangement but for me that defeats the purpose of SaaS which is... to offload responsiblity and the need to manage big portions of your Tech Stack.</i>
+<i>
+  Note: It might be possible if you pay for Custom/Enterprise offerings you could get a privately
+  hosted/secure arrangement but for me that defeats the purpose of SaaS which is... to offload
+  responsiblity and the need to manage big portions of your Tech Stack.
+</i>
 
 In order for all this to work, SaaS providers generally utilise DNS based routing for everything. By doing this, they can repoint as they need and take care of what they need to but it means that they won't provide you IP addresses as they're likely changing regularly as they manage things for you behind the scenes. So you point a DNS record to the SaaS product and use that to access/communicate with it.
 
@@ -33,7 +38,8 @@ By routing/proxying traffic through our own Edge network using DNS, we are able 
 
 Whenever you add new SaaS based products to your stack, if you can put a custom DNS record on it, it means you can route it through your Edge Network and get it protected with WAF, DDOS Protection, added scurity headers, bot detection etc. (the list goes on).
 
-![Sample Composbale Sitecore Architecture with an Edge network fronting everything](/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/image.png "Sample Composbale Sitecore Architecture with an Edge network fronting everything")
+![Sample Composbale Sitecore Architecture with an Edge network fronting everything](/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/image.png 'Sample Composbale Sitecore Architecture with an Edge network fronting everything')
+
 <i>Sample Composbale Sitecore Architecture with an Edge network fronting everything</i>
 
 Typically there will be a transition period where you have the old security mechanisms in place with the existing business systems/services behind it and as things are updated/replaced over time, the old security layer can likely be phased out or retained as required.
