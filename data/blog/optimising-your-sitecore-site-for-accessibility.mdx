@@ -15,14 +15,16 @@ There is a great deal of content readily available on what you should and should
 This article is a quick look at just a few ways in which you can enforce accessibility standards and best practice within Sitecore.
 
 ## Content Management Systems and Maintaining Accessibility Standards
+
 As the name suggests a Content Management System (CMS) empowers Content Authors to be able to manage the content of a website without necessarily being savvy web developers. In Sitecore, this (hopefully) takes the form of a Content Author assembling pages using a swag-bag of individual components, adding them to a page and then inserting their content into numerous content fields to finally be published to their end-users.
 
 ## Limit the use of Rich Text fields in your Components
+
 Rich Text field types empower a content author to insert rich text in the form of HTML into a content field. This is a very powerful thing to be able to do however it should be used sparingly as this is a big glaring hole in a potentially beutifully accessible website as Content Authors may not understand or have the skills to insert additional markup attributes or adhere to the accessibility standards. Adding Single Line Text fields (for example) which are rendered out into your Views between the HTML tags you choose ensure components are consistently using your accessible markup.
 
 ## Use Semantic Markup
-As developers, we can ensure that we've used nice semantic markup to assist with screen readers. Some of the more common HTML5 semantic markup tags are shown below. This is low effort but enables screen readers to jump to parts of the page more simply and give context to someone using a screen reader.
 
+As developers, we can ensure that we've used nice semantic markup to assist with screen readers. Some of the more common HTML5 semantic markup tags are shown below. This is low effort but enables screen readers to jump to parts of the page more simply and give context to someone using a screen reader.
 
 ```
 <!-- A container used for the web page header -->
@@ -59,20 +61,24 @@ As developers, we can ensure that we've used nice semantic markup to assist with
 
 One of the simplest things an accessibility-concious content author can do is to simply add some 'alt text' to an image when they are uploaded. This helps a screen reader provide context to a user. By default, Sitecore will display a red validiation alert on the screen in a couple of places to indicate that alt-text is missing.
 
-![Sitecore field validation](/static/images/posts/2020/optimising-your-site-for-accessibility/image-8.png "Sitecore field validation")
-<i>Error level validation for missing alt-text on a Sitecore image</i>
+![Sitecore field validation](/static/images/posts/2020/optimising-your-site-for-accessibility/image-8.png 'Sitecore field validation')
 
+<i>Error level validation for missing alt-text on a Sitecore image</i>
 
 The 'type' of validation error configured doesn't stop a user from being able to avoid saving the image without supplying an alt-text value however so what we can do is to locate the rule in question and either update the existing one, or apply a new one which will not allow you to save the item without supplying an alt-text value.
 
-<i>Note: Please be mindful of changing any default sitecore settings. It may be fine to do so, but if in doubt, you should always add your own setting and apply that instead.</i>
+<i>
+  Note: Please be mindful of changing any default sitecore settings. It may be fine to do so, but if
+  in doubt, you should always add your own setting and apply that instead.
+</i>
 
-![Sitecore Image Template Alt Text field validation](/static/images/posts/2020/optimising-your-site-for-accessibility/image-9.png "Sitecore Image Template Alt Text field validation")
+![Sitecore Image Template Alt Text field validation](/static/images/posts/2020/optimising-your-site-for-accessibility/image-9.png 'Sitecore Image Template Alt Text field validation')
+
 <i>Sitecore Image Template Alt Text field validation</i>
 
 There are a number of Validation rules which ship with Sitecore (some shown below). Here you can see how these can be configured. If you want to add your own rule, as with most Sitecore functions, it just needs to inhert the appropriatie "type" and then be referenced in the template with your own class and it's corresponding .dll
 
-![Example of where the Alt Required rule is defined and how](/static/images/posts/2020/optimising-your-site-for-accessibility/image-11.png "Example of where the Alt Required rule is defined and how")
+![Example of where the Alt Required rule is defined and how](/static/images/posts/2020/optimising-your-site-for-accessibility/image-11.png 'Example of where the Alt Required rule is defined and how')
 
 When we have a quick look at the types defined in the Sitecore Kernel, you can see some handy comments telling us what will happen when you set the different validation results.
 

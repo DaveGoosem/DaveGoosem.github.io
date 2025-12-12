@@ -8,13 +8,16 @@ layout: DaveLayout
 images: ['/static/images/posts/2020/federated-search/computer-search.jpg']
 authors: ['default']
 ---
+
 In this article we look at how you might develop a Federated Search with data using both Sitecore Content and numerous other external data points.
 
 ## What do we mean by "Federated Search"?
+
 Federated Search is a type of search which returns data from a range of different originating sources.
 Breaking down
 
 ## Breaking down the problem
+
 In order to be able to create our federated search, there are a few things we need to consider, the largest of which are:
 
 1. We need to index the data using Sitecore Custom Crawlers
@@ -28,13 +31,13 @@ The data could be sourced from:
 - File System shared directories containing large PDF's
 - Sitecore Content pages
 
-We need to be able to page the results and display the results based on the relevance/score across all search indexes. which  proved to be a complicated challenge as there really isn't a logical clean way to do this using multiple indexes when you consider the combined search. After all, how can you generate pagingation for disparate results if you pull the 'most relavant' results out from multiple indexes and sort them by relevance?
+We need to be able to page the results and display the results based on the relevance/score across all search indexes. which proved to be a complicated challenge as there really isn't a logical clean way to do this using multiple indexes when you consider the combined search. After all, how can you generate pagingation for disparate results if you pull the 'most relavant' results out from multiple indexes and sort them by relevance?
 
 For this reason it just seemed inevitable that we will need to have individual indexes for when users are searhing on just the one data set, but also a 'combined' index with all the data also pushed into this combined index as well. This may sound like a double up of indexing, but there isn't really a 'good' way to do this without purchasing a product to manage that for you and we're building our own right?
 
 Finally, the Federated Search will need to be able to support an advanced search capability using multiple input options/combinations which looks like this:
 
-![Example advanced search UI](/static/images/posts/2020/federated-search/image.png "Example advanced search UI")
+![Example advanced search UI](/static/images/posts/2020/federated-search/image.png 'Example advanced search UI')
 
 Supporting this will require some complicated Predicate work.
 
@@ -44,7 +47,7 @@ The solution will also need custom crawlers to handle he indexing of the various
 
 The only additional thing worth adding to my previous blog post is that if you want to create the 'combined' index, you simply create your combined index definition configuration and where the single data point indexes would have just their one crawler defined, you can simply add multiple crawlers to the `<locations>` area and they will all push their data into the new combined index. Neat right!?
 
-Finally, if you have your create/remove/update/rename actions in place, you will  just need to make sure that those actions <b>get performed on both indexes</b> rather than just the singular index you had previously.
+Finally, if you have your create/remove/update/rename actions in place, you will just need to make sure that those actions <b>get performed on both indexes</b> rather than just the singular index you had previously.
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -241,5 +244,6 @@ Inside your Feature Search, you can now use your Predicate Builder Service to ta
 That's it, you're well on your way to a complex Advanced Search capability.
 
 ## Taking it further...
+
 - Add search faceting
 - Add search term highlighting

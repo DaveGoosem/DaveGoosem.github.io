@@ -17,23 +17,24 @@ Coupled with this is the way we lay out our Environments with XM Cloud and your 
 
 ## Concepts and High Level Decisions
 
-To begin with, we need answers to the following questions to help set us up for success when it comes to Solution and Environments Structure. ***These questions are ones you need to answer as part of licensing for both Sitecore and Vercel***
+To begin with, we need answers to the following questions to help set us up for success when it comes to Solution and Environments Structure. **_These questions are ones you need to answer as part of licensing for both Sitecore and Vercel_**
+
 - How many sites/heads are we going to have initially?
 - How many sites/heads are we going to have eventually/potentially?
 - How many project streams do we have or need to cater for?
-    - BAU and another larger project stream (for example)?
+  - BAU and another larger project stream (for example)?
 - How many environments do we need for our typical build/release workflow
-    - Prod
-    - UAT
-    - DEV/CI
-    - any other Test environments?
-
+  - Prod
+  - UAT
+  - DEV/CI
+  - any other Test environments?
 
 ## Sitecore's XM Cloud Environment Structure
 
 Sitecore breaks up it’s Environments using [Projects](https://doc.sitecore.com/xmc/en/developers/xm-cloud/create-a-project-in-the-deploy-app.html). Each Project can have up to 3 [Environments](https://doc.sitecore.com/xmc/en/developers/xm-cloud/manage-an-environment.html) within them.
 
 Each XM Cloud Projects allows for the following:
+
 - 1 x Prod Environment
 - 2 x Non-Prod Environment
 
@@ -48,6 +49,7 @@ Vercel allows us to have any number of "Projects" per "Team" which is very nice.
 In a Headless world, we can have many Heads/Sites/Apps which align to a Sitecore Environment and we should. This gives us the best flexiblity. See my previous posts https://davegoosem.com/blog/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13 and https://davegoosem.com/blog/sitecore-jss-multi-site-with-npm-workspaces for how this can be achieved.
 
 Some Key call outs:
+
 - Each head/app only containing what it NEEDS rather than the entire CSS/JS for all sites.
 - Each head/app can utilise different rendering approaches (SSR or SSG or ISR for example)
 - Each head/app can be deployed to seperately depending on what's changing/being released
@@ -55,22 +57,22 @@ Some Key call outs:
 
 See here for details on how how some of this set up is achieved, we're looking higher-level for this article): https://davegoosem.com/blog/configuring-your-sitecore-heads-in-vercel-for-multi-site
 
-
 ## So what does it look like if we structure it well?
 
 Consider the example shown below...
 
-![Sample Multi-Headed Multi-site Environment Structure](/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/Image1.png "Sample Multi-Headed Multi-site Environment Structure")
+![Sample Multi-Headed Multi-site Environment Structure](/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/Image1.png 'Sample Multi-Headed Multi-site Environment Structure')
 
 In the Environments Diagram shown above, we can can see the following which was based on the requirements and answers to the questions posed above:
+
 - There are 5 total XM Cloud "projects" with 7 total environments depicted by the coloured stripes labelled with environment names that span the width:
-    - Production (has it's own Project and uses the "production" slot)
-    - SVT (pre prod) (has it's own Project so it can use it's own "prod-like" slot with room for other env's when we need to flex up)
-    - Regression 1 (in the RGR project which has 1 slot spare)
-    - Regression 2 (in the RGR project which has 1 slot spare)
-    - Systems integration Testing 1 (in the SIT project which has 1 slot spare)
-    - Systems integration Testing 2 (in the SIT project which has 1 slot spare)
-    - DEV (CI) (in the DEV project which has 2 slots spare)
+  - Production (has it's own Project and uses the "production" slot)
+  - SVT (pre prod) (has it's own Project so it can use it's own "prod-like" slot with room for other env's when we need to flex up)
+  - Regression 1 (in the RGR project which has 1 slot spare)
+  - Regression 2 (in the RGR project which has 1 slot spare)
+  - Systems integration Testing 1 (in the SIT project which has 1 slot spare)
+  - Systems integration Testing 2 (in the SIT project which has 1 slot spare)
+  - DEV (CI) (in the DEV project which has 2 slots spare)
 
 - There are 4 apps/heads in our multi-site solution which are hosted Vecel in their own Project.
 - Each Vercel Project has all it's environments defined with in it which track a unique environment git-branch
@@ -81,9 +83,6 @@ In the Environments Diagram shown above, we can can see the following which was 
 - There is 1x Prod Sitecore Search instance used for production by the Production Vercel and XMC environments
 - There is 1x Non-Prod Sitecore Search instance used by all non-prod environments (each has their own collection configurations)
 
-
 Keeping things aligned like this is definately the way to go. Obviously this is quite a large number of environments and most often you would have much fewer but it's shows how this architecture pattern can scale which is important.
 
-
 Notice that Vercel uses only one Project per-app/head so that we can neatly manage environments with things like environment variables and security and logging rules and DNS effectively.
-

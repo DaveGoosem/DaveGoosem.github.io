@@ -8,7 +8,7 @@ layout: DaveLayout
 authors: ['default']
 ---
 
-![Searchstax and Sitecore](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/SearchStax-SitecoreLogos-3.png "Searchstax and Sitecore")
+![Searchstax and Sitecore](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/SearchStax-SitecoreLogos-3.png 'Searchstax and Sitecore')
 
 In a [previous post](https://davegoosem.com/sitecore-with-solr-the-management-conumdrum/) I discussed the management conundrum of Solr and Sitecore and the challenges faced with their differing eco-systems. This post will be more of a technical guide looking at how to configure SearchStax for your Sitecore Solution.
 
@@ -26,19 +26,22 @@ See [here](https://www.searchstax.com/pricing/) for pricing details or contact S
 
 Once you've determined what it is you need and SeachStax has provisioned your resources and/or hooked you up with an account with the portal access so you can manage/do it yourself, you will see your environments which should look something like this:
 
-<b>*** Note: Remember to check what version of Solr you need for your solution and select the right version for your version of Sitecore ***</b>
+<b>
+  *** Note: Remember to check what version of Solr you need for your solution and select the right
+  version for your version of Sitecore ***
+</b>
 
-![Searchstax environments view](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-6.png "Searchstax environments view")
+![Searchstax environments view](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-6.png 'Searchstax environments view')
 
 ## Managing Solr Users
 
 It's recommended to create Solr user accounts to lock down the environments further and that is managed by clicking the edit icon on the right and choosing View Detail.
 
-![View detail menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-7.png "View Detail menu")
+![View detail menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-7.png 'View Detail menu')
 
 The next screen contains the information we need to configure SOLR for our environments. To create a user, on the Security Tab, select “Auth” and crate a user.
 
-![Security > Auth menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-8.png "Security > Auth menu")
+![Security > Auth menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-8.png 'Security > Auth menu')
 
 ## SOLR Endpoint and Connection String Values
 
@@ -66,7 +69,7 @@ cd C:\projects\myproject\tools\searchstax-sitecore-plugin-1.7
 
 Open the yaml file in this location and update it with the configuration values from your searchstax instance and Sitecore installation type. Eg.
 
-![config.yml file](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-9.png "config.yml file")
+![config.yml file](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-9.png 'config.yml file')
 
 When promted for username and password, use the credentials you use to access the SearchStax management panel here: https://app.searchstax.com/admin/deployment/
 
@@ -84,11 +87,11 @@ Grab the SearchStax-Client Repo from Github and put it into your project repo in
 
 Locate your SXA Indexes (easiest to grab from your local Sitecore installation Solr Directory and copy them into the SearchStax-Client/Solr-7/configsets directory (use your solr version) like so (copying from your local solr to the tools config sets folder for the right version of solr:
 
-![Solr Core folders](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-10.png "Solr Core folders")
+![Solr Core folders](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-10.png 'Solr Core folders')
 
 Delete the data and core.properties folders so that the only thing in the folder is the conf folder like so:
 
-![Folders to delete](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-11.png "Folders to delete")
+![Folders to delete](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-11.png 'Folders to delete')
 
 Open your Powershell.core as admin and plug in your values to the command as per the doco once you’ve changed into the correct directory related to your version of SOLR so that you’re in the folder with the zkcli.bat file to run the script:
 
@@ -105,19 +108,22 @@ https://www.searchstax.com/docs/
 
 Example:
 
-![Console example](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-12.png "Console example")
+![Console example](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-12.png 'Console example')
 
 ## Add your Solr Collection
 
 The next step is to log into the Solr interface and add your collection. Click Collections in the left hand menu, Click on the Add Collection button, and then select your new core from the “config set” drop down menu. If your cores were correctly created in SearchStax, the core you want to add should be in the list now. Use a name that matches the value you select in config set.
 
-![Add Collection menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-14.png "Add Collection menu")
+![Add Collection menu](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-14.png 'Add Collection menu')
 
-<b>Note: If you experience issues uploading to zookeeper, you may need to white list your IP as well as potentially add firewall rules to open port 2181.</b>
+<b>
+  Note: If you experience issues uploading to zookeeper, you may need to white list your IP as well
+  as potentially add firewall rules to open port 2181.
+</b>
 
 In the environment connecting to your SearchStax environment, grab the IP(s) to white list with SearchStax and insert each of your ips as required:
 
-![IP White list UI](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-15.png "IP White list UI")
+![IP White list UI](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-15.png 'IP White list UI')
 
 ## First time Deployment/Configuration of Search Stax
 
@@ -127,7 +133,7 @@ You’ll need to run a rebuild of each index (best to do this individually for e
 
 Each standard index should be run seperately
 
-![Sitecore Indexing Manager](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-16.png "Sitecore Indexing Manager")
+![Sitecore Indexing Manager](/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/image-16.png 'Sitecore Indexing Manager')
 
 Some of these steps vary depending on if you're standing up a new environment or replacing your custom solr solution with a new SearchStax solution. If you need to, run the xdb index rebuild. You may need to go and locate all the Solr connection strings and update them with the new ones for example.
 
