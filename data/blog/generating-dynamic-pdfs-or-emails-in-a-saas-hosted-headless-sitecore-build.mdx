@@ -4,52 +4,53 @@ date: '2025-10-21'
 tags: ['Sitecore', 'XMCloud', 'SitecoreAI', 'Multi-Site', 'React', 'NextJS', 'Vercel']
 draft: false
 summary: >
-  A quick look at one way to build out dynamic PDF and Email templates and generate PDFs or Send an email in a SaaS hosted Headless Solution
+  A quick look at one way to build dynamic PDF and email templates and generate PDFs or send emails in a SaaS-hosted headless solution.
 layout: DaveLayout
 images: []
 authors: ['default']
 ---
 
-In a headless solution, especially a SaaS hosted one, the way in which you need to look at what has been historically a backend/server-side process (often running in your Content Delivery Sitecore instance) needs to be re-considered.
+In a headless solution—especially a SaaS-hosted one—the way you approach what has historically been a backend/server-side process (often running in your Content Delivery Sitecore instance) needs to be reconsidered.
 This article looks at an approach taken in a recent build where we used modern patterns fit for composable, headless solutions.
 
-We are going to focus on the Sitecore Application Solution Design concepts for the Head application only and how to make the content of the PDF/Email dynamic and not on
-the actual generation/service itself which we'll get into 'why' shortly.
+We are going to focus on the Sitecore Application Solution Design concepts for the head application only—specifically how to make the PDF/email content dynamic—not on
+the actual generation/service itself (we'll get into the 'why' shortly).
 
-## The high level requirements:
+## The high-level requirements:
 
 We have a solution with our Sitecore head application using NextJS, hosted in Vercel.
 
-We have a product calculator page which let's end-users plug in their specifications for a series of products and it will output the quantities of each product you need. There's a whole complicated form with the options to add line items etc through a
-nice UI however at the end of the flow, the user can opt to generate a PDF with their calculation line items or send it to themselves in an email.
+We have a product calculator page which lets end users plug in their specifications for a series of products, and it outputs the quantities of each product they need. There's a whole complicated form with options to add line items, etc., through a
+nice UI. However, at the end of the flow, the user can opt to generate a PDF with their calculation line items or send it to themselves via email.
 
 An example of the PDF template design is below. The Email template is very similar with some extra bits in the footer.
 When the user clicks on the "Generate PDF" call to action, we want to take this dynamic data which is all coming from a products API to the UI and generate the PDF.
 
-To add to the complexity, the header and footer of the templates must be content managed within Sitecore and the content will potentially be different per-site or per product (other usages)
+To add to the complexity, the header and footer of the templates must be content managed within Sitecore, and the content will potentially be different per site or per product (other use cases).
 
 ![PDF Design](/static/images/posts/2025/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build/PDFDesign.png 'Example Code Base Structure')
 
 ## The problem statement:
 
-There area couple of challenges we need to solve here, lets take a look:
+There are a couple of challenges we need to solve here—let's take a look:
+
 
 1. In a headless solution hosted in Vercel, you can't really (reliably) use something like [puppeteer](https://pptr.dev/guides/pdf-generation) as the executable required to use this is quite large and may exceed the limit for storage you have.
 2. If you have a multi-head/multi-site solution you really don't want to need this giant executable in multiple heads and we should be looking at a middleware/api option to centralise the pdf and/or email sending so we can use it from each site that needs it.
-3. We need a way to get the content managed Template data out of Sitecore
+3. We need a way to get the content-managed template data out of Sitecore
 4. We need a way to create the actual template HTML and map our specific user-managed data into it
-5. We need to have the browser know it's a PDF so it does the browser-default PDF behavior (download or open in the browser)
-6. API and Sitecore communication must be secure (IE. execute Server-side in our Nextjs app)
-7. We need some kind of persisted state to allow us to have the data be retained per user session (through reload or otherwise) and aid with storing the data with a number of React Elements we are going to use in the construction of this feature.
+5. We need the browser to know it's a PDF so it does the browser-default PDF behavior (download or open in the browser)
+6. API and Sitecore communication must be secure (i.e., executed server-side in our Next.js app)
+7. We need some kind of persisted state so data is retained per user session (through reload or otherwise) and to help store the data used by a number of React elements in the construction of this feature.
 
 ## Solution design to satisfy these requirements in our Vercel-hosted NextJS application?
 
-We're going to focus on the PDF Generation Scenario here. Both PDF and Email used the same approach just using different downstream services ultimately. The PDF one is more interesting because we need to get the browser to manage a PDF in the response.
+We're going to focus on the PDF generation scenario here. Both PDF and email use the same approach, ultimately just using different downstream services. The PDF scenario is more interesting because we need the browser to handle a PDF in the response.
 
 ### High level concepts
 
-The entry point to all of our "Generate PDF" and "Generate Email" actions is going to be a CTA/Link in the UI which we'll set the target to a [NextJS API Route](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) endpoint (sample code below). This API Route is
-As per the convention, we've put the api route within our NextJS App's `<root>/src/pages/api/products` folder (wherever you like in here as long as you know the path) and so our link to trigger this would be something like this (where "generate-pdf" is the name of our API route file)
+The entry point to all of our "Generate PDF" and "Generate Email" actions is going to be a CTA/link in the UI, which we'll set to target a [Next.js API Route](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) endpoint (sample code below).
+As per convention, we've put the API route within our NextJS app's `<root>/src/pages/api/products` folder (wherever you like in here, as long as you know the path). Our link to trigger this would be something like this (where "generate-pdf" is the name of our API route file):
 
 ```html
 <a class="btn btn-style-primary download btn-size-md" href="/api/products/generate-pdf"
@@ -73,7 +74,7 @@ This API has a series of endpoints we can call to get the product data we need t
 
 #### The PDF and Email Generation services
 
-Both are down stream API's which will take care of this for us (notice we aren't building that into the NextJS Application and employing proper composable architecture).
+Both are downstream APIs which will take care of this for us (notice we aren't building that into the NextJS application, and we're employing proper composable architecture).
 
 I won't include the actual API data services here, but it's not too dissimilar to what you see here already noting that the service itself is only executed server-side and pulls the secrets in from environment variables.
 
@@ -109,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       calculations: data.calculations?.filter((calc) => calc.isComplete === true) ?? [],
     }
 
-    // Go get the PDF template data from sitecore
+    // Go get the PDF template data from Sitecore
     const packCalcExportTemplate = await getExportTemplates(
       baseDomain,
       `/sitecore/content/App/${siteName}/Data/PDF Templates`
@@ -123,9 +124,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'PDF template not found for product type' })
     }
 
-    // This method calls another NextJS api route which has been exposed (for other usages of pdf generation) that just calls the business API PDF generation service
-    // and returns the pdf response that we can then use in this API Route response to tell the browser it's a PDF (see below).
-    // the 'getPackCalculatorPDFString() method is taking the items in the persisted storage and the data from the Sitecore PDF template data CMS managed values to populate the template
+    // This method calls another Next.js API route which has been exposed (for other usages of PDF generation) that just calls the business API PDF generation service
+    // and returns the PDF response that we can then use in this API Route response to tell the browser it's a PDF (see below).
+    // The `getPackCalcPDFString()` method takes the items in the persisted storage and the CMS-managed values from the Sitecore PDF template data to populate the template.
     const generatePDFResult = await generatePDFfromHTML(
       getPackCalcPDFString(packCalcProducts, packCalcExportTemplate),
       'Pack Calculator Products'
@@ -160,11 +161,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 ```
 
-### React Email and PDF template HTML
+### React email and PDF template HTML
 
-A standard React Component which contains all the code to populate and out a HTML with the right data in it which we will pass in from our upstream calls.
+A standard React component that contains all the code to generate the template HTML and populate it with the right data, which we will pass in from our upstream calls.
 
-Below is a sample component which we can see gets called from the initial API Route above^
+Below is a sample component which gets called from the initial API route above.
 
 ```typescript
 import React from 'react';
@@ -173,7 +174,7 @@ import { ExportTemplateProps } from '@namespace/app/src/props/export-template-pr
 import PackCalcTiles from '@namespace/app/src/atoms/products/PackCalcTile';
 import { PackCalculatorSelectedPacks } from '@namespace/app/src/props/pack-calculator-props';
 
-//NOTE the PDF Generation service does not support ALL Flexbox Styles so we need to use inline styles and only limited Flexbox...
+// NOTE: The PDF generation service does not support all Flexbox styles, so we use inline styles and only limited Flexbox.
 export const PackCalcPDF = (
   selectedPacks: PackCalculatorSelectedPacks,
   templateProps: ExportTemplateProps
@@ -303,11 +304,11 @@ export const getPackCalcPDFString = (
 
 ```
 
-#### The GraphQL Query to Sitecore Edge to get the PDF template content managed content from our data template:
+#### The GraphQL query to Sitecore Edge to get the content-managed PDF template content from our data template:
 
-We've got a service managing the GraphQL request/response once again, this is pretty stock standard in Sitecore XMCloud builds..
+We've got a service managing the GraphQL request/response once again; this is fairly standard in Sitecore XMCloud builds.
 
-Again, you will see this get's called above from our initial API Route^
+Again, you will see this gets called above from our initial API route.
 
 ```typescript
 // Utils
@@ -477,4 +478,4 @@ export const getExportTemplates = async (
 }
 ```
 
-Hopefully you've found this helpful. There's a number of moving pieces in this (more complicated) version but the design patterns and concepts should get you generating content manageable pdfs and emails from your applications nicely!
+Hopefully you've found this helpful. There are a number of moving pieces in this (more complicated) version, but the design patterns and concepts should get you generating content-manageable PDFs and emails from your applications.
