@@ -70,6 +70,5 @@
     "*.+(js|jsx|ts|tsx|json|css|md|mdx)": [
       "prettier --write"
     ]
-  },
-  "packageManager": "npm@11.6.2"
+  }
 }
