@@ -25,7 +25,7 @@ Atomic Design is a methodology composed of five distinct stages working together
    Combinations of atoms that form more complex UI elements, such as a search bar (input + button).
 
 3. **Organisms**:  
-   Groups of atoms AND molecules that form distinct sections of the UI, such as a header or footer.
+   Groups of atoms and molecules that form distinct sections of the UI, such as a header or footer.
 
 4. **Templates**:  
    Page-level structures that define the layout and placement of organisms.
@@ -42,26 +42,26 @@ Atomic Design is a methodology composed of five distinct stages working together
   Atomic Design is ideal for multi-site and multi-brand solutions, allowing you to reuse components across different sites while maintaining consistency.
 
 - **Unit-Tested and Themeable Components**:  
-  Atomic elements can be unit-tested and themed, ensuring high-quality and extendable design systems.
+   Atomic elements can be unit-tested and themed, ensuring high-quality and extensible design systems.
 
 - **Confidence in Reusability**:  
   Using atomic elements throughout the solution provides a high level of quality and confidence, as the same button or heading atom can be reused everywhere.
 
 - **Efficient Development**:  
-  Atomic Design is like the "Ikea flat pack" of web design—efficient and modular, requiring only assembly.
+   Atomic Design is like the "IKEA flat-pack" of web design—efficient and modular, requiring only assembly.
 
 - **Seamless Integration with Sitecore**:  
   Atomic elements can be used as Sitecore renderings, with data template inheritance matching the front-end seamlessly.
 
-## How Are We Going to Structure the Code Base?
+## How Are We Going to Structure the Codebase?
 
-To implement Atomic Design in a headless Sitecore solution, we need to structure the code base thoughtfully:
+To implement Atomic Design in a headless Sitecore solution, we need to structure the codebase thoughtfully:
 
 1. **Shared Atomic Elements**:  
    Atomic elements need to be shared across all sites. These include buttons, headings, text, links, etc., which are set up in the design system.
 
 2. **UI Package in a Mono-Repo**:  
-   Create a UI package in the mono-repo to define atoms, molecules, and organisms, as well as shared components.
+   Create a UI package in the monorepo to define atoms, molecules, and organisms, as well as shared components.
 
 3. **Styling and Theming Base**:  
    Set up a styling and theming base with variable-driven CSS using your preferred CSS framework.
@@ -77,7 +77,7 @@ To implement Atomic Design in a headless Sitecore solution, we need to structure
 
 ![Example Code Base Structure](/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/CodeBaseStructure.png 'Example Code Base Structure')
 
-Note: you may prefer to have multiple Storybooks and/or nest your stories next to your atomic elements and components depending on what makes more sense for your brand set up and solution needs..
+Note: You may prefer to have multiple Storybooks and/or nest your stories next to your atomic elements and components, depending on what makes the most sense for your brand setup and solution needs.
 
 ### Key Considerations:
 
@@ -90,10 +90,10 @@ Note: you may prefer to have multiple Storybooks and/or nest your stories next t
 
 ![Storybook Structure](/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/StorybookStructure.png 'Storybook Structure')
 
-## Sitecore Components simply wrap your Atomic ones
+## Sitecore components simply wrap your atomic ones
 
-The last piece is just to create Sitecore Renderings which are only responsible for plumbing your data from sitecore to the underlying atomic elements and inserting placeholders and the "Sitecore" specific things that make sense to go into this layer.
+The last piece is to create Sitecore renderings that are only responsible for plumbing your data from Sitecore to the underlying atomic elements, inserting placeholders, and handling the Sitecore-specific things that make sense to live in this layer.
 
 ## Final Thoughts
 
-This is my favourite way to build. Give it a whirl and let me know your thoughts..
+This is my favourite way to build. Give it a whirl and let me know your thoughts.
