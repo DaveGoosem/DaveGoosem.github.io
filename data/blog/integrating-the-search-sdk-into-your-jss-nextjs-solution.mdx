@@ -1,8 +1,8 @@
 ---
 title: 'Sitecore Search End-to-End: Integrating the Search SDK into Your JSS Next.js Headless Solution'
 date: '2026-04-13'
-tags: []
-draft: true
+tags: [Sitecore, Search, Sitecore Search]
+draft: false
 summary: 'A comprehensive guide to integrating Sitecore Search into a JSS Next.js headless solution — covering CEC setup, SDK options, front-end integration, multi-site source scoping, and a disciplined environment promotion workflow.'
 layout: DaveLayout
 images: []
@@ -24,7 +24,7 @@ Before diving into implementation, it's worth being clear about where Sitecore S
 - **Sitecore Personalize** — behavioural targeting and experimentation
 - **Sitecore Search** — content discovery, typeahead, search results pages
 
-Sitecore Search is independent of your CMS's GraphQL/Edge delivery. Rather than querying your content tree directly, it crawls your *live website* (or non-prod equivalent) and builds its own index. This is important to understand early — your Search index is populated from rendered web pages, not directly from Sitecore content items. That has implications for what you index, when you index it, and how your non-prod crawl targets are configured.
+Sitecore Search is independent of your CMS's GraphQL/Edge delivery. Rather than querying your content tree directly, it crawls your _live website_ (or non-prod equivalent) and builds its own index. This is important to understand early — your Search index is populated from rendered web pages, not directly from Sitecore content items. That has implications for what you index, when you index it, and how your non-prod crawl targets are configured.
 
 ---
 
@@ -60,7 +60,7 @@ The Customer Engagement Console (CEC) at `cec.sitecorecloud.io` is where all sea
 
 The CEC operates with a concept of separate domain instances — typically a **Non-Production** instance and a **Production** instance. Each is a completely separate tenant with its own sources, attributes, API keys, and widget configuration.
 
-The licensing model for Sitecore Search typically provides one production instance and one non-production instance. The Search non-prod instance is used by *all* your non-prod environments (dev, QA, UAT) simultaneously — there is no per-environment isolation built in. Your production instance is used only by your live production environment.
+The licensing model for Sitecore Search typically provides one production instance and one non-production instance. The Search non-prod instance is used by _all_ your non-prod environments (dev, QA, UAT) simultaneously — there is no per-environment isolation built in. Your production instance is used only by your live production environment.
 
 This gives you an architecture that looks like this:
 
@@ -92,16 +92,16 @@ Before setting up sources or widgets, define your domain attributes. Think of th
 
 Sitecore ships a few default entities (Content, Product, Category, Store). For a typical JSS/content site you'll be working with the **Content** entity. Common attributes to set up:
 
-| Attribute | Type | Features |
-|---|---|---|
-| `title` | String | Textual Relevance, Return in API Response |
-| `description` | String | Textual Relevance, Return in API Response |
-| `url` | String | Return in API Response |
-| `image_url` | String | Return in API Response |
-| `type` | String | Facets, Return in API Response |
-| `category` | String | Facets, Suggestions, Return in API Response |
-| `date` | Timestamp | Sorting, Return in API Response |
-| `site_name` | String | Facets (critical for multi-site) |
+| Attribute     | Type      | Features                                    |
+| ------------- | --------- | ------------------------------------------- |
+| `title`       | String    | Textual Relevance, Return in API Response   |
+| `description` | String    | Textual Relevance, Return in API Response   |
+| `url`         | String    | Return in API Response                      |
+| `image_url`   | String    | Return in API Response                      |
+| `type`        | String    | Facets, Return in API Response              |
+| `category`    | String    | Facets, Suggestions, Return in API Response |
+| `date`        | Timestamp | Sorting, Return in API Response             |
+| `site_name`   | String    | Facets (critical for multi-site)            |
 
 > ⚠️ **Important:** The "Will be used in" feature settings on an attribute **cannot be changed after creation**. If you need to add Facet support to an attribute you've already created without it, you must delete it and recreate it. Plan your attribute schema carefully before you start indexing.
 
@@ -136,24 +136,23 @@ A basic extractor for a JSS site might look like this:
 
 ```javascript
 function extract(request, response, document) {
-  const $ = document.content;
+  const $ = document.content
 
   // Pull from meta tags that your JSS head renders
-  const title = $('meta[property="og:title"]').attr('content')
-    || $('title').text()
-    || '';
+  const title = $('meta[property="og:title"]').attr('content') || $('title').text() || ''
 
-  const description = $('meta[property="og:description"]').attr('content')
-    || $('meta[name="description"]').attr('content')
-    || '';
+  const description =
+    $('meta[property="og:description"]').attr('content') ||
+    $('meta[name="description"]').attr('content') ||
+    ''
 
-  const imageUrl = $('meta[property="og:image"]').attr('content') || '';
+  const imageUrl = $('meta[property="og:image"]').attr('content') || ''
 
   // Use a data attribute on your layout for structured type data
-  const type = $('body').data('page-type') || 'content';
+  const type = $('body').data('page-type') || 'content'
 
   // Site name — critical for multi-site filtering
-  const siteName = $('body').data('site-name') || 'default';
+  const siteName = $('body').data('site-name') || 'default'
 
   return {
     title,
@@ -161,7 +160,7 @@ function extract(request, response, document) {
     image_url: imageUrl,
     type,
     site_name: siteName,
-  };
+  }
 }
 ```
 
@@ -181,10 +180,10 @@ Then in your document extractor, check for it and return `null` to prevent index
 
 ```javascript
 function extract(request, response, document) {
-  const $ = document.content;
+  const $ = document.content
 
-  const exclude = $('meta[property="excludeFromSearch"]').attr('content');
-  if (exclude === 'true') return null;
+  const exclude = $('meta[property="excludeFromSearch"]').attr('content')
+  if (exclude === 'true') return null
 
   // ... rest of extraction
 }
@@ -235,7 +234,7 @@ NEXT_PUBLIC_SEARCH_API_KEY=your-non-prod-api-key
 # NEXT_PUBLIC_SEARCH_API_KEY=your-prod-api-key
 ```
 
-> 📝 `NEXT_PUBLIC_SEARCH_ENV` accepts specific values: `prod`, `staging`, `prodEu`, or `apse2`. It is *not* a free-text label — it maps to Sitecore's actual API endpoint regions. For Australian/APAC implementations, `apse2` is the relevant value.
+> 📝 `NEXT_PUBLIC_SEARCH_ENV` accepts specific values: `prod`, `staging`, `prodEu`, or `apse2`. It is _not_ a free-text label — it maps to Sitecore's actual API endpoint regions. For Australian/APAC implementations, `apse2` is the relevant value.
 
 ### WidgetsProvider Setup
 
@@ -244,13 +243,13 @@ The `WidgetsProvider` is the root component that initialises the Search SDK and 
 In your JSS `Layout.tsx`:
 
 ```tsx
-import { WidgetsProvider, PageController } from '@sitecore-search/react';
+import { WidgetsProvider, PageController } from '@sitecore-search/react'
 
 const searchConfig = {
   env: process.env.NEXT_PUBLIC_SEARCH_ENV as string,
   customerKey: process.env.NEXT_PUBLIC_SEARCH_CUSTOMER_KEY as string,
   apiKey: process.env.NEXT_PUBLIC_SEARCH_API_KEY as string,
-};
+}
 
 export default function Layout({ layoutData }: LayoutProps) {
   return (
@@ -260,7 +259,7 @@ export default function Layout({ layoutData }: LayoutProps) {
       <main>{/* page content */}</main>
       <Footer />
     </WidgetsProvider>
-  );
+  )
 }
 ```
 
@@ -272,31 +271,28 @@ Create a Sitecore rendering in the CMS and a corresponding component in your JSS
 
 ```tsx
 // components/search/PreviewSearch.tsx
-import { usePreviewSearch, widget } from '@sitecore-search/react';
-import { PreviewSearch as PreviewSearchUI } from '@sitecore-search/ui';
-import { useRouter } from 'next/router';
+import { usePreviewSearch, widget } from '@sitecore-search/react'
+import { PreviewSearch as PreviewSearchUI } from '@sitecore-search/ui'
+import { useRouter } from 'next/router'
 
 interface PreviewSearchProps {
-  rfkId: string;  // Pass this from your Sitecore rendering parameters
+  rfkId: string // Pass this from your Sitecore rendering parameters
 }
 
 const PreviewSearchComponent = ({ rfkId }: PreviewSearchProps) => {
-  const router = useRouter();
+  const router = useRouter()
 
   const {
     widgetRef,
     actions: { onItemClick, onKeyphraseChange },
     queryResult: { data: { suggestion: { title_context_aware: suggestions = [] } = {} } = {} },
   } = usePreviewSearch({
-    query: (query) =>
-      query
-        .getRequest()
-        .setSearchQueryHighlightFragmentSize(100),
-  });
+    query: (query) => query.getRequest().setSearchQueryHighlightFragmentSize(100),
+  })
 
   const handleSubmit = (value: string) => {
-    router.push(`/search?q=${encodeURIComponent(value)}`);
-  };
+    router.push(`/search?q=${encodeURIComponent(value)}`)
+  }
 
   return (
     <PreviewSearchUI.Root ref={widgetRef}>
@@ -317,11 +313,15 @@ const PreviewSearchComponent = ({ rfkId }: PreviewSearchProps) => {
         </PreviewSearchUI.Suggestions>
       )}
     </PreviewSearchUI.Root>
-  );
-};
+  )
+}
 
 // Widget wrapping connects this component to the CEC widget configuration
-export const PreviewSearch = widget(PreviewSearchComponent, PreviewSearchUI.Default, 'preview-search');
+export const PreviewSearch = widget(
+  PreviewSearchComponent,
+  PreviewSearchUI.Default,
+  'preview-search'
+)
 ```
 
 > 💡 The `rfk_id` you pass here must match the ID assigned to your widget in the CEC. For multi-site, you can either create separate widgets per site in the CEC and pass different `rfk_id` values per site, or use one shared widget and filter results using a source filter at query time.
@@ -332,34 +332,30 @@ Create a `/search` page in your Next.js app and a Search Results component:
 
 ```tsx
 // components/search/SearchResults.tsx
-import { useSearchResults, widget, FilterEqual } from '@sitecore-search/react';
-import { SearchResults as SearchResultsUI, Pagination, FacetList } from '@sitecore-search/ui';
-import { useRouter } from 'next/router';
+import { useSearchResults, widget, FilterEqual } from '@sitecore-search/react'
+import { SearchResults as SearchResultsUI, Pagination, FacetList } from '@sitecore-search/ui'
+import { useRouter } from 'next/router'
 
 interface SearchResultItem {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  image_url?: string;
-  type?: string;
-  site_name?: string;
+  id: string
+  title: string
+  description: string
+  url: string
+  image_url?: string
+  type?: string
+  site_name?: string
 }
 
 const SearchResultsComponent = () => {
-  const router = useRouter();
-  const keyphrase = (router.query.q as string) || '';
+  const router = useRouter()
+  const keyphrase = (router.query.q as string) || ''
 
   const {
     widgetRef,
     actions: { onResultsPerPageChange, onPageNumberChange, onFacetClick },
     state: { page, itemsPerPage },
     queryResult: {
-      data: {
-        total_item: totalItems = 0,
-        facet: facets = [],
-        content: results = [],
-      } = {},
+      data: { total_item: totalItems = 0, facet: facets = [], content: results = [] } = {},
     },
   } = useSearchResults<SearchResultItem>({
     query: (query) => {
@@ -367,23 +363,23 @@ const SearchResultsComponent = () => {
         .getRequest()
         .setSearchQueryKeyphrase(keyphrase)
         // Multi-site: filter to only show results from this site
-        .addSearchQueryFilter(new FilterEqual('site_name', process.env.NEXT_PUBLIC_SITE_NAME as string));
+        .addSearchQueryFilter(
+          new FilterEqual('site_name', process.env.NEXT_PUBLIC_SITE_NAME as string)
+        )
     },
-  });
+  })
 
   return (
     <div ref={widgetRef}>
-      <p>{totalItems} results for "{keyphrase}"</p>
+      <p>
+        {totalItems} results for "{keyphrase}"
+      </p>
 
       <div className="search-layout">
         {/* Facets sidebar */}
         <aside>
           {facets.map((facet) => (
-            <FacetList
-              key={facet.name}
-              facet={facet}
-              onFacetClick={onFacetClick}
-            />
+            <FacetList key={facet.name} facet={facet} onFacetClick={onFacetClick} />
           ))}
         </aside>
 
@@ -392,7 +388,9 @@ const SearchResultsComponent = () => {
           {results.map((result) => (
             <article key={result.id}>
               {result.image_url && <img src={result.image_url} alt={result.title} />}
-              <h3><a href={result.url}>{result.title}</a></h3>
+              <h3>
+                <a href={result.url}>{result.title}</a>
+              </h3>
               <p>{result.description}</p>
             </article>
           ))}
@@ -406,14 +404,14 @@ const SearchResultsComponent = () => {
         </main>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const SearchResults = widget(
   SearchResultsComponent,
   SearchResultsUI.Default,
   'search-results'
-);
+)
 ```
 
 Add `NEXT_PUBLIC_SITE_NAME` to your Vercel environment variables, set per-site/per-head deployment. This is the filter that scopes search results to the current site — essential in a multi-site setup where all sites share the same non-prod Search instance.
@@ -441,10 +439,12 @@ If you're following a proper multi-site setup (as covered in previous posts), yo
 In the CEC, create a source for each site:
 
 **Non-Prod CEC sources:**
+
 - `Site A — Non-Prod` → crawls `dev.site-a.com`
 - `Site B — Non-Prod` → crawls `dev.site-b.com`
 
 **Prod CEC sources:**
+
 - `Site A — Prod` → crawls `site-a.com`
 - `Site B — Prod` → crawls `site-b.com`
 
@@ -522,11 +522,13 @@ For changes that can't be captured in code (widget facet settings, boosting rule
 ## [Unreleased — Pending Prod Promotion]
 
 ### Non-Prod CEC Changes
+
 - Added `category` facet to SearchResults widget
 - Boosted documents with type=article by 1.5x
 - Updated site-a extractor to extract `author` field
 
 ## [2025-03-15] — Promoted to Prod
+
 - Added `type` facet to SearchResults widget
 - Updated sitemap trigger URL for Site B
 ```
