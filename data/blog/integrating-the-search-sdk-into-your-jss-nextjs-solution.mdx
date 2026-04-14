@@ -1,0 +1,573 @@
+---
+title: 'Sitecore Search End-to-End: Integrating the Search SDK into Your JSS Next.js Headless Solution'
+date: '2026-04-13'
+tags: [Sitecore, Search, Sitecore Search]
+draft: false
+summary: 'A comprehensive guide to integrating Sitecore Search into a JSS Next.js headless solution — covering CEC setup, SDK options, front-end integration, multi-site source scoping, and a disciplined environment promotion workflow.'
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+If you're running a Sitecore JSS Next.js headless front end, adding Sitecore Search is a natural next step in the composable DXP story. Unlike Solr — which comes bundled with on-premise Sitecore but requires you to manage infrastructure, scaling, and version compatibility — Sitecore Search is a fully SaaS-based AI-powered search platform. You configure it through a browser, it crawls your sites, and you integrate the results into your front end via a React SDK. No servers. No Solr topology decisions.
+
+That said, there are real gotchas around multi-site setups, managing multiple environments, and the currently limited ability to promote configuration changes from non-prod to prod. This post walks through all of it end-to-end — from setting up the Customer Engagement Console (CEC) through to wiring up your JSS components, handling multi-site source scoping, and maintaining a sane dev-to-prod promotion workflow.
+
+---
+
+## How Sitecore Search Fits Into the Composable Stack
+
+Before diving into implementation, it's worth being clear about where Sitecore Search sits relative to your other products. In a typical Sitecore JSS headless stack, you're looking at something like this:
+
+- **Sitecore CMS** — content management and authoring, delivering content via GraphQL (Experience Edge or inline)
+- **Vercel / hosting** — hosting your Next.js JSS head(s)
+- **Sitecore Personalize** — behavioural targeting and experimentation
+- **Sitecore Search** — content discovery, typeahead, search results pages
+
+Sitecore Search is independent of your CMS's GraphQL/Edge delivery. Rather than querying your content tree directly, it crawls your _live website_ (or non-prod equivalent) and builds its own index. This is important to understand early — your Search index is populated from rendered web pages, not directly from Sitecore content items. That has implications for what you index, when you index it, and how your non-prod crawl targets are configured.
+
+---
+
+## The Two SDK Options (and Which to Use)
+
+As of 2025/2026 there are two SDK paths for integrating Sitecore Search into your React/Next.js app, and most articles mix them up without explaining the difference.
+
+**Option 1: `@sitecore-search/react` + `@sitecore-search/ui`**
+
+This is the original SDK. You install the core React SDK and optionally the UI components package — a pre-built kit of around 15 widget components (PreviewSearch, SearchResults, etc.) built on top of styled-components.
+
+```bash
+npm install @sitecore-search/react @sitecore-search/ui
+```
+
+**Option 2: `@sitecore-cloudsdk/search`**
+
+This is the newer Cloud SDK approach, part of the broader `@sitecore-cloudsdk` family that also handles CDP and Personalize integrations. It uses an Edge Context ID rather than a standalone API key, and is the direction Sitecore is moving for all new headless builds.
+
+```bash
+npm install @sitecore-cloudsdk/core @sitecore-cloudsdk/search
+```
+
+**Which should you use?** For a new project targeting the latest composable Sitecore stack, lean towards `@sitecore-cloudsdk/search` as it aligns with the unified Cloud SDK direction. However, if your team is already familiar with the `@sitecore-search/react` SDK, or you're referencing the official Starter Kit, the older SDK is still fully supported and better documented at the time of writing. This post primarily uses the `@sitecore-search/react` SDK as it has more community examples and a more developed UI kit — but the CEC configuration and multi-environment concepts apply to both.
+
+---
+
+## Part 1: CEC Setup — Do This Before Writing Any Code
+
+The Customer Engagement Console (CEC) at `cec.sitecorecloud.io` is where all search configuration lives. Every attribute, source, crawler, and widget is managed here. Critically, **this is also where your biggest operational challenge lives** — and we'll come back to that in the environment management section.
+
+### Understanding Your Environments in the CEC
+
+The CEC operates with a concept of separate domain instances — typically a **Non-Production** instance and a **Production** instance. Each is a completely separate tenant with its own sources, attributes, API keys, and widget configuration.
+
+The licensing model for Sitecore Search typically provides one production instance and one non-production instance. The Search non-prod instance is used by _all_ your non-prod environments (dev, QA, UAT) simultaneously — there is no per-environment isolation built in. Your production instance is used only by your live production environment.
+
+This gives you an architecture that looks like this:
+
+```
+┌─────────────────────────────────────────────┐
+│         Sitecore Search: Non-Prod CEC       │
+│  Sources: dev.site-a.com, dev.site-b.com    │
+│  API Key: <non-prod-api-key>                │
+└─────────────────────────────────────────────┘
+        ↑               ↑              ↑
+    JSS DEV          JSS TEST         JSS UAT
+  Vercel (DEV)    Vercel (TEST)   Vercel (UAT)
+
+┌─────────────────────────────────────────────┐
+│           Sitecore Search: Prod CEC         │
+│  Sources: site-a.com, site-b.com            │
+│  API Key: <prod-api-key>                    │
+└─────────────────────────────────────────────┘
+        ↑
+   JSS Production
+   Vercel (production)
+```
+
+The implication is that any widget tuning, boosting rules, facet configuration, or document extractor changes you make in the Non-Prod CEC need to be **manually replicated** into the Prod CEC when you're ready to go live. More on managing this process below.
+
+### Step 1: Define Your Attributes
+
+Before setting up sources or widgets, define your domain attributes. Think of these as the fields your content will be indexed with. Navigate to **Administration → Domain Settings → Attributes**.
+
+Sitecore ships a few default entities (Content, Product, Category, Store). For a typical JSS/content site you'll be working with the **Content** entity. Common attributes to set up:
+
+| Attribute     | Type      | Features                                    |
+| ------------- | --------- | ------------------------------------------- |
+| `title`       | String    | Textual Relevance, Return in API Response   |
+| `description` | String    | Textual Relevance, Return in API Response   |
+| `url`         | String    | Return in API Response                      |
+| `image_url`   | String    | Return in API Response                      |
+| `type`        | String    | Facets, Return in API Response              |
+| `category`    | String    | Facets, Suggestions, Return in API Response |
+| `date`        | Timestamp | Sorting, Return in API Response             |
+| `site_name`   | String    | Facets (critical for multi-site)            |
+
+> ⚠️ **Important:** The "Will be used in" feature settings on an attribute **cannot be changed after creation**. If you need to add Facet support to an attribute you've already created without it, you must delete it and recreate it. Plan your attribute schema carefully before you start indexing.
+
+You'll also need a suggestions block. Ensure the field used for title suggestions is named `title_context_aware` or configure your suggestion block to point to your `title` attribute. This is what powers the typeahead experience.
+
+### Step 2: Set Up Your Sources
+
+A **Source** is a crawler configuration targeting a website (or set of pages). For each site in your multi-site setup, you'll create a separate source pointing at each head.
+
+Navigate to **Sources → Add Source** and select **Web Crawler (Advanced)**. This is the option you want — it supports multi-language, JavaScript rendering, and gives you the most control over document extraction.
+
+Key settings to configure for each source:
+
+**Triggers — how the crawler knows what to crawl**
+
+Using your sitemap is the most reliable trigger. Most sites already expose `/sitemap.xml` for SEO purposes, so reuse it here. The crawler will enumerate all pages in the sitemap and crawl each one.
+
+```
+Trigger type: Sitemap
+URL: https://dev.site-a.com/sitemap.xml
+```
+
+**Scan Frequency**
+
+Configure how often the crawler re-indexes your site. For non-prod you might set this less frequently (weekly is fine), while for production you'll want to balance freshness against crawl cost.
+
+**Document Extractors**
+
+This is where most of the custom logic lives, and is the most common area that differs between implementations. Extractors define how the crawler maps page content to your attributes. You'll use the **JS Extractor**, which runs a Cheerio-based script against the crawled HTML.
+
+A basic extractor for a JSS site might look like this:
+
+```javascript
+function extract(request, response, document) {
+  const $ = document.content
+
+  // Pull from meta tags that your JSS head renders
+  const title = $('meta[property="og:title"]').attr('content') || $('title').text() || ''
+
+  const description =
+    $('meta[property="og:description"]').attr('content') ||
+    $('meta[name="description"]').attr('content') ||
+    ''
+
+  const imageUrl = $('meta[property="og:image"]').attr('content') || ''
+
+  // Use a data attribute on your layout for structured type data
+  const type = $('body').data('page-type') || 'content'
+
+  // Site name — critical for multi-site filtering
+  const siteName = $('body').data('site-name') || 'default'
+
+  return {
+    title,
+    description,
+    image_url: imageUrl,
+    type,
+    site_name: siteName,
+  }
+}
+```
+
+> 💡 **Tip:** In your JSS layout component, render `data-site-name` and `data-page-type` attributes on `<body>` using your SXA site settings. This gives your crawler reliable structured metadata to extract without needing to scrape visible content. This is especially important in multi-site solutions where you want to filter results per-site at query time.
+
+You can test your extractor JS against live HTML using the [Cheerio playground](https://try.cheerio.js.org/) before saving it in the CEC. This will save you a lot of unnecessary re-crawl cycles.
+
+**Excluding Pages from Search**
+
+Not every page should appear in search results — search pages themselves, landing pages, gated content, etc. The cleanest approach is to add a custom meta tag to those pages:
+
+```html
+<meta property="excludeFromSearch" content="true" />
+```
+
+Then in your document extractor, check for it and return `null` to prevent indexing:
+
+```javascript
+function extract(request, response, document) {
+  const $ = document.content
+
+  const exclude = $('meta[property="excludeFromSearch"]').attr('content')
+  if (exclude === 'true') return null
+
+  // ... rest of extraction
+}
+```
+
+In Sitecore, create a `_Search` base template at the Foundation layer with an `excludeFromSearch` checkbox field. Add it as a base template on your Page template, and render the meta tag conditionally in your JSS layout.
+
+Optionally if you exclude the page from Sitemap it won't be crawled as well given we're using the sitemap for our crawling.
+
+### Step 3: Configure Widgets
+
+Widgets are the reusable search UI configurations — they define things like which facets are displayed, how results are sorted, and what boosting rules apply. You need at least two:
+
+- **PreviewSearch** — the typeahead/inline search widget that shows as users type
+- **SearchResults** — the full results page widget
+
+Create each widget in **Widgets**, noting the `rfk_id` assigned to each. This ID is how your React components connect to the right widget configuration.
+
+For PreviewSearch, ensure your suggestions block is configured and pointing to the right attributes. For SearchResults, configure your facet fields (map them to the attributes you set up with Facet enabled).
+
+> ⚠️ Another important quirk: the widget **"Will be used in"** setting cannot be changed after creation (just like attributes). Set it correctly — typically "Search" for SearchResults and "Preview Search" for typeahead.
+
+---
+
+## Part 2: Front-End Integration
+
+With the CEC configured and content indexed, it's time to wire up the front end. Here's the setup for a JSS Next.js application using `@sitecore-search/react`.
+
+### Installation
+
+```bash
+npm install @sitecore-search/react @sitecore-search/ui styled-components
+```
+
+### Environment Variables
+
+You'll need different values for each environment tier. In your `.env.local` (and in Vercel's environment variable settings per deployment):
+
+```env
+# Non-prod environments (dev, QA, UAT)
+NEXT_PUBLIC_SEARCH_ENV=staging
+NEXT_PUBLIC_SEARCH_CUSTOMER_KEY=your-non-prod-customer-key
+NEXT_PUBLIC_SEARCH_API_KEY=your-non-prod-api-key
+
+# Production (set separately in Vercel prod environment)
+# NEXT_PUBLIC_SEARCH_ENV=prod
+# NEXT_PUBLIC_SEARCH_CUSTOMER_KEY=your-prod-customer-key
+# NEXT_PUBLIC_SEARCH_API_KEY=your-prod-api-key
+```
+
+> 📝 `NEXT_PUBLIC_SEARCH_ENV` accepts specific values: `prod`, `staging`, `prodEu`, or `apse2`. It is _not_ a free-text label — it maps to Sitecore's actual API endpoint regions. For Australian/APAC implementations, `apse2` is the relevant value.
+
+### WidgetsProvider Setup
+
+The `WidgetsProvider` is the root component that initialises the Search SDK and manages all communication between your widget components. It should wrap the parts of your application that use search — typically at the layout level.
+
+In your JSS `Layout.tsx`:
+
+```tsx
+import { WidgetsProvider, PageController } from '@sitecore-search/react'
+
+const searchConfig = {
+  env: process.env.NEXT_PUBLIC_SEARCH_ENV as string,
+  customerKey: process.env.NEXT_PUBLIC_SEARCH_CUSTOMER_KEY as string,
+  apiKey: process.env.NEXT_PUBLIC_SEARCH_API_KEY as string,
+}
+
+export default function Layout({ layoutData }: LayoutProps) {
+  return (
+    <WidgetsProvider {...searchConfig}>
+      {/* Your existing layout markup */}
+      <Header />
+      <main>{/* page content */}</main>
+      <Footer />
+    </WidgetsProvider>
+  )
+}
+```
+
+### Building the PreviewSearch (Typeahead) Component
+
+The PreviewSearch widget is the typeahead experience in your site header. It's the most visible part of Search and the trickiest to get right in a multi-site setup.
+
+Create a Sitecore rendering in the CMS and a corresponding component in your JSS app:
+
+```tsx
+// components/search/PreviewSearch.tsx
+import { usePreviewSearch, widget } from '@sitecore-search/react'
+import { PreviewSearch as PreviewSearchUI } from '@sitecore-search/ui'
+import { useRouter } from 'next/router'
+
+interface PreviewSearchProps {
+  rfkId: string // Pass this from your Sitecore rendering parameters
+}
+
+const PreviewSearchComponent = ({ rfkId }: PreviewSearchProps) => {
+  const router = useRouter()
+
+  const {
+    widgetRef,
+    actions: { onItemClick, onKeyphraseChange },
+    queryResult: { data: { suggestion: { title_context_aware: suggestions = [] } = {} } = {} },
+  } = usePreviewSearch({
+    query: (query) => query.getRequest().setSearchQueryHighlightFragmentSize(100),
+  })
+
+  const handleSubmit = (value: string) => {
+    router.push(`/search?q=${encodeURIComponent(value)}`)
+  }
+
+  return (
+    <PreviewSearchUI.Root ref={widgetRef}>
+      <PreviewSearchUI.Input
+        onChange={(e) => onKeyphraseChange({ keyphrase: e.target.value })}
+        onEnterKeyphrase={handleSubmit}
+      />
+      {suggestions.length > 0 && (
+        <PreviewSearchUI.Suggestions>
+          {suggestions.map((suggestion, index) => (
+            <PreviewSearchUI.SuggestionItem
+              key={index}
+              onClick={() => handleSubmit(suggestion.text)}
+            >
+              {suggestion.text}
+            </PreviewSearchUI.SuggestionItem>
+          ))}
+        </PreviewSearchUI.Suggestions>
+      )}
+    </PreviewSearchUI.Root>
+  )
+}
+
+// Widget wrapping connects this component to the CEC widget configuration
+export const PreviewSearch = widget(
+  PreviewSearchComponent,
+  PreviewSearchUI.Default,
+  'preview-search'
+)
+```
+
+> 💡 The `rfk_id` you pass here must match the ID assigned to your widget in the CEC. For multi-site, you can either create separate widgets per site in the CEC and pass different `rfk_id` values per site, or use one shared widget and filter results using a source filter at query time.
+
+### Building the Search Results Page
+
+Create a `/search` page in your Next.js app and a Search Results component:
+
+```tsx
+// components/search/SearchResults.tsx
+import { useSearchResults, widget, FilterEqual } from '@sitecore-search/react'
+import { SearchResults as SearchResultsUI, Pagination, FacetList } from '@sitecore-search/ui'
+import { useRouter } from 'next/router'
+
+interface SearchResultItem {
+  id: string
+  title: string
+  description: string
+  url: string
+  image_url?: string
+  type?: string
+  site_name?: string
+}
+
+const SearchResultsComponent = () => {
+  const router = useRouter()
+  const keyphrase = (router.query.q as string) || ''
+
+  const {
+    widgetRef,
+    actions: { onResultsPerPageChange, onPageNumberChange, onFacetClick },
+    state: { page, itemsPerPage },
+    queryResult: {
+      data: { total_item: totalItems = 0, facet: facets = [], content: results = [] } = {},
+    },
+  } = useSearchResults<SearchResultItem>({
+    query: (query) => {
+      query
+        .getRequest()
+        .setSearchQueryKeyphrase(keyphrase)
+        // Multi-site: filter to only show results from this site
+        .addSearchQueryFilter(
+          new FilterEqual('site_name', process.env.NEXT_PUBLIC_SITE_NAME as string)
+        )
+    },
+  })
+
+  return (
+    <div ref={widgetRef}>
+      <p>
+        {totalItems} results for "{keyphrase}"
+      </p>
+
+      <div className="search-layout">
+        {/* Facets sidebar */}
+        <aside>
+          {facets.map((facet) => (
+            <FacetList key={facet.name} facet={facet} onFacetClick={onFacetClick} />
+          ))}
+        </aside>
+
+        {/* Results */}
+        <main>
+          {results.map((result) => (
+            <article key={result.id}>
+              {result.image_url && <img src={result.image_url} alt={result.title} />}
+              <h3>
+                <a href={result.url}>{result.title}</a>
+              </h3>
+              <p>{result.description}</p>
+            </article>
+          ))}
+
+          <Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={onPageNumberChange}
+          />
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export const SearchResults = widget(
+  SearchResultsComponent,
+  SearchResultsUI.Default,
+  'search-results'
+)
+```
+
+Add `NEXT_PUBLIC_SITE_NAME` to your Vercel environment variables, set per-site/per-head deployment. This is the filter that scopes search results to the current site — essential in a multi-site setup where all sites share the same non-prod Search instance.
+
+### The `@sitecore-search/ui` Bundle Size Gotcha
+
+Before you commit to using the full `@sitecore-search/ui` package in production, be aware of a meaningful performance trade-off. Including the full UI kit has been reported to drop Lighthouse performance scores significantly, with "Reduce unused JavaScript" appearing as a red flag in audits. The package ships all widget templates together without deep tree-shaking support.
+
+Your options:
+
+1. **Use the UI kit but measure it.** Run a Lighthouse audit with and without the package. If your score drops below acceptable thresholds, move to option 2.
+2. **Use only the SDK hooks (`@sitecore-search/react`) and build your own UI.** The hooks (`usePreviewSearch`, `useSearchResults`) are lean and give you full control. Pair with your existing Tailwind components.
+3. **Hybrid approach.** Use the SDK hooks directly for components in your critical rendering path (header PreviewSearch), and use the UI kit for the lower-priority search results page where the performance impact is less significant.
+
+For most client builds, option 2 — using the SDK hooks with your own Tailwind-styled components — produces the best balance of performance and design consistency with the rest of your site.
+
+---
+
+## Part 3: Multi-Site Source Scoping
+
+If you're following a proper multi-site setup (as covered in previous posts), you have multiple Next.js heads, each deployed to their own Vercel project. Here's how to manage Search across them cleanly.
+
+### One Source Per Site Per Environment Tier
+
+In the CEC, create a source for each site:
+
+**Non-Prod CEC sources:**
+
+- `Site A — Non-Prod` → crawls `dev.site-a.com`
+- `Site B — Non-Prod` → crawls `dev.site-b.com`
+
+**Prod CEC sources:**
+
+- `Site A — Prod` → crawls `site-a.com`
+- `Site B — Prod` → crawls `site-b.com`
+
+All non-prod environments (dev, QA, UAT) share the non-prod CEC and its sources, connected via the same non-prod API key. Each Vercel deployment has its own env var pointing to the appropriate CEC key.
+
+### Scoping Results Per Site at Query Time
+
+As shown in the Search Results component above, add a `FilterEqual` on `site_name` using the `NEXT_PUBLIC_SITE_NAME` environment variable. Set this per Vercel deployment:
+
+```
+# Site A Vercel project (all environments)
+NEXT_PUBLIC_SITE_NAME=site-a
+
+# Site B Vercel project (all environments)
+NEXT_PUBLIC_SITE_NAME=site-b
+```
+
+And in your document extractor, ensure `site_name` is populated consistently:
+
+```javascript
+// In your CEC document extractor
+const siteName = $('body').data('site-name') || 'default';
+return { ..., site_name: siteName };
+```
+
+In your JSS layout, render the data attribute:
+
+```tsx
+// _document.tsx or Layout.tsx
+<body data-site-name={process.env.NEXT_PUBLIC_SITE_NAME}>
+```
+
+This creates a clean chain: Vercel env var → rendered HTML attribute → crawled by Search → indexed as `site_name` attribute → filtered at query time per-site.
+
+### Separate Widgets or Shared Widgets?
+
+For PreviewSearch, you can use the same CEC widget across all sites (the `rfk_id` is identical in both CEC instances) since the site scoping is handled at the source/filter level. However, if your sites have meaningfully different facet schemas or boosting rules, create separate widgets per site and pass the appropriate `rfk_id` from Sitecore rendering parameters.
+
+---
+
+## Part 4: Environment Promotion — The Manual Problem
+
+This is the part of Sitecore Search that will catch you off guard if you're not prepared for it.
+
+**There is currently no automated way to export configuration from the Non-Prod CEC and import it into the Prod CEC.** This applies to sources, document extractors, widget settings, boosting rules, facet configuration — all of it. Each change made in Non-Prod must be manually replicated in Prod.
+
+The Sitecore team has confirmed this migration capability is on their roadmap, but until it ships, you need a disciplined process to manage it.
+
+### A Workable Promotion Workflow
+
+The approach that works best in practice combines source control discipline for extractor code with a structured release note process for everything else.
+
+**1. Version control your document extractor scripts**
+
+Even though extractor scripts don't run as part of your code deployment, keep them in your repository. Create a folder structure like:
+
+```
+/search-config
+  /extractors
+    site-a.js
+    site-b.js
+  /widgets
+    preview-search-config.md
+    search-results-config.md
+  CHANGELOG.md
+```
+
+When you modify an extractor in the Non-Prod CEC, also update the file in source control and commit it with a meaningful message. This gives you a versioned history and makes it obvious what needs to be replicated to Prod.
+
+**2. Maintain a Search Config CHANGELOG**
+
+For changes that can't be captured in code (widget facet settings, boosting rules, sort configuration), maintain a `CHANGELOG.md` in your `/search-config` folder:
+
+```markdown
+## [Unreleased — Pending Prod Promotion]
+
+### Non-Prod CEC Changes
+
+- Added `category` facet to SearchResults widget
+- Boosted documents with type=article by 1.5x
+- Updated site-a extractor to extract `author` field
+
+## [2025-03-15] — Promoted to Prod
+
+- Added `type` facet to SearchResults widget
+- Updated sitemap trigger URL for Site B
+```
+
+Tie this to your sprint/release process. Before any production deployment, the promotion checklist includes: apply all `[Unreleased]` Search config changes to the Prod CEC, then move them to a dated `Promoted to Prod` entry.
+
+**3. Use the CEC API Explorer to validate parity**
+
+The CEC's **Developer Resources → API Explorer** lets you fire search queries against both your Non-Prod and Prod instances and compare responses. After promoting changes, use this to verify your results, facets, and suggestions match expectations before signing off.
+
+**4. Synchronise crawls to your deployment timeline**
+
+When you deploy a significant change to content structure (new page types, new meta attributes, changed URL patterns), trigger a manual re-crawl in the CEC after deployment. Don't rely on the scheduled crawl to pick it up — especially for Prod. Navigate to **Sources → [Your Source] → Scan Now** after each significant content or structure deployment.
+
+### Non-Prod Source Targets and Environment Isolation
+
+One practical problem with sharing a single non-prod CEC across dev, QA, and UAT is that the Search sources point at specific URLs. If your dev environment is at `dev.site-a.com`, your CEC non-prod source crawls that URL. QA at `qa.site-a.com` is not crawled.
+
+A few options for managing this:
+
+**Option A — Accept it.** Dev gets the most up-to-date non-prod index (since its URL is the crawl target). QA and UAT use the same non-prod API key and index, which is "good enough" for testing the integration even if it's not crawling QA-specific content.
+
+**Option B — Multiple sources in one non-prod CEC.** Create a source per environment URL (`dev.site-a.com`, `qa.site-a.com`). All index into the same non-prod domain. Use an additional `env_name` attribute in your extractor to tag documents by source environment, and filter by it in your non-prod head deployments.
+
+**Option C — Treat non-prod Search as best-effort.** Accept that Search integration testing is done primarily against dev, and use QA/UAT for testing the UI integration (does the component render, do results appear) rather than validating the indexed content quality. Reserve content quality validation for production after a controlled go-live.
+
+Most teams end up with a mix of A and C in practice — and that's fine, as long as the team understands the limitation and doesn't treat non-prod search results as representative of what prod will show.
+
+---
+
+## Wrapping Up
+
+Sitecore Search is a genuinely capable product and integrates well with a JSS/Next.js head, but it rewards teams who plan their CEC configuration carefully and establish a disciplined promotion process early. The key things to take away:
+
+- **Set up your attribute schema before you start indexing** — you can't change feature flags on existing attributes.
+- **Use a shared non-prod CEC instance across all non-prod environments**, scoped by environment variable in your Vercel deployments.
+- **Filter results by `site_name` at query time** — this is what keeps multi-site search clean.
+- **Keep your document extractor scripts in source control** — they're your most important Search configuration artefact and the CEC offers no versioning.
+- **Manually maintain a promotion changelog** until Sitecore ships native CEC config export/import. Be disciplined about it and tie it to your release process.
+- **Measure the bundle impact of `@sitecore-search/ui`** before committing to it in production — consider using the SDK hooks with your own Tailwind components instead.
+
+The next natural step from here is wiring Sitecore Search analytics into Sitecore Personalize — the click and conversion events tracked by Search become audience signals you can act on in Personalize. That's a topic for a follow-up post.
