@@ -52,6 +52,7 @@ export async function generateMetadata({
       url: img.includes('http') ? img : siteMetadata.siteUrl + img,
     }
   })
+  const canonicalUrl = post.canonicalUrl ?? `${siteMetadata.siteUrl}/${post.path}`
 
   return {
     title: post.title,
@@ -73,6 +74,9 @@ export async function generateMetadata({
       title: post.title,
       description: post.summary,
       images: imageList,
+    },
+    alternates: {
+      canonical: canonicalUrl,
     },
   }
 }
@@ -110,6 +114,21 @@ export default async function Page({ params }: { params: Promise<{ slug: string[
     }
   })
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteMetadata.siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteMetadata.siteUrl}/blog` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: post.title,
+        item: `${siteMetadata.siteUrl}/${post.path}`,
+      },
+    ],
+  }
+
   const Layout = layouts[post.layout || defaultLayout]
 
   return (
@@ -117,6 +136,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string[
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <Layout content={mainContent} authorDetails={authorDetails} next={next} prev={prev}>
         <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
