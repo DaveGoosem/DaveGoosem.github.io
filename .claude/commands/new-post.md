@@ -26,6 +26,8 @@ Set `draft: true` so it doesn't publish until the user is ready.
 Leave `tags: []` empty — the user will add tags as they write.
 
 After creating the file, tell the user:
+
 - The file path created
 - To run `yarn dev` to preview it at `http://localhost:3000/blog/[slug]`
 - To change `draft: false` when ready to publish
+- **Before publishing:** add at least one image to `images: []` — posts without an image fall back to the generic site banner for social sharing. Store images at `public/static/images/posts/YYYY/post-slug-name/` and reference as `/static/images/posts/YYYY/post-slug-name/image.png`.

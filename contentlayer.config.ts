@@ -106,6 +106,18 @@ export const Blog = defineDocumentType(() => ({
         description: doc.summary,
         image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
         url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: siteMetadata.title,
+          logo: {
+            '@type': 'ImageObject',
+            url: `${siteMetadata.siteUrl}/static/images/Logos/DaveGoosem.com_Logo_Black.png`,
+          },
+        },
       }),
     },
   },
@@ -132,6 +144,7 @@ export const Authors = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: 'data',
+  contentDirExclude: ['blog/CLAUDE.md'],
   documentTypes: [Blog, Authors],
   mdx: {
     cwd: process.cwd(),

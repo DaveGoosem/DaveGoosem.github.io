@@ -147,6 +147,14 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               <div className="flex flex-wrap">
                 <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/4 xl:w-1/2">
                   <Image
+                    src={'/static/images/Logos/2026-Sitecore_MVP_Technology.png'}
+                    alt="2026 Sitecore Technology MVP"
+                    width={500}
+                    height={500}
+                  />
+                </div>
+                <div className="w-1/4 pl-1 pt-1 sm:w-1/4 md:w-1/4 xl:w-1/2">
+                  <Image
                     src={'/static/images/Logos/2025-Sitecore-MVP-Technology.png'}
                     alt="2025 Sitecore Technology MVP"
                     width={500}
