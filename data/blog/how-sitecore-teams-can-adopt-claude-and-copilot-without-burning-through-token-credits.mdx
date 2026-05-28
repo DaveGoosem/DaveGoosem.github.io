@@ -1,0 +1,201 @@
+---
+title: 'How Sitecore Teams Can Adopt Claude and Copilot Without Burning Through Your Token Credits Mid-Sprint'
+date: '2026-05-29'
+tags: ['SitecoreAI', 'Next.js', 'AI', 'Strategy', 'Claude', 'Development Workflow']
+draft: false
+summary: >
+  A practical guide for Sitecore teams adopting Claude and Copilot — how to govern token
+  credit usage across your team so nobody burns through their allowance mid-sprint and leaves
+  the rest of the cycle without AI assistance.
+layout: DaveLayout
+images:
+  [
+    '/static/images/posts/2026/how-sitecore-teams-can-adopt-claude-and-copilot-without-burning-through-token-credits/banner-image.png',
+  ]
+authors: ['default']
+---
+
+AI tools promised to supercharge development teams. And they do — right up until someone hits their token credit limit mid-sprint. One developer's unfocused debugging session burns through their allowance, and suddenly the rest of the sprint has to be completed without AI assistance. No autocomplete. No architecture review. Back to manual everything, mid-cycle.
+
+This is the adoption failure mode nobody warns you about. It's not about AI being bad, and it's not about unexpected bills — most teams sensibly set per-user credit limits upfront. It's about uncoordinated usage exhausting those limits at the worst possible time.
+
+This post is the playbook for avoiding that. Specifically for SitecoreAI + Next.js teams adopting Claude Code and GitHub Copilot: how to structure your project so Claude works efficiently, how to divide AI responsibility across your team, and how to govern usage so your token credits last the full sprint.
+
+## 1. Understanding the Token Economy
+
+Before you can govern AI credit usage, you need a basic mental model of what costs money.
+
+**Tokens are not requests.** Both Claude and Copilot charge based on the amount of text processed — input (what you send to the model, including context) plus output (what the model generates). A short, focused prompt on a single file costs very little. A session where Claude reads your entire repository to answer a question about one component can cost 10–50x more.
+
+**Context window size is the biggest lever.** Every time Claude responds, it processes everything in its current context window — your conversation history, any files you've attached or it has auto-read, and any system instructions. The larger that window, the more tokens consumed per response. This means:
+
+- Auto-attaching large generated files (GraphQL types, Contentlayer output, `node_modules`) massively inflates cost
+- Long sessions accumulate history — a 2-hour debugging session in one window costs far more than four 30-minute focused sessions
+- Opening Claude at the repository root pulls in much more context than opening it inside a specific feature folder
+
+**The two failure modes to avoid:**
+
+1. **Over-reliance** — one or two developers burn through their credit allowance on exploratory, open-ended sessions with no clear outcome. The classic culprit: "help me understand this whole codebase" prompts that consume enormous context for marginal return. Once the limit is hit, they're without AI tools for the rest of the cycle.
+2. **Under-use** — the rest of the team avoids AI tools for fear of exhausting their credits too fast, negating the productivity benefit entirely. This happens when there's no clarity on what AI is _for_ and no shared pattern for using it efficiently.
+
+The goal is to treat AI credits like any other sprint resource — plan them, allocate them by workstream, and track them.
+
+## 2. Planning Phase: Define Your Team's AI Boundaries
+
+The most effective token-saving measure happens before a single prompt is written: agreeing, as a team, what each AI tool is responsible for.
+
+### Divide the tools by job
+
+A practical split for SitecoreAI teams:
+
+| Tool               | Best used for                                                                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Claude Code**    | Architecture decisions, scaffolding new components/features, complex refactors, PR reviews, writing CLAUDE.md files                |
+| **GitHub Copilot** | Inline autocomplete, boilerplate generation, unit test scaffolding                                                                 |
+| **Manual**         | Security-sensitive logic, legacy data migrations, anything where reading the output carefully matters more than generating it fast |
+
+Running both Claude and Copilot simultaneously on the same problem is the fastest way to burn budget on duplicate work. Pick the right tool for the job and use the other one for something else.
+
+### Assign an AI owner per workstream
+
+For any project, nominate one developer per workstream (components, serialization, search, etc.) to own the CLAUDE.md setup and context quality for that area. This person:
+
+- Writes and maintains the CLAUDE.md files for their workstream
+- Defines which files Claude should and shouldn't read
+- Shares any reusable slash commands or prompts with the broader team
+- Is the first port of call when someone has a "why is Claude giving bad answers?" question
+
+This isn't gatekeeping — everyone still uses AI. It's just ensuring there's someone accountable for keeping context tight and relevant.
+
+### Set budgets before the sprint starts
+
+Rough budget guidance to adapt to your team's situation:
+
+- **Planning phase** (architecture, scaffolding, CLAUDE.md setup): typically higher token spend — you're establishing patterns the whole team will reuse
+- **Build phase** (feature development): lower per-session, but more frequent — keep sessions short and scoped
+- **Review phase** (PR reviews, diff analysis): very efficient — reviewing a diff is far cheaper than re-reading whole files
+
+Whatever your actual credit limit, set an internal team alert at 70% consumption. That's your signal to review usage before you hit the wall, not after.
+
+### Make AI a retro agenda item
+
+Once per sprint, spend 10 minutes reviewing: What did we use AI for? Where did it save time? Where did it burn credits on something we could have done manually faster? This loop closes over time into a team that uses AI precisely rather than reflexively.
+
+## 3. Structuring Your SitecoreAI Next.js Solution for Claude
+
+This is where concrete technical choices make the biggest difference. A well-structured project means Claude reads less, understands more, and costs less per useful response.
+
+### 3a — CLAUDE.md Placement Strategy
+
+Claude Code reads `CLAUDE.md` files hierarchically — the root file first, then any `CLAUDE.md` in subdirectories as you navigate into them. Use this to your advantage.
+
+**Root `CLAUDE.md`** — stack overview, package manager, key scripts, path aliases, deployment target, and a clear list of what Claude must never touch (generated files, platform SDK files, etc.). Keep it concise: this file is loaded on every session.
+
+**Feature-area `CLAUDE.md` files** — place these inside `src/components/`, `src/lib/`, and `.sitecore/` to give Claude narrower, more relevant context when working in those areas. A Claude session opened inside `src/components/Navigation/` should only need to understand component conventions — not your serialization strategy.
+
+**`.sitecore/CLAUDE.md`** — describe the Sitecore CLI config, what content serialization paths are used, and critically: which files are generated by the platform vs hand-edited. This stops Claude from suggesting edits to files it should never touch.
+
+### 3b — What to Exclude
+
+The single biggest context-reduction win is telling Claude what not to read. Add these exclusions explicitly to your root `CLAUDE.md` under a "Do not read" or "Ignore" section:
+
+```
+# Claude should not read these — generated or third-party files
+node_modules/
+.next/
+.sitecore/platform/        # generated Sitecore platform files
+src/graphql/generated/     # auto-generated GraphQL types from schema introspection
+*.generated.ts
+```
+
+These directories are either generated output (reading them wastes tokens and produces stale advice) or third-party platform code (Claude can't meaningfully help here and it inflates context enormously).
+
+### 3c — Annotated File Tree
+
+Here's a typical SitecoreAI JSS Next.js solution with CLAUDE.md files placed at the right levels:
+
+```
+/
+├── CLAUDE.md                     ← stack, npm scripts, path aliases, constraints, exclusions
+├── src/
+│   ├── components/
+│   │   ├── CLAUDE.md             ← component naming conventions, Storybook patterns, atomic structure
+│   │   ├── Navigation/
+│   │   ├── Hero/
+│   │   └── ...
+│   ├── lib/
+│   │   ├── CLAUDE.md             ← GraphQL helper patterns, SDK wrapper conventions, what's generated
+│   │   ├── graphql/
+│   │   │   └── generated/        ← EXCLUDE: auto-generated types
+│   │   └── ...
+│   ├── pages/ (or app/)
+│   │   └── ...
+│   └── styles/
+├── .sitecore/
+│   ├── CLAUDE.md                 ← CLI commands, serialization paths, platform/ is generated
+│   ├── platform/                 ← EXCLUDE: generated Sitecore platform files
+│   └── items/                    ← serialized content items (hand-managed)
+├── scripts/
+└── package.json
+```
+
+The key insight: each `CLAUDE.md` makes Claude smarter about that specific area _without_ requiring it to read the whole project every time.
+
+### 3d — Scope Your Claude Sessions
+
+How you open Claude Code matters as much as what you put in CLAUDE.md — but the right entry point depends on your solution's shape.
+
+The advice to open Claude inside a specific component folder works well for isolated, self-contained work. In practice, most SitecoreAI Next.js solutions share a significant amount of atomic components, design tokens, utility functions, and lib logic across features. Opening too deep in the tree means Claude lacks the shared context it actually needs, and you end up pasting the same foundational files into every session manually.
+
+A better rule: **open at the lowest directory that naturally contains everything relevant to the task.** For a feature that touches only one component and its styles, that might be `src/components/Navigation/`. For a feature that draws on shared atoms, layout primitives, and a GraphQL helper, opening at `src/` is more appropriate — Claude will load the relevant CLAUDE.md for that level and have sight of the shared structure.
+
+From there, be deliberate about what you pull in:
+
+- **Use `@file` references for cross-cutting dependencies.** If your task touches a shared design token file, a base component, or a utility in `src/lib/`, name those files explicitly rather than relying on Claude to discover them. Auto-discovery can miss important files or pull in irrelevant ones.
+- **One task per session.** Long sessions accumulate conversation history, which is re-processed on every response. A 3-hour sprawling session is dramatically more expensive than three focused 45-minute ones.
+- **Close and reopen** when you switch context. It feels slightly inefficient but it's the right habit — you shed irrelevant history and start with a clean, cheap context.
+
+## 4. Build Phase: Day-to-Day Credit-Smart Habits
+
+Good project setup reduces baseline cost. Good daily habits reduce the variance — the surprise sessions that consume 10x the expected budget.
+
+**One ticket, one session.** Define what done looks like before you open Claude. A session with a clear scope ("implement the `NavigationItem` component to match the Storybook story") costs a fraction of an open-ended one ("help me figure out the navigation architecture").
+
+**Review diffs, not files.** When asking Claude to review code, paste the diff — not the whole file. A 50-line diff review costs perhaps 5% of a whole-file review and gives equivalent (often better) feedback because Claude focuses on what changed.
+
+**Build a shared prompts library.** Create a `.claude/commands/` folder in your repository and commit reusable slash commands: `/new-component`, `/review-pr`, `/serialization-check`. Every developer benefits from prompts that have already been refined, and nobody re-invents an expensive prompt from scratch.
+
+**Copilot for boilerplate, Claude for architecture.** Don't run both on the same problem. Use Copilot's inline autocomplete while you're in the flow of writing — it's fast and cheap. Reach for Claude when you need to think through a pattern, review a design decision, or understand why something is failing.
+
+**Pair AI sessions for complex problems.** When a problem is genuinely hard, pair up: one developer drives the Claude session while the other reviews responses and watches the token count. This catches rabbit holes early — the reviewer can see when the session is drifting and redirect it before costs compound.
+
+## 5. Governance: Tracking Your Token Usage
+
+None of the above works without visibility into what's actually being consumed. Here's where to look:
+
+**Claude usage** — the [Anthropic Console](https://console.anthropic.com) shows per-API-key token consumption with breakdowns by model. If your team shares a project API key, you can see aggregate usage. For per-developer visibility, each developer needs their own key with a credit limit set at the account level — this is the baseline assumption. The question is not whether to set limits, but how to stay well within them.
+
+**GitHub Copilot Insights** — available in your GitHub organisation settings under "Copilot" → "Usage". Shows accepted suggestions, active users, and activity by repository. Useful for spotting whether Copilot is actually being used or just sitting idle.
+
+**Set usage alerts well before the limit.** In the Anthropic Console, configure quota alerts at 70% and 90% of each developer's monthly allowance. The 70% alert is your "adjust your approach" trigger — tighten session scope, defer non-essential AI work, prioritise the highest-value tasks for the remainder of the cycle. The 90% alert means AI-assisted work stops for anything that isn't critical. Neither alert should be a surprise; if they are, the sessions leading up to them weren't well governed.
+
+**Monthly AI health check (10 minutes):**
+
+- What percentage of the sprint's token usage was on planning vs. build vs. review work?
+- Which sessions consumed the most? Were they worth it?
+- Are there recurring expensive prompts that could be replaced with a smarter CLAUDE.md or a shared slash command?
+- Did anyone exhaust their allowance and revert to manual work? What was the productivity cost of that mid-sprint switch?
+
+**Rotate the AI owner role.** If the same person sets up all the CLAUDE.md files and shared prompts, that knowledge never spreads. Rotate the role each sprint — the incoming owner reviews what exists, improves one thing, and documents one new pattern. Over six sprints, the whole team is fluent.
+
+## Conclusion
+
+The goal isn't to use AI as little as possible — it's to use it as effectively as possible. A team that plans its AI usage like it plans its infrastructure will get genuine leverage from these tools. A team that doesn't will either burn the budget on unfocused sessions or under-use AI out of fear, and end up with the worst of both worlds.
+
+The SitecoreAI stack is complex enough that well-governed AI assistance is a genuine force multiplier: the composable architecture, the serialization model, the JSS rendering pipeline, the Vercel deployment surface — there's a lot to hold in your head. Claude is genuinely useful here, and Copilot saves real time on the boilerplate. But neither tool can govern itself.
+
+Get the structure right, set the team norms early, and build the feedback loop. The sprint where you spend an hour on AI setup is the one that saves you ten hours of context-window chaos later.
+
+---
+
+_If this sparked thoughts about the broader mindset shift teams need to make when moving into AI-first development, [What Teams Must Unlearn From the Composable Era](/blog/what-teams-must-unlearn-from-the-composable-era) covers the strategic side of the same conversation._
