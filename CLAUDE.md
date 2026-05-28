@@ -6,7 +6,7 @@
 - **Content**: Contentlayer2 — MDX files in `data/blog/` and `data/authors/`
 - **Styles**: Tailwind CSS 3 (class-based dark mode, Space Grotesk font)
 - **Deployment**: Vercel
-- **Package manager**: `yarn` — never use `npm install` or `npm run`
+- **Package manager**: `npm`
 - **Comments**: Giscus (GitHub Discussions), configured via env vars
 - **Search**: kbar (local `public/search.json`, regenerated on build)
 - **Analytics**: Google Analytics via Pliny
@@ -14,9 +14,9 @@
 ## Key Commands
 
 ```bash
-yarn dev          # start dev server
-yarn build        # production build + postbuild (RSS, search index)
-yarn lint         # ESLint with auto-fix
+npm run dev       # start dev server
+npm run build     # production build + postbuild (RSS, search index)
+npm run lint      # ESLint with auto-fix
 ```
 
 ## Path Aliases (tsconfig.json)
@@ -58,7 +58,7 @@ The following are already implemented — do not duplicate or replace them:
 
 - Do not add API routes — this is a static/SSG blog with no backend
 - Do not add a database or server-side state
-- Contentlayer2 auto-generates TypeScript types on `yarn build` / `yarn dev` — do not edit `.contentlayer/` manually
+- Contentlayer2 auto-generates TypeScript types on `npm run build` / `npm run dev` — do not edit `.contentlayer/` manually
 - ESLint uses flat config (`eslint.config.mjs`) — not `.eslintrc`
 - External links require `target="_blank"` and `rel="noopener noreferrer"` (enforced by ESLint)
 
@@ -70,4 +70,4 @@ The following are already implemented — do not duplicate or replace them:
 
 **Remote images** — `next/image` only proxies domains listed in `next.config.js` → `images.remotePatterns`. Currently only `picsum.photos` is allowed. Add new domains there before using external image URLs in posts or components.
 
-**Bundle analysis** — run `ANALYZE=true yarn build` to open the webpack bundle visualiser. Useful before committing large new dependencies.
+**Bundle analysis** — run `ANALYZE=true npm run build` to open the webpack bundle visualiser. Useful before committing large new dependencies.
