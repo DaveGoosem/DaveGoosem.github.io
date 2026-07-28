@@ -1,0 +1,73 @@
+---
+title: 'The Developer Skill Shift: Prompt Craft Meets Web Security in the Composable Era'
+date: '2026-07-29'
+tags: ['AI', 'Security', 'Composable', 'SaaS', 'SitecoreAI', 'Strategy', 'Development Workflow']
+draft: false
+summary: >
+  Modern developer skill sets are splitting in two directions at once — becoming fluent
+  prompt engineers who direct AI tooling effectively, while deepening web security
+  fundamentals to safely wire together composable SaaS products and grant AI systems
+  access via MCP servers and third-party integrations. For Sitecore developers living in
+  SitecoreAI's composable, SaaS-first world, both shifts are already showing up in day-to-day work.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+The job hasn't changed shape so much as it's changed centre of gravity. Five years ago, "senior developer" mostly meant depth in a language, a framework, and the patterns around them. Today it increasingly means two things that didn't used to be core skills at all: knowing how to direct AI tooling well enough that it actually saves time, and understanding web security deeply enough to trust — or not trust — the growing web of services you're wiring together.
+
+Neither of these is optional anymore, and neither is really "extra." They're becoming the job.
+
+It's a particularly sharp shift if you've spent your career in the Sitecore ecosystem. SitecoreAI (formerly XM Cloud) already pushed teams out of a single monolithic platform and into a composable DXP stack — content ops, Search, Personalize, CDP, Send, all talking to each other over the network instead of living in one solution — and is now layering AI-assisted content and development workflows directly on top of that. So the two skills below aren't abstract future-proofing for a Sitecore developer — they're this quarter's actual work.
+
+## Prompt engineering is now a baseline skill, not a novelty
+
+Writing a good prompt isn't about magic phrasing — it's about the same discipline that's always separated good engineers from average ones: clear problem framing, providing the right context, and knowing what "done" looks like before you start. What's changed is that this discipline now has direct, measurable leverage. A vague prompt against a large context window burns time and money for a mediocre result; a well-scoped one with the right constraints can produce in minutes what used to take an afternoon.
+
+The developers pulling ahead right now aren't the ones who type the fastest — they're the ones who've built a mental model of:
+
+- **What the tool actually needs to know** to answer well, and what's just noise that dilutes its attention
+- **When to delegate versus when to drive** — some tasks are faster to do by hand than to explain
+- **How to verify output**, because fluency with AI tooling doesn't remove the need to actually understand what it produced
+
+That last point matters more than it sounds. Prompt engineering without verification skill isn't a shortcut — it's just moving risk downstream.
+
+On SitecoreAI projects this shows up constantly: asking an assistant to scaffold a new JSS component, generate GraphQL queries against your content types, or draft a Content Serialization module is only fast if you've scoped it with the right context — the actual template fields, the component's rendering variants, the existing module boundaries — rather than letting it guess. Skip that scoping and you get code that compiles but doesn't match your data model, and now you're debugging AI output instead of writing it yourself.
+
+## The other half: understanding what you're actually connecting
+
+The composable era gave every team the ability to stitch together best-of-breed SaaS products instead of building everything in-house — a CMS here, a search product there, an identity provider, a CDP, a payments layer. That flexibility is genuinely valuable. It's also a lot of new attack surface, and most of it is invisible unless you go looking for it.
+
+When you connect two SaaS products together, you're not just calling an API — you're making a decision about trust. Questions worth asking every time, not just once at setup:
+
+- **Where does the request actually go?** Is it hitting the vendor directly, or is it routed through an edge network, a proxy, or a webhook relay you don't control?
+- **What's authenticating the call** — a long-lived API key sitting in an environment variable, a short-lived signed token, mutual TLS? Long-lived static secrets are the easiest thing to get wrong and the hardest to rotate under pressure.
+- **What can the other side do with what you've given it?** Scoped, least-privilege tokens are worth the extra setup friction every time.
+- **Is the data in transit and at rest actually protected**, or is "it's HTTPS" being treated as the whole answer when it's really just the starting point?
+
+This is the same discipline that's always underpinned good security thinking — it's just that composable architectures multiply the number of trust boundaries a normal feature team now has to reason about, often without a security specialist in the room.
+
+A typical SitecoreAI solution makes this concrete: your Next.js head calls the Experience Edge GraphQL endpoint, Sitecore Search or the Search SDK for query results, CDP/Personalize for personalization decisions, and Send for triggered messaging — often fronted by Vercel's edge network with its own routing, caching, and firewall rules in between. Each of those hops is a place where an API key can be scoped too broadly, a webhook can be left unauthenticated, or a personalization payload can leak more customer data than the calling component actually needed. Knowing your solution's architecture isn't enough anymore — you need to know what each of those integrations is allowed to do, and what happens if one of them is compromised.
+
+## MCP servers raise the stakes again
+
+If composable SaaS connections are trust boundaries between services, MCP (Model Context Protocol) servers and AI tool integrations are trust boundaries between an AI system and your actual environment — your filesystem, your databases, your internal APIs, sometimes your production infrastructure.
+
+That's a meaningfully different risk profile. When you install an MCP server or grant an AI assistant access to a tool, you're not just trusting the vendor who wrote it — you're trusting that:
+
+- The server's permission model is actually scoped to what you need, not blanket access "for convenience"
+- The tool's inputs are validated server-side, not just assumed safe because "an AI is calling it"
+- Prompt injection from untrusted content (a webpage, a document, a support ticket) can't smuggle instructions through to a tool with real-world effects
+- You know what happens if that MCP server's own dependencies or supply chain are compromised, since it now sits inside your trust boundary too
+
+None of this is theoretical caution for its own sake. It's the same "assume breach, minimise blast radius" thinking that's always applied to third-party code — just applied to a new category of tool that happens to be a lot more capable and a lot newer, which means the guardrails are still catching up.
+
+For a Sitecore developer this is no longer hypothetical: SitecoreAI-era tooling and assistants like Claude increasingly want direct access to your content tree, your Content Serialization repo, or your deployment pipeline via an MCP server or IDE integration. Before granting that, ask the same questions you'd ask of any new service account — does it need write access to production content, or would a scoped, read-only sandbox environment do? Is it authenticating with a token tied to a real identity you can revoke, or a shared credential nobody remembers issuing? That access request deserves the same scrutiny as adding a new integration to your DXP stack, not a reflexive "approve."
+
+## Where this leaves developer skill sets
+
+Put together, the shift looks less like "learn AI" and more like "learn to direct AI well, and learn to reason about trust in systems you don't fully control" — because increasingly, most of what you ship is built on both. Being productive with AI tooling and being careful about what you connect and what you grant access to aren't competing priorities. They're the same job now, just with a wider surface area than the one most of us trained for.
+
+The teams that get ahead here won't be the ones with the fanciest AI setup or the strictest lockdown — they'll be the ones who treat prompt craft and security fundamentals as equally core, and build habits around both instead of bolting one on as an afterthought.
+
+For Sitecore developers specifically, that means the skill set worth investing in isn't "learn SitecoreAI" or "learn AI" as separate tracks — it's building a habit of tracing every request across your composable DXP stack and every permission you grant an AI tool, the same way you'd trace a request through a content resolution pipeline. That instinct was always part of the job. It just now covers more ground.
