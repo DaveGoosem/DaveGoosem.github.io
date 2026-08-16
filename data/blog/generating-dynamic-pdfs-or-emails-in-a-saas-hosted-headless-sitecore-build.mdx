@@ -34,7 +34,6 @@ To add to the complexity, the header and footer of the templates must be content
 
 There are a couple of challenges we need to solve here—let's take a look:
 
-
 1. In a headless solution hosted in Vercel, you can't really (reliably) use something like [puppeteer](https://pptr.dev/guides/pdf-generation) as the executable required to use this is quite large and may exceed the limit for storage you have.
 2. If you have a multi-head/multi-site solution you really don't want to need this giant executable in multiple heads and we should be looking at a middleware/api option to centralise the pdf and/or email sending so we can use it from each site that needs it.
 3. We need a way to get the content-managed template data out of Sitecore
