@@ -1,0 +1,111 @@
+---
+title: 'The Road to SitecoreAI: Why Moving Off XM/XP Is Harder Than It Looks (and How We Make It Manageable)'
+date: '2026-10-11'
+tags: ['Sitecore', 'SitecoreAI', 'XMCloud', 'SXA', 'Migration', 'Architecture', 'Strategy', 'AI']
+draft: true
+summary: >
+  Moving from Sitecore XM/XP to SitecoreAI is a replatform, not an upgrade. Part 1 of a three-part series covers the pain points that rarely make it into the estimate, and the principles we use to make the migration repeatable, reviewable and manageable.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+_Part 1 of 3 in a series on migrating legacy Sitecore sites to SitecoreAI._
+
+If you're a Sitecore customer on XM or XP 9.x or 10.x, you've probably had the conversation by now. SitecoreAI (formerly XM Cloud) is where the platform is going: SaaS,
+no more platform upgrades, a headless front end, composable services around it. The question isn't really _whether_ to move. It's _how quickly_, _how much it will cost_, and _how much will break on the way_.
+
+For partners, that conversation is now constant. Many customers want to make the move, often on a fixed budget and timeline, usually with an active marketing team that can't stop publishing for three months while the site is rebuilt.
+
+This series is about how we're approaching that, based on a migration we're in the middle of right now. This first post covers why the move is harder than it sounds, and the principles we use to keep it manageable. Parts 2 and 3 get into the practical detail.
+
+## It's not an upgrade, it's a replatform
+
+With an on-premises upgrade, say 9.3 to 10.3, the content mostly comes along as it is. Your renderings, templates, pipelines and indexes still work, give or take some breaking changes.
+
+Moving to SitecoreAI is different. The content database is the only thing that looks familiar. Nearly everything around it changes, and that's true whether your current site is MVC / SXA or already headless with JSS or Headless SXA on XM/XP. Headless teams start further along, but "we're already on Next.js" doesn't mean the head will lift and shift. For example:
+
+| On XM/XP you had                                        | On SitecoreAI you have                                                                                                            |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| MVC / SXA renderings in Razor, running inside the CM/CD | A headless Next.js head on the Content SDK, with React components reading layout from Experience Edge                             |
+| A JSS or Headless SXA head on your own rendering host   | Still Next.js, but on the Content SDK, reading from Experience Edge rather than your CD, and hosted on Vercel, Netlify or similar |
+| Experience Editor for in-context editing                | Pages as the main editing tool, with its own expectations of how components, placeholders and datasources are set up              |
+| Custom .NET code: pipelines, processors, controllers    | Very little custom CM code (it's discouraged for SaaS compatibility), so logic moves to the head or to services                   |
+| Content Search with Solr indexes you query directly     | A SaaS search product (Sitecore Search or similar), fed by crawlers or feeds, with its own widgets and indexing delays            |
+| Sitecore Forms (or WFFM) built into the platform        | A different forms approach: the SaaS forms offering, a third-party form tool, or custom forms posting to external endpoints       |
+| xDB-based personalisation and analytics                 | Composable personalisation and analytics, set up differently                                                                      |
+| The media library storing files in the database         | Usually a DAM such as Content Hub, with public links and a connector writing different field values                               |
+| SXA themes, grid and styles you've customised for years | A new design system, with its own components, variants and spacing scale                                                          |
+
+Each of those rows is a project in its own right. Put together, "moving to SitecoreAI" means **rebuilding or reworking the front end, rethinking search and forms, re-homing media, and migrating content into a different shape**, all at once.
+
+## The pain points nobody puts in the estimate
+
+Some challenges are obvious from day one. These are the ones that tend to show up halfway through.
+
+**The content doesn't map one to one.** A legacy SXA page is a deep tree of renderings: splitters inside containers inside tabs inside accordions, each with styles, grid classes and a datasource. The new component library is (rightly) simpler and more opinionated. Every legacy rendering needs a decision: which new component, which variant, which styles, and what happens to the bits that don't fit.
+
+**Content authors have been creative.** Years of editing produce rich text containing buttons, tables with inline styles, Plain HTML renderings with page-specific `<style>` blocks, and headings coloured by hand. None of that is in the content model, and all of it affects how the page looks.
+
+**The legacy site is already slightly broken.** Every long-lived Sitecore instance has datasources pointing at deleted items, links to pages that no longer exist, and media nobody uses. A migration shows you all of it. You need to decide what to fix, what to drop, and what to report.
+
+**Media is its own migration.** Moving thousands of files into a DAM, keeping alt text and titles, and then re-pointing every image field, file link and rich-text `<img>` to the new asset is a big job. Matching on file names or paths seems fine until you find the same file uploaded twice under the same name.
+
+**Search and listing pages change behaviour.** Anything that used to query an index, such as listings, people directories, document libraries or related content, now depends on a crawler or feed. Pages may look empty until content is published _and_ indexed, and widget configuration becomes something you have to get right in every environment.
+
+**Forms need rebuilding.** Legacy forms often post to back-office systems, CRMs or third-party endpoints. Each one needs a new home and a new integration, and it needs testing end to end.
+
+**Production keeps moving.** The marketing team keeps publishing while you migrate. New pages appear, media changes, pages turn into redirects. A migration that runs once against a snapshot taken months ago will be out of date before go-live.
+
+**Visual parity is harder than structural parity.** A page can have the right components in the right order and still look wrong: spacing, background bands, heading sizes, alignment. Stakeholders judge the migration on how it looks, so "close enough" isn't good enough.
+
+**Environments multiply everything.** Dev, UAT and production each have their own CM, their own DAM links and their own search configuration. Whatever you build has to run again in each one, the same way each time.
+
+## How we approach it
+
+We've done a few of these now, and the approach that works for us comes down to a handful of principles.
+
+### 1. Start from an accelerator, not a blank page
+
+We build on our own SitecoreAI accelerator: a Next.js head, a component library and design system, Sitecore-aware wrappers, page branches and serialization already set up. The client work is then mostly _configuration and extension_, not building the basics from scratch. The page branches matter for migration too. They're the reference for how each page type should be composed, and the migration copies them instead of inventing layouts.
+
+### 2. Treat the migration as code, not data entry
+
+Migrating content by hand doesn't scale and can't be repeated. Copying the content as it is fails because the shapes don't match. We take a middle path: **mapping rules written as code**. Each legacy rendering, template and field gets a rule that says what it becomes. The rules run in a script that turns a legacy page into a plan for the new page, and a second script builds the page in the CMS. When a rule is wrong, we fix the rule and re-run. We never fix the page by hand.
+
+### 3. Make the legacy site something you can read offline
+
+Instead of querying a live legacy CM, we serialize the legacy site into plain text files kept next to the new solution. Scripts can read it, people can search it, and two snapshots can be compared when production changes. [Part 2](/blog/getting-your-legacy-data-migration-ready) covers this in detail.
+
+### 4. Keep a pointer back to the legacy item, everywhere
+
+Every migrated page, datasource and media asset records the ID of the legacy item it came from. That one decision makes re-runs safe, links resolvable and media lookups exact. [Part 2](/blog/getting-your-legacy-data-migration-ready) covers this too.
+
+### 5. Use AI where it helps, and keep people on the irreversible steps
+
+This is the part that has changed the most for us. With a well-prepared repository, an AI coding agent (we use Claude Code) can do much of the mapping, scripting and investigation: reading thousands of legacy items, proposing rules, writing the transformation code and checking its own changes against every other page. People make the decisions, review the output and run anything that writes to a CMS. [Part 3](/blog/migrating-to-sitecoreai-with-an-ai-pair) covers how we set that up.
+
+### 6. Measure parity, don't eyeball it
+
+For the visual review, we compare the old and new sites side by side, with numbers: element sizes, padding, gaps and backgrounds measured on both. The fix goes into the rule, and every rule change is checked against all the other pages so that pages already signed off don't change.
+
+## What this means for customers
+
+For the customer, the result is a migration that is:
+
+- **Repeatable.** It can run again after a content refresh, in each environment, and give the same result.
+- **Reviewable.** Every page has a plan you can read, every import produces a report, and every change shows up as a diff.
+- **Quick to iterate.** Changing a rule and re-planning a whole section takes minutes, not days of re-keying.
+- **Honest about gaps.** What couldn't be mapped, which media is missing and which links were already broken are listed, not hidden.
+
+It isn't magic. Search, forms and integrations still need proper design and build. The content migration, though, stops being the scary, unestimated part of the project and becomes a process you can see, measure and repeat.
+
+## The series
+
+The rest of the series gets practical:
+
+- **Part 1: The Road to SitecoreAI** _(this post)_. The challenge, and the principles we use.
+- **[Part 2: Getting Your Legacy Data Migration-Ready](/blog/getting-your-legacy-data-migration-ready).** Legacy IDs on every asset, moving the media library to Content Hub and back again as a lookup table, and serializing the legacy site into the repo (with Unicorn, SCS or something else).
+- **[Part 3: Migrating with an AI Pair](/blog/migrating-to-sitecoreai-with-an-ai-pair).** How we give an AI agent the context to do this work reliably: mapping documents, the plan-and-import pipeline, a review loop based on measurements, and what we learned along the way.
+
+If you're about to start your own move to SitecoreAI, [Part 2](/blog/getting-your-legacy-data-migration-ready) is where to begin. Most of it is worth doing whether or not AI is involved.
