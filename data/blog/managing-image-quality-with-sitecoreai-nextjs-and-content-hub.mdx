@@ -1,0 +1,302 @@
+---
+title: 'Managing Image Quality with SitecoreAI, Next.js and Content Hub'
+date: '2026-11-10'
+tags: ['Sitecore', 'SitecoreAI', 'XMCloud', 'ContentHub', 'Next.js']
+draft: false
+summary: >
+  Next.js image optimisation is great for photos but can break SVGs and soften PNGs, so a headless SitecoreAI front end needs to know what type of file each image is. That's easy with Media Library URLs and surprisingly hard with Content Hub public links. This post covers why different image types need different handling, and how to get file type information from Content Hub through Sitecore Connect for Content Hub to a shared Next.js image component.
+layout: DaveLayout
+images: []
+authors: ['default']
+---
+
+{/* TODO: add screenshots (our Attribute mapping item, the image field XML with the new attribute, before/after of a PNG) and promote one into `images:` before publishing */}
+
+Images are one of those things nobody thinks about until they look wrong. A logo goes missing from the header, or a product screenshot looks slightly fuzzy, and suddenly everyone has an opinion.
+
+This is one area where Next.js really shines. Its built-in image handling takes care of most of the work that used to need a lot of custom code. It serves each visitor an image sized for their screen, converts it to a smaller modern format such as WebP or AVIF, compresses it, and caches the result. It lazy-loads images below the fold and reserves their space so the page doesn't jump around as they load. Together, that means smaller pages, faster loads and better Core Web Vitals, mostly for free.
+
+It does need a little help, though. Not every image should be treated the same way, and to make the right call the front end has to know what kind of image it's dealing with.
+
+This post is about a small change we had to make when moving images into Sitecore Content Hub. It's a good example of a front end quietly depending on something that disappears when you change where images come from.
+
+## The setup
+
+Our site is a SitecoreAI build with a Next.js front end. Every image on the site goes through Next.js's built-in `next/image` component, which does all of the **optimising** described above. For photos, that's free performance with no visible downside.
+
+Not every image is a photo, though. Our content also has plenty of logos, icons, diagrams and screenshots, usually supplied as **SVG** or **PNG** files, and the standard optimisation doesn't suit them (more on why below). So, rather than leave it to each component, all images on the site render through one **shared image component** that applies two rules:
+
+- **SVGs skip the optimiser entirely.** They're sent to the browser as-is.
+- **PNGs are optimised at full quality (100).** Everything else uses 90.
+
+To apply those rules, the component needs to know what type of file each image is. While our images lived in the **Sitecore Media Library** that was easy, because every image URL ended in its file extension: `.../brand-logo.svg`, `.../screenshot.png`. The component just read the end of the URL.
+
+## The problem
+
+As part of our migration to SitecoreAI, we moved the site's media out of the Media Library and into Sitecore Content Hub, our DAM (digital asset management system). I covered that move in [part 2 of the migration series](/blog/getting-your-legacy-data-migration-ready).
+
+Content Hub serves images from **public links**, and those links don't include a file extension. Nothing else in the image field the front end received said what type of file it was either. Overnight, our shared component lost the one clue it relied on, and every image fell into the "everything else" bucket:
+
+- **SVG logos and icons** were sent to the optimiser, which rejects SVGs by default, so they didn't render.
+- **PNG screenshots and diagrams** were compressed at 90 instead of 100, and the edges went soft.
+
+The fix had three parts:
+
+1. Get Content Hub to send the asset's **file name** along with every image, using an attribute mapping in Sitecore Connect for Content Hub.
+2. **Re-sync** the images authors had already selected, so they picked up the new value.
+3. Update the shared image component to read the file type from the file name.
+
+> **Step 1 really should be out of the box.** A `FileName` mapping should ship with the Sitecore Content Hub connector out of the box. A front end almost always needs to know what type of file it's dealing with, and not only for images. Several of our components link to Content Hub PDFs and other documents. They need the file type to show the right icon, add a "PDF" label next to the link, or decide whether to open the file in the browser or download it. Every asset in Content Hub already has a file name, and with headless front ends now the norm, it's surprising this still has to be added by hand on each project.
+
+The rest of this post walks through each one, starting with why SVGs and PNGs need different handling in the first place.
+
+> **A note on the code in this post:** the YAML and TypeScript below are **sample code**, based on the Sitecore documentation and simplified to show the idea. They aren't lifted from our project. Adapt names, IDs and structure to your own solution.
+
+## Why SVGs and PNGs need special treatment
+
+`next/image` is great for photos. It resizes the image to fit the screen, converts it to a modern format such as WebP or AVIF, and compresses it. Photos survive that with no visible change. SVGs and PNGs often don't.
+
+### SVGs: there's nothing to optimise
+
+An SVG isn't a grid of pixels. It's a set of drawing instructions, so it's already sharp at any size. Resizing it on the server gains nothing.
+
+The Next.js image optimiser also refuses SVGs by default. Because an SVG is XML, it can contain scripts and other active content, so serving one through the optimiser is a security risk unless you opt in with `dangerouslyAllowSVG` and a strict Content Security Policy. Next.js recommends the `unoptimized` prop instead: the browser loads the SVG directly from its source.
+
+Next.js handles this for you, **if the `src` ends in `.svg`**. In that case `next/image` marks the image as unoptimised automatically. Without the extension, Next.js can't tell, so it sends the SVG to the optimiser, which rejects it, and the page shows a broken image.
+
+{/* TODO: confirm the exact symptom we saw — broken image / 400 from /_next/image? */}
+
+### PNGs: lossy compression shows
+
+Content authors usually pick PNG for logos, icons, diagrams, screenshots and anything with transparency. These images have flat areas of colour, sharp edges and text.
+
+When the optimiser converts a PNG to WebP or AVIF at the default quality (75), it uses lossy compression. That's fine for a photo, but on a logo or a screenshot you get:
+
+- blurry or "fringed" edges around text and shapes
+- blocky artefacts in flat areas of colour
+- halos around transparent edges
+
+Setting `quality={100}` for PNGs still gets you resizing and the format conversion, without the visible damage. For everything else (mostly photographic JPEGs), 90 was the right balance between file size and quality for this site.
+
+## Media Library URLs vs Content Hub public links
+
+A Media Library image field resolves to a URL that ends in the file's extension:
+
+```text
+https://<cm-or-edge-host>/-/media/project/site/logos/brand-logo.svg?h=120&w=240
+```
+
+A Content Hub image is rendered from its **public link**, which looks like this:
+
+```text
+https://<instance>.sitecorecontenthub.cloud/api/public/content/7c1f0e2b9a8d4c3e?v=4b2a91f0
+```
+
+The Content Hub link has no extension, so the front end has nothing to go on. We considered a few ways to get the file type back:
+
+| Option                                                       | Why we didn't use it                                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Send a `HEAD` request at render time to read `Content-Type`  | An extra network call for every image, on every render or build             |
+| Ask authors to tick a "this is an SVG" checkbox              | Easy to forget, and the DAM already knows the answer                        |
+| Turn off optimisation for all Content Hub images             | Throws away the resizing and format conversion for every photo on the site  |
+| **Carry the asset's file name through with the image field** | No runtime cost, no author effort, and it uses data Content Hub already has |
+
+The last option is the one we went with.
+
+## Step 1: Add an attribute mapping in Sitecore Connect for Content Hub
+
+When an author picks a Content Hub asset in an image field (**Browse Sitecore DAM**, then **Select** in the **Insert from DAM** dialog), the connector writes an `<image />` tag into the field. Which attributes end up on that tag is controlled by **attribute mapping items** in the connector module. Each one maps a property on the Content Hub `M.Asset` entity to an attribute on the Sitecore image tag.
+
+Sitecore documents this in [Configure the Image tag attribute mapping in Sitecore](https://doc.sitecore.com/sai/en/developers/sitecoreai/sitecore-connect-for-content-hub/configuring-sitecore-connect-for-content-hub/configure-the-image-tag-attribute-mapping-in-sitecore.html). Its own example edits a mapping to use the asset's file name, which is very close to what we needed.
+
+The mappings live under:
+
+```text
+/sitecore/system/Modules/DAM/Config/Mapping
+```
+
+Image tag attributes are in the `Image Field` folder underneath. To add a new one, right-click the folder, choose **Insert** then **Attribute**, and fill in the fields in the **Data** section:
+
+| Field                    | Value      | Notes                                                                                            |
+| ------------------------ | ---------- | ------------------------------------------------------------------------------------------------ |
+| **Content Hub Property** | `FileName` | The property name on `M.Asset`. Check the exact spelling against your own entity (see below)     |
+| **Sitecore Attribute**   | `filename` | The attribute name written to the image tag. It must be a valid XML attribute name, so no spaces |
+| **IsRendering**          | Checked    | If you clear this, the attribute isn't rendered on delivery, which defeats the purpose here      |
+
+{/* TODO: confirm the folder/item name we used, and swap in a screenshot of our Attribute item */}
+
+To check the property name, the docs suggest opening the entity in the Content Hub API, at `https://<your-content-hub>/api/entities/<asset-id>`. That shows every property on the asset as JSON, including the file name.
+
+### Serialising the mapping
+
+The mapping item is configuration, so it belongs in source control and should be deployed like everything else. In a SitecoreAI project, that means Sitecore Content Serialization (SCS).
+
+A sample module file (for example `src/items/dam-mapping.module.json`) that includes **only** the new mapping item:
+
+```json
+{
+  "namespace": "Project.DamMapping",
+  "items": {
+    "includes": [
+      {
+        "name": "dam-image-field-filename",
+        "path": "/sitecore/system/Modules/DAM/Config/Mapping/Image Field/FileName",
+        "scope": "SingleItem",
+        "allowedPushOperations": "CreateAndUpdate"
+      }
+    ]
+  }
+}
+```
+
+The `SingleItem` scope and `CreateAndUpdate` matter. You want to own **your** mapping item, not the whole `Mapping` folder. If you serialise the parent with its descendants, you take ownership of the connector's built-in mappings too, and a push could delete or overwrite them.
+
+Run `dotnet sitecore ser pull` and SCS writes a YAML file for the item. It will look roughly like this:
+
+```yaml
+# Sample only — IDs replaced with placeholders. Pull your own item to get the real file.
+---
+ID: '<new-item-id>'
+Parent: '<image-field-folder-id>'
+Template: '<attribute-template-id>'
+Path: '/sitecore/system/Modules/DAM/Config/Mapping/Image Field/FileName'
+Languages:
+  - Language: en
+    Versions:
+      - Version: 1
+        Fields:
+          - ID: '<content-hub-property-field-id>'
+            Hint: Content Hub Property
+            Value: FileName
+          - ID: '<sitecore-attribute-field-id>'
+            Hint: Sitecore Attribute
+            Value: filename
+          - ID: '<isrendering-field-id>'
+            Hint: IsRendering
+            Value: 1
+```
+
+The mapping fields are versioned per language, which is how the connector supports a different property for each language (for example `Description.en-us`). If your site has more than one language, check that the mapping exists in each language version you need.
+
+### What the image tag looks like afterwards
+
+Once the mapping is in place, newly selected assets include the new attribute:
+
+```xml
+<image
+  dam-id="123456"
+  dam-content-type="Image"
+  src="https://<instance>.sitecorecontenthub.cloud/api/public/content/7c1f0e2b9a8d4c3e?v=4b2a91f0"
+  alt="Brand logo"
+  width="240"
+  height="120"
+  filename="brand-logo.svg"
+/>
+```
+
+Older connector versions write `stylelabs-content-id` and `stylelabs-content-type` instead of `dam-id` and `dam-content-type`. Version 5.2.0 renamed them, so it's worth checking if any of your code relies on the old names.
+
+The image tag attributes are passed through to the field's `value` in the layout data. So the front end receives the new attribute with no extra work:
+
+```json
+"image": {
+  "value": {
+    "src": "https://<instance>.sitecorecontenthub.cloud/api/public/content/7c1f0e2b9a8d4c3e?v=4b2a91f0",
+    "alt": "Brand logo",
+    "width": "240",
+    "height": "120",
+    "filename": "brand-logo.svg"
+  }
+}
+```
+
+## Step 2: Re-sync the images that were already selected
+
+This is the step that's easy to miss. **The image tag is a snapshot from the moment the asset was selected.** Adding a new mapping doesn't go back and update the images that authors had already chosen. Every existing Content Hub image field had a `src` but no `filename`.
+
+The connector has a sync feature for this, described in [Synchronize DAM asset changes](https://doc.sitecore.com/sai/en/developers/sitecoreai/sitecore-connect-for-content-hub/using-sitecore-connect-for-content-hub/synchronize-dam-asset-changes.html). In the Content Editor:
+
+1. On the ribbon, click the **DAM** tab.
+2. Select the item to sync.
+3. Click **Sync**, then choose **Sync Current** for the selected item, or **Sync Children** for everything under it.
+4. In the **DAM Batch Sync** dialog, click **Next**, check the **Target Item** is correct, then click **Start Batch Sync**.
+
+Where the sync didn't pick up the new attribute, re-selecting the asset in the field fixed it, because the connector writes the image tag again with the current mappings.
+
+{/* TODO: add detail on what we actually did (Sync Children from which root? how many items? which ones needed a manual re-select?) */}
+
+A few things worth knowing if you're doing the same:
+
+- **Add the mapping before the bulk of authoring or migration.** Every image selected before the mapping exists becomes a re-sync job later.
+- **Check the result.** Before calling it done, look for image fields that point to Content Hub but have no `filename` attribute. A Sitecore PowerShell Extensions report, or a search for `dam-id` without `filename=`, does the job.
+- **Publish afterwards.** The updated field values only reach the front end once they're published to Experience Edge.
+
+## Step 3: Use it in the front-end image component
+
+All images on the site render through one shared image component. It wraps the Content SDK's `NextImage`, so Sitecore editing still works in Pages, and applies our rules on top. That meant the fix only had to go in one place.
+
+The change is to work out the file type from `filename` first, then fall back to `src`. The fallback keeps any remaining Media Library images, and any Content Hub images not yet re-synced, working as before.
+
+Here's a **sample** of how that could look:
+
+```tsx
+// Sample only: a simplified wrapper around the Content SDK's NextImage.
+import { ImageField, NextImage } from '@sitecore-content-sdk/nextjs'
+import type { ComponentProps } from 'react'
+
+const DEFAULT_QUALITY = 90
+const PNG_QUALITY = 100
+
+// Returns the lowercase extension at the end of a file name or URL path, if there is one.
+const getExtension = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined
+  const path = value.split(/[?#]/)[0]
+  return path.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase()
+}
+
+// Prefer the Content Hub file name; fall back to the src for Media Library images.
+export const getImageExtension = (field?: ImageField): string | undefined =>
+  getExtension(field?.value?.filename) ?? getExtension(field?.value?.src)
+
+type SiteImageProps = Omit<ComponentProps<typeof NextImage>, 'field'> & {
+  field?: ImageField
+}
+
+export const SiteImage = ({ field, ...props }: SiteImageProps) => {
+  const extension = getImageExtension(field)
+  const isSvg = extension === 'svg'
+  const quality = extension === 'png' ? PNG_QUALITY : DEFAULT_QUALITY
+
+  return (
+    <NextImage field={field} unoptimized={isSvg} quality={isSvg ? undefined : quality} {...props} />
+  )
+}
+```
+
+Two settings in `next.config` are worth checking at the same time:
+
+- **`images.remotePatterns`** must include your Content Hub host, or `next/image` won't load Content Hub images at all.
+- **`images.qualities`**, if your version of Next.js supports it, must include every quality you use. Newer versions only allow the values listed (Next.js 16 allows just `75` by default), so add `90` and `100`.
+
+```js
+// next.config.js (sample)
+module.exports = {
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: '<instance>.sitecorecontenthub.cloud' }],
+    qualities: [75, 90, 100],
+  },
+}
+```
+
+## The result
+
+SVGs from Content Hub load directly, are sharp at any size and don't touch the optimiser. PNG logos and screenshots keep their clean edges. Photos still get resized and converted, at a quality we chose.
+
+The change was small, but the general lesson applies to any move from the Media Library to a DAM: **check what your front end was inferring from the old URLs.** File extensions, folder paths and query strings like `?h=` and `?w=` often carry information that code depends on without anyone noticing. Once the URLs change, that information has to come from somewhere else, and the connector's attribute mappings are a cheap way to bring it across.
+
+## References
+
+- [Configure the Image tag attribute mapping in Sitecore](https://doc.sitecore.com/sai/en/developers/sitecoreai/sitecore-connect-for-content-hub/configuring-sitecore-connect-for-content-hub/configure-the-image-tag-attribute-mapping-in-sitecore.html) (Sitecore docs)
+- [Synchronize DAM asset changes](https://doc.sitecore.com/sai/en/developers/sitecoreai/sitecore-connect-for-content-hub/using-sitecore-connect-for-content-hub/synchronize-dam-asset-changes.html) (Sitecore docs)
+- [Sitecore Connect for Content Hub 5.2.0 release notes](https://developers.sitecore.com/downloads/Sitecore_Connect_for_Content_Hub/5x/Sitecore_Connect_for_Content_Hub_520/Release_Notes) (attribute renames)
+- [`next/image` component reference](https://nextjs.org/docs/app/api-reference/components/image) (Next.js docs: `unoptimized`, `quality`, `dangerouslyAllowSVG`, `qualities`)
