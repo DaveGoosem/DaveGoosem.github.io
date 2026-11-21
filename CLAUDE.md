@@ -2,7 +2,7 @@
 
 ## Stack
 
-- **Framework**: Next.js 14 (App Router), TypeScript
+- **Framework**: Next.js 15 (App Router), TypeScript
 - **Content**: Contentlayer2 — MDX files in `data/blog/` and `data/authors/`
 - **Styles**: Tailwind CSS 3 (class-based dark mode, Space Grotesk font)
 - **Deployment**: Vercel
