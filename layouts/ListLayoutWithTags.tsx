@@ -94,7 +94,7 @@ export default function ListLayoutWithTags({
       </div>
       <div className="flex gap-10">
         <aside className="hidden w-60 shrink-0 sm:block">
-          <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-auto rounded-2xl border border-gray-200 bg-gray-50/60 p-3 dark:border-gray-800 dark:bg-gray-900/40">
+          <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-auto rounded-2xl border border-gray-200 bg-gray-50/60 p-3 dark:border-gray-800 dark:bg-gray-900/40">
             <p className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
               Topics
             </p>

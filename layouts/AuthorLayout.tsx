@@ -20,7 +20,7 @@ export default function AuthorLayout({ children, content }: Props) {
           </h1>
         </div>
         <div className="items-start space-y-8 xl:grid xl:grid-cols-3 xl:gap-x-10 xl:space-y-0">
-          <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-gray-50/60 p-8 text-center dark:border-gray-800 dark:bg-gray-900/40 xl:sticky xl:top-8">
+          <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-gray-50/60 p-8 text-center dark:border-gray-800 dark:bg-gray-900/40 xl:sticky xl:top-24">
             {avatar && (
               <Image
                 src={avatar}

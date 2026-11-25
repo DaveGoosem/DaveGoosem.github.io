@@ -9,6 +9,7 @@ import SectionContainer from '@/components/SectionContainer'
 import Image from '@/components/Image'
 import Tag from '@/components/Tag'
 import PostMeta from '@/components/PostMeta'
+import PostCover from '@/components/PostCover'
 import ReadingProgress from '@/components/ReadingProgress'
 import TableOfContents from '@/components/TableOfContents'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
@@ -122,7 +123,7 @@ function PrevNextLink({
 }
 
 export default function DaveLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { path, date, title, images, tags, readingTime } = content
+  const { slug, path, date, title, images, tags, readingTime } = content
   const toc = (content.toc as unknown as Toc) ?? []
   const basePath = path.split('/')[0]
   const displayImage = images && images.length > 0 ? images[0] : ''
@@ -131,30 +132,28 @@ export default function DaveLayout({ content, authorDetails, next, prev, childre
   return (
     <SectionContainer>
       <ReadingProgress />
-      <ScrollTopAndComment />
+      <ScrollTopAndComment showComment={false} />
       <article>
         {/* Header */}
         <header className="pb-10 pt-8">
-          {displayImage && (
-            <div className="mb-10">
-              <Bleed>
-                <div className="relative aspect-[2/1] w-full overflow-hidden xl:rounded-2xl">
+          {/* Same artwork as the post's card: its own image, or the generated cover */}
+          <div className="mb-10">
+            <Bleed>
+              <div
+                className={`relative w-full overflow-hidden xl:rounded-2xl ${
+                  displayImage ? 'aspect-[2/1]' : 'aspect-[3/1] sm:aspect-[4/1]'
+                }`}
+              >
+                {displayImage ? (
                   <Image src={displayImage} alt={title} fill priority className="object-cover" />
-                </div>
-              </Bleed>
-            </div>
-          )}
-          <div className="mx-auto max-w-3xl text-center">
-            {tags && tags.length > 0 && (
-              <div className="-mb-2 flex flex-wrap justify-center">
-                {tags.map((tag) => (
-                  <Tag key={tag} text={tag} />
-                ))}
+                ) : (
+                  <PostCover slug={slug} tags={tags} showLabel={false} />
+                )}
               </div>
-            )}
-            <div className="mt-5">
-              <PageTitle>{title}</PageTitle>
-            </div>
+            </Bleed>
+          </div>
+          <div className="text-center">
+            <PageTitle>{title}</PageTitle>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               {primaryAuthor?.avatar && (
                 <Image
@@ -170,24 +169,34 @@ export default function DaveLayout({ content, authorDetails, next, prev, childre
                   {authorDetails.map((a) => a.name).join(', ')}
                 </span>
               )}
-              <span aria-hidden="true" className="text-gray-300 dark:text-gray-600">
+              <span
+                aria-hidden="true"
+                className="hidden text-gray-300 dark:text-gray-600 sm:inline"
+              >
                 &middot;
               </span>
               <PostMeta date={date} readingTime={readingTime} dateFormat={postDateTemplate} />
             </div>
+            {tags && tags.length > 0 && (
+              <div className="-mb-2 mt-5 flex flex-wrap justify-center">
+                {tags.map((tag) => (
+                  <Tag key={tag} text={tag} />
+                ))}
+              </div>
+            )}
           </div>
         </header>
 
         {/* Body */}
         <div className="border-t border-gray-200 pt-10 dark:border-gray-800 xl:grid xl:grid-cols-4 xl:gap-x-10">
           <aside className="hidden xl:block">
-            <div className="sticky top-8 max-h-[calc(100vh-4rem)] overflow-auto pb-8">
+            <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-auto pb-8">
               <TableOfContents toc={toc} />
             </div>
           </aside>
 
           <div className="min-w-0 xl:col-span-3">
-            <div className="prose max-w-none pb-8 dark:prose-invert">{children}</div>
+            <div className="prose max-w-none pb-8 dark:prose-invert md:prose-lg">{children}</div>
             {/* Comments are switched off for this layout.
             {siteMetadata.comments && (
               <div className="pb-6 pt-6 text-center text-gray-700 dark:text-gray-300" id="comment">

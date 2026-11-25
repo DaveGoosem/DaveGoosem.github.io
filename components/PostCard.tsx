@@ -4,55 +4,71 @@ import Link from './Link'
 import Image from './Image'
 import Tag from './Tag'
 import PostMeta from './PostMeta'
+import PostCover from './PostCover'
 
 type Variant = 'featured' | 'grid' | 'row'
 
 interface Props {
   post: CoreContent<Blog>
   /**
-   * featured: large card, hero image beside the text when the post has one
-   * grid: compact card with no image, so rows in a grid stay even
-   * row: full-width list item with a small thumbnail on the right when the post has an image
+   * featured: large card, artwork beside the text
+   * grid: card with artwork across the top
+   * row: full-width list item with a thumbnail on the right
+   * Artwork is the post's first image, or a generated cover when it has none.
    */
   variant?: Variant
   maxTags?: number
 }
 
 export default function PostCard({ post, variant = 'grid', maxTags = 4 }: Props) {
-  const { path, date, title, summary, tags, images, readingTime } = post
+  const { slug, path, date, title, summary, tags, images, readingTime } = post
   const image = Array.isArray(images) && images.length > 0 ? images[0] : undefined
   const href = `/${path}`
   const featured = variant === 'featured'
-  const showImage = image && variant !== 'grid'
 
   return (
     <article
       className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 dark:border-gray-800 dark:bg-gray-900/40 dark:hover:border-primary-500/40 ${
-        showImage && featured ? 'md:flex-row' : ''
-      } ${showImage && variant === 'row' ? 'sm:flex-row-reverse' : ''}`}
+        featured ? 'md:flex-row' : ''
+      } ${variant === 'row' ? 'sm:flex-row-reverse' : ''}`}
     >
       {/* Accent line that lights up on hover */}
       <span
         aria-hidden="true"
         className="absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r from-primary-500 via-sky-400 to-indigo-500 opacity-0 transition-opacity group-hover:opacity-100"
       />
-      {showImage && (
-        <div
-          className={`relative shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 ${
-            featured
-              ? 'aspect-[2/1] md:aspect-auto md:w-1/2'
-              : 'aspect-[2/1] sm:m-5 sm:ml-0 sm:aspect-[4/3] sm:w-44 sm:rounded-xl'
-          }`}
-        >
+      <div
+        className={`relative shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 ${
+          featured
+            ? 'aspect-[2/1] md:aspect-auto md:min-h-[18rem] md:w-1/2'
+            : variant === 'row'
+              ? 'aspect-[2/1] sm:aspect-auto sm:w-56 sm:border-l sm:border-gray-200 dark:sm:border-gray-800'
+              : 'aspect-[5/2]'
+        }`}
+      >
+        {image ? (
           <Image
             src={image}
             alt=""
             fill
-            sizes={featured ? '(min-width: 768px) 512px, 100vw' : '(min-width: 640px) 176px, 100vw'}
+            sizes={
+              featured
+                ? '(min-width: 768px) 512px, 100vw'
+                : variant === 'row'
+                  ? '(min-width: 640px) 224px, 100vw'
+                  : '(min-width: 768px) 480px, 100vw'
+            }
             className="object-cover transition duration-500 group-hover:scale-[1.03]"
           />
-        </div>
-      )}
+        ) : (
+          <PostCover
+            slug={slug}
+            tags={tags}
+            showLabel={variant !== 'row'}
+            className="transition duration-500 group-hover:scale-[1.03]"
+          />
+        )}
+      </div>
       <div className={`flex min-w-0 flex-1 flex-col ${featured ? 'p-6 md:p-8' : 'p-6'}`}>
         <PostMeta date={date} readingTime={readingTime} />
         <h2

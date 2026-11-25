@@ -52,7 +52,7 @@ module.exports = {
               fontWeight: '600',
             },
             'h2,h3,h4': {
-              scrollMarginTop: theme('spacing.8'),
+              scrollMarginTop: theme('spacing.24'),
             },
             // Inline code as a subtle chip rather than `backticked` text
             ':not(pre) > code': {
