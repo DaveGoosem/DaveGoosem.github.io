@@ -87,7 +87,8 @@ export function generateAgentFiles({
 
   rmSync(PUBLIC_MD, { recursive: true, force: true })
 
-  const authorLine = `${author.name}, ${author.occupation} at ${author.company}`
+  const role = [author.occupation, author.company].filter(Boolean).join(' at ')
+  const authorLine = role ? `${author.name}, ${role}` : String(author.name)
   const postLine = (p: Doc) =>
     `- [${p.title}](${site}/${p.path}) (${isoDate(p.date)}): ${p.summary?.replace(/\s+/g, ' ').trim() ?? ''}`
 
@@ -160,7 +161,7 @@ export function generateAgentFiles({
   add(
     '/about',
     'about.md',
-    `# About ${author.name}\n\n${author.occupation} at ${author.company}.\n\n${mdxToMarkdown(author.body.raw, site)}\n\n## Elsewhere\n\n${socials}`
+    `# About ${author.name}\n\n${role ? `${role}.\n\n` : ''}${mdxToMarkdown(author.body.raw, site)}\n\n## Elsewhere\n\n${socials}`
   )
 
   // Standalone pages (contact, privacy, ...)

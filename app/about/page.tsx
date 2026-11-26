@@ -14,7 +14,7 @@ import {
 export const metadata = genPageMetadata({
   title: 'About',
   description:
-    'About David Goosem: Technical Architect at Aceik and Sitecore Technology MVP, writing about Sitecore, SitecoreAI, XM Cloud and headless Next.js.',
+    'About David Goosem: Technical Architect and Sitecore Technology MVP, writing about Sitecore, SitecoreAI, XM Cloud and headless Next.js.',
   markdownPath: 'about.md',
 })
 
