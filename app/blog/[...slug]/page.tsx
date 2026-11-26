@@ -50,9 +50,12 @@ export async function generateMetadata({
   const publishedAt = new Date(post.date).toISOString()
   const modifiedAt = new Date(post.lastmod || post.date).toISOString()
   const authors = authorDetails.map((author) => author.name)
+  // `images: []` in frontmatter is truthy, so check length: an empty list falls back to the banner
   let imageList = [siteMetadata.socialBanner]
-  if (post.images) {
-    imageList = typeof post.images === 'string' ? [post.images] : post.images
+  if (typeof post.images === 'string' && post.images) {
+    imageList = [post.images]
+  } else if (Array.isArray(post.images) && post.images.length > 0) {
+    imageList = post.images
   }
   const ogImages = imageList.map((img) => {
     return {
