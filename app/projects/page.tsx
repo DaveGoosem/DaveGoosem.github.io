@@ -2,7 +2,11 @@ import projectsData from '@/data/projectsData'
 import Card from '@/components/Card'
 import { genPageMetadata } from 'app/seo'
 
-export const metadata = genPageMetadata({ title: 'Projects' })
+// Still the starter template's placeholder content, so keep it out of search indexes
+export const metadata = genPageMetadata({
+  title: 'Projects',
+  robots: { index: false, follow: true },
+})
 
 export default function Projects() {
   return (

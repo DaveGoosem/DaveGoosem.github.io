@@ -11,7 +11,9 @@
 | `/tags`             | `app/tags/page.tsx`             | All tags                                 |
 | `/tags/[tag]`       | `app/tags/[tag]/page.tsx`       | Posts by tag                             |
 | `/about`            | `app/about/page.tsx`            | About page                               |
-| `/projects`         | `app/projects/page.tsx`         | Projects page                            |
+| `/projects`         | `app/projects/page.tsx`         | Template placeholder, `noindex`          |
+| `/contact`          | `app/contact/page.tsx`          | MDX from `data/pages/contact.mdx`        |
+| `/privacy`          | `app/privacy/page.tsx`          | MDX from `data/pages/privacy.mdx`        |
 
 ## Blog Post Rendering
 
@@ -30,14 +32,15 @@ export const metadata = genPageMetadata({ title: 'Page Title', description: '...
 
 **Do not write raw `<meta>` tags** — always go through the Next.js Metadata API or `genPageMetadata()`.
 
-**Structured data (JSON-LD)** — blog posts render two `<script type="application/ld+json">` blocks: `BlogPosting` (from Contentlayer's `structuredData` computed field, enriched with author in `page.tsx`) and `BreadcrumbList` (built inline in `page.tsx`). The root layout renders a `WebSite` schema. Do not add duplicate schema blocks.
+**Structured data (JSON-LD)** — built with the helpers in `app/structured-data.ts`. The root layout renders a `@graph` with `WebSite` + `Person` on every page; pages add their own `@graph` (`BlogPosting` + `BreadcrumbList` on posts, `ProfilePage`, `ContactPage`, `CollectionPage` on listings) that reference those by `@id`. Do not add duplicate `WebSite`/`Person` blocks.
 
 **Auto-generated files** (do not edit manually):
 
 - `app/tag-data.json` — tag counts, written by Contentlayer's `onSuccess` callback
 - `public/search.json` — kbar search index, written by the same callback
+- `public/md/**`, `public/llms.txt`, `public/llms-full.txt`, `app/agent-routes.json` — agent files, written by `scripts/agent-files.ts` from the same callback
 - `robots.ts` and `sitemap.ts` generate `/robots.txt` and `/sitemap.xml` at build time
 
 ## No API Routes
 
-This is a static blog — there are no `/api/` routes. Do not add them.
+This is a static blog — there are no `/api/` routes. Do not add them. The only request-time code is the root `middleware.ts`, which serves pre-generated Markdown to agents (see root CLAUDE.md).

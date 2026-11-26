@@ -32,9 +32,15 @@ module.exports = {
         DEFAULT: {
           css: {
             a: {
-              color: theme('colors.primary.500'),
+              color: theme('colors.primary.600'),
+              fontWeight: '500',
+              textDecorationLine: 'underline',
+              textDecorationColor: `${theme('colors.primary.500')}4d`,
+              textUnderlineOffset: '3px',
+              transition: 'text-decoration-color 150ms',
               '&:hover': {
-                color: `${theme('colors.primary.600')}`,
+                color: `${theme('colors.primary.500')}`,
+                textDecorationColor: theme('colors.primary.500'),
               },
               code: { color: theme('colors.primary.400') },
             },
@@ -45,22 +51,58 @@ module.exports = {
             h3: {
               fontWeight: '600',
             },
-            code: {
-              color: theme('colors.indigo.500'),
+            'h2,h3,h4': {
+              scrollMarginTop: theme('spacing.24'),
+            },
+            // Inline code as a subtle chip rather than `backticked` text
+            ':not(pre) > code': {
+              color: theme('colors.indigo.600'),
+              backgroundColor: theme('colors.gray.100'),
+              borderRadius: theme('borderRadius.md'),
+              padding: '0.15em 0.4em',
+              fontWeight: '500',
+            },
+            'code::before': { content: 'none' },
+            'code::after': { content: 'none' },
+            pre: {
+              borderRadius: theme('borderRadius.xl'),
+              border: `1px solid ${theme('colors.gray.800')}`,
+            },
+            blockquote: {
+              fontStyle: 'normal',
+              borderLeftColor: theme('colors.primary.500'),
+              backgroundColor: theme('colors.gray.50'),
+              borderTopRightRadius: theme('borderRadius.lg'),
+              borderBottomRightRadius: theme('borderRadius.lg'),
+              padding: '0.25em 1.25em',
+            },
+            'blockquote p:first-of-type::before': { content: 'none' },
+            'blockquote p:last-of-type::after': { content: 'none' },
+            img: {
+              borderRadius: theme('borderRadius.xl'),
             },
           },
         },
         invert: {
           css: {
             a: {
-              color: theme('colors.primary.500'),
+              color: theme('colors.primary.400'),
+              textDecorationColor: `${theme('colors.primary.400')}4d`,
               '&:hover': {
-                color: `${theme('colors.primary.400')}`,
+                color: `${theme('colors.primary.300')}`,
+                textDecorationColor: theme('colors.primary.300'),
               },
               code: { color: theme('colors.primary.400') },
             },
             'h1,h2,h3,h4,h5,h6': {
               color: theme('colors.gray.100'),
+            },
+            ':not(pre) > code': {
+              color: theme('colors.indigo.300'),
+              backgroundColor: theme('colors.gray.800'),
+            },
+            blockquote: {
+              backgroundColor: theme('colors.gray.900'),
             },
           },
         },

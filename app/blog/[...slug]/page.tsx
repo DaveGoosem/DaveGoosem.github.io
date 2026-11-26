@@ -14,6 +14,13 @@ import DaveLayout from '@/layouts/DaveLayout'
 import { Metadata } from 'next'
 import siteMetadata from '@/data/siteMetadata'
 import { notFound } from 'next/navigation'
+import {
+  WEBSITE_ID,
+  breadcrumbSchema,
+  jsonLdGraph,
+  jsonLdScript,
+  personRef,
+} from 'app/structured-data'
 
 const defaultLayout = 'PostLayout'
 const layouts = {
@@ -77,6 +84,9 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: canonicalUrl,
+      types: {
+        'text/markdown': `/md/${post.path}.md`,
+      },
     },
   }
 }
@@ -106,41 +116,31 @@ export default async function Page({ params }: { params: Promise<{ slug: string[
     return coreContent(authorResults as Authors)
   })
   const mainContent = coreContent(post)
-  const jsonLd = post.structuredData
-  jsonLd['author'] = authorDetails.map((author) => {
-    return {
-      '@type': 'Person',
-      name: author.name,
-    }
-  })
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: siteMetadata.siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteMetadata.siteUrl}/blog` },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: post.title,
-        item: `${siteMetadata.siteUrl}/${post.path}`,
-      },
-    ],
-  }
+  const minutes = Math.max(1, Math.round(post.readingTime?.minutes ?? 1))
+  const jsonLd = jsonLdGraph(
+    {
+      ...post.structuredData,
+      '@context': undefined,
+      author:
+        authorDetails.length > 1
+          ? authorDetails.map((a) => ({ '@type': 'Person', name: a.name }))
+          : personRef(),
+      isPartOf: { '@id': WEBSITE_ID },
+      ...(post.tags?.[0] && { articleSection: post.tags[0] }),
+      ...(post.readingTime?.words && { wordCount: post.readingTime.words }),
+      timeRequired: `PT${minutes}M`,
+    },
+    breadcrumbSchema([
+      { name: 'Blog', path: 'blog' },
+      { name: post.title, path: post.path },
+    ])
+  )
 
   const Layout = layouts[post.layout || defaultLayout]
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <script {...jsonLdScript(jsonLd)} />
       <Layout content={mainContent} authorDetails={authorDetails} next={next} prev={prev}>
         <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
       </Layout>
