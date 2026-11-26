@@ -5,21 +5,22 @@ Image prompts for the 33 blog posts that don't set `images` in their frontmatter
 ## Workflow in Gemini
 
 1. **Set the aspect ratio to 16:9** if your Gemini app offers the option. Gemini can't make a 2:1 image, so every prompt asks for 16:9 with the subject centred; the site crops it to 2:1 for the article header and wider still for cards.
-2. **Start with the series anchor.** Generate the prompt for _The Road to SitecoreAI_ first and iterate until you're happy with the style. Short follow-ups work well, e.g. "make the lines thinner", "less detail in the background", "a little more navy".
-3. **Reuse that image as a style reference.** For every other post, attach the anchor image and start the prompt with:
+2. **The series anchor is done.** _The Road to SitecoreAI_ (`public/static/images/posts/2026/the-road-to-sitecoreai/banner-image.jpg`) sets the style for the whole set. If a later image drifts, short follow-ups work well, e.g. "make the lines thinner", "less detail in the background", "a little more navy".
+3. **Attach the anchor as a style reference.** For every other post, attach `the-road-to-sitecoreai/banner-image.jpg` and start the prompt with:
 
    > Use the attached image as a style reference: match its illustration style, line weight, texture, lighting and navy background. Change only the subject and colours as described below.
 
    This keeps the set consistent far better than text alone.
 
 4. **If any lettering appears, ask Gemini to remove it**, e.g. "Remove all text and lettering from the image; keep everything else the same." Gemini is good at targeted edits like this.
-5. **Save and wire it up.** Save the image as a PNG at the path listed for the post, then add the frontmatter line shown. That image then becomes the post's article header, its card artwork and its social share image.
+5. **Save and wire it up.** Save the JPG Gemini gives you at the path listed for the post, then add the frontmatter line shown (or ask Claude to wire it up and check the crops). That image then becomes the post's article header, its card artwork and its social share image.
+6. **Shrink it.** Run `npm run optimise-images`. Gemini's files are about 2752px wide and 2 MB; the script resizes every banner wider than 1600px to a JPG of roughly 70–250 KB with no visible difference, and skips ones it has already done. It is the file social networks fetch for link previews, and it keeps the repo small.
 
 ## Why the prompts are written this way
 
 - **Full sentences, not keyword lists.** Gemini follows a descriptive paragraph better than a list of tags.
 - **The post's purpose comes first** ("a banner for a technical blog post about…"), so Gemini knows what the image is for.
-- **Framing is stated explicitly** (centred subject, calm space around it), so the crop to a wider banner doesn't cut anything important off.
+- **Framing is stated explicitly, and strictly.** The site shows each image at several shapes: a 2:1 article header, a 5:2 card, and a narrow, almost square panel on the /blog list that keeps only the middle ~40% of the width. On the anchor, Gemini still pushed the castle and the city into opposite corners, so the list panel shows only the road. The prompts now ask for the story to sit in the middle 40%.
 - **"No text" is phrased positively** ("every surface is clean and free of lettering…"). This works better than a list of don'ts. The post titles are left out of the prompts on purpose: quoting a title tends to make Gemini draw it into the image.
 
 ---
@@ -28,8 +29,8 @@ Image prompts for the 33 blog posts that don't set `images` in their frontmatter
 
 - **Post:** `data/blog/getting-your-legacy-data-migration-ready.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2026/getting-your-legacy-data-migration-ready/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/getting-your-legacy-data-migration-ready/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/getting-your-legacy-data-migration-ready/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/getting-your-legacy-data-migration-ready/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about preparing old content and media for a platform migration.
@@ -38,7 +39,7 @@ The scene shows old archive boxes and filing cabinets being sorted on the left, 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -47,8 +48,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/managing-image-quality-with-sitecoreai-nextjs-and-content-hub.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2026/managing-image-quality-with-sitecoreai-nextjs-and-content-hub/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/managing-image-quality-with-sitecoreai-nextjs-and-content-hub/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/managing-image-quality-with-sitecoreai-nextjs-and-content-hub/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/managing-image-quality-with-sitecoreai-nextjs-and-content-hub/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about keeping logos and screenshots sharp when images are optimised.
@@ -57,7 +58,7 @@ The scene shows two copies of the same simple geometric emblem under a large mag
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -66,8 +67,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/migrating-to-sitecoreai-with-an-ai-pair.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2026/migrating-to-sitecoreai-with-an-ai-pair/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/migrating-to-sitecoreai-with-an-ai-pair/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/migrating-to-sitecoreai-with-an-ai-pair/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/migrating-to-sitecoreai-with-an-ai-pair/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about a developer and an AI coding assistant migrating content together.
@@ -76,7 +77,7 @@ The scene shows a developer and a friendly, rounded AI assistant robot sitting s
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -85,8 +86,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/integrating-the-search-sdk-into-your-jss-nextjs-solution.mdx`
 - **Colour family:** search (emerald green and teal)
-- **Save as:** `public/static/images/posts/2026/integrating-the-search-sdk-into-your-jss-nextjs-solution/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/integrating-the-search-sdk-into-your-jss-nextjs-solution/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/integrating-the-search-sdk-into-your-jss-nextjs-solution/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/integrating-the-search-sdk-into-your-jss-nextjs-solution/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about adding site search to a website end to end.
@@ -95,7 +96,7 @@ The scene shows a beam of light sweeping across a library of floating content ca
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is emerald green and teal, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -104,8 +105,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/the-developer-skill-shift-ai-prompt-craft-meets-web-security-in-the-composable-era.mdx`
 - **Colour family:** ai (magenta and violet)
-- **Save as:** `public/static/images/posts/2026/the-developer-skill-shift-ai-prompt-craft-meets-web-security-in-the-composable-era/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/the-developer-skill-shift-ai-prompt-craft-meets-web-security-in-the-composable-era/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/the-developer-skill-shift-ai-prompt-craft-meets-web-security-in-the-composable-era/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/the-developer-skill-shift-ai-prompt-craft-meets-web-security-in-the-composable-era/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about developers learning to direct AI tools while strengthening security skills.
@@ -114,17 +115,18 @@ The scene shows a developer standing at a fork in the road, one hand guiding a s
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is magenta and violet, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
 
 ## The Road to SitecoreAI: Why Moving Off XM/XP Is Harder Than It Looks (and How We Make It Manageable)
 
+- **Status:** done. This is the style anchor; frontmatter is set.
 - **Post:** `data/blog/the-road-to-sitecoreai.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2026/the-road-to-sitecoreai/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/the-road-to-sitecoreai/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/the-road-to-sitecoreai/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/the-road-to-sitecoreai/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about why moving to a new platform is a journey, not an upgrade.
@@ -133,7 +135,7 @@ The scene shows a long winding road leading from an old monolithic castle in the
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -142,8 +144,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/what-teams-must-unlearn-from-the-composable-era.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2026/what-teams-must-unlearn-from-the-composable-era/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2026/what-teams-must-unlearn-from-the-composable-era/banner-image.png']`
+- **Save as:** `public/static/images/posts/2026/what-teams-must-unlearn-from-the-composable-era/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2026/what-teams-must-unlearn-from-the-composable-era/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about simplifying an over-complicated stack of connected products.
@@ -152,7 +154,7 @@ The scene shows a team carefully dismantling a wobbly tower made of many mismatc
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -161,8 +163,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/atomic-design-patterns-for-headless-sitecore-multi-site-solutions.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/banner-image.png']`
+- **Save as:** `public/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2025/atomic-design-patterns-for-headless-sitecore-multi-site-solutions/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about reusing one design system across many websites.
@@ -171,7 +173,7 @@ The scene shows small glowing spheres joining into molecules, the molecules snap
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -180,8 +182,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2025/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2025/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build/banner-image.png']`
+- **Save as:** `public/static/images/posts/2025/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2025/generating-dynamic-pdfs-or-emails-in-a-saas-hosted-headless-sitecore-build/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about generating documents and emails from website templates.
@@ -190,7 +192,7 @@ The scene shows a press stamping out a polished document and a sealed envelope f
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -199,8 +201,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/banner-image.png']`
+- **Save as:** `public/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2025/setting-up-your-xmcloud-solution-with-storybook-and-full-test-tooling/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about developing and testing interface components in isolation.
@@ -209,7 +211,7 @@ The scene shows interface components laid out like illustrations in a large open
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -218,8 +220,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/banner-image.png']`
+- **Save as:** `public/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2025/sitecore-content-serialization-in-xmcloud-defining-your-workflow-for-success/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about a team workflow for keeping content and code in sync.
@@ -228,7 +230,7 @@ The scene shows content items folding into neat stacks of file cards, travelling
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -237,8 +239,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/unit-testing-and-automation-with-storybook-and-github-workflows.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2025/unit-testing-and-automation-with-storybook-and-github-workflows/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2025/unit-testing-and-automation-with-storybook-and-github-workflows/banner-image.png']`
+- **Save as:** `public/static/images/posts/2025/unit-testing-and-automation-with-storybook-and-github-workflows/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2025/unit-testing-and-automation-with-storybook-and-github-workflows/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about automated testing of interface components.
@@ -247,7 +249,7 @@ The scene shows component cards riding an automated conveyor through a row of te
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -256,8 +258,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/building-components-for-sitecore-pages-with-xmcloud.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/building-components-for-sitecore-pages-with-xmcloud/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about building page components that content editors can drag and drop.
@@ -266,7 +268,7 @@ The scene shows a hand placing a modular interface tile onto a large page canvas
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -275,8 +277,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/configuring-sitecore-cloud-portal-with-azure-ad-sso.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/configuring-sitecore-cloud-portal-with-azure-ad-sso/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about single sign-on into a cloud portal.
@@ -285,7 +287,7 @@ The scene shows one glowing key held up to a row of doors set into a cloud works
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -294,8 +296,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
-- **Save as:** `public/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/how-to-structure-your-multi-site-xmcloud-solution-and-deploy-it-to-vercel/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about structuring a multi-site solution and deploying it to the cloud.
@@ -304,7 +306,7 @@ The scene shows an architect's blueprint laid flat on a desk showing a building 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is deep crimson and warm orange, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -313,8 +315,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/securing-non-production-vercel-environments-via-vercel-firewall.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/securing-non-production-vercel-environments-via-vercel-firewall/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about restricting test websites to people inside the organisation.
@@ -323,7 +325,7 @@ The scene shows a group of preview buildings behind a gated wall. The gate opens
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -332,8 +334,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/sitecore-10-3-mono-repo-setup-with-npm-workspaces-nextjs13/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about keeping several websites in one shared code repository.
@@ -342,7 +344,7 @@ The scene shows a large open toolbox with neatly partitioned compartments, each 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -351,8 +353,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-xmcloud-front-end-framework-selection.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2024/sitecore-xmcloud-front-end-framework-selection/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2024/sitecore-xmcloud-front-end-framework-selection/banner-image.png']`
+- **Save as:** `public/static/images/posts/2024/sitecore-xmcloud-front-end-framework-selection/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2024/sitecore-xmcloud-front-end-framework-selection/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about choosing a front-end framework.
@@ -361,7 +363,7 @@ The scene shows a developer standing at a crossroads where several paths branch 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -370,8 +372,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-headless-jss-static-site-generation-ssg.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/banner-image.png']`
+- **Save as:** `public/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2023/sitecore-headless-jss-static-site-generation-ssg/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about turning a dynamic website into fast static pages.
@@ -380,7 +382,7 @@ The scene shows a lively, moving website being fed into a printing press and com
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -389,8 +391,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/configuring-sitecore-jss-headless-nextjs-security-headers.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/banner-image.png']`
+- **Save as:** `public/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2023/configuring-sitecore-jss-headless-nextjs-security-headers/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about protecting a website with security headers.
@@ -399,7 +401,7 @@ The scene shows a single web page floating in the centre, wrapped in several thi
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -408,8 +410,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/configuring-your-sitecore-heads-in-vercel-for-multi-site.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/banner-image.png']`
+- **Save as:** `public/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2023/configuring-your-sitecore-heads-in-vercel-for-multi-site/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about running several websites on one hosting platform with separate environments.
@@ -418,7 +420,7 @@ The scene shows four browser windows standing side by side on one shared platfor
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -427,8 +429,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/securing-a-saas-solution-with-edge-networks.mdx`
 - **Colour family:** frontend (sky blue and cyan)
-- **Save as:** `public/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/banner-image.png']`
+- **Save as:** `public/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2023/securing-a-saas-solution-with-edge-networks/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about securing connected cloud services at the network edge.
@@ -437,7 +439,7 @@ The scene shows a small city of connected service buildings ringed by glowing ed
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is sky blue and cyan, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -446,8 +448,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-wildcard-pages-with-item-buckets-jss.mdx`
 - **Colour family:** architecture (indigo and soft violet)
-- **Save as:** `public/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/banner-image.png']`
+- **Save as:** `public/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2022/sitecore-wildcard-pages-with-item-buckets-jss/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about one page template serving thousands of items.
@@ -456,7 +458,7 @@ The scene shows a single master page stencil producing a fan of unique pages, ea
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is indigo and soft violet, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -465,8 +467,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/configuring-searchstax-for-your-sitecore-solution.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/banner-image.png']`
+- **Save as:** `public/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2021/configuring-searchstax-for-your-sitecore-solution/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about setting up a managed search service.
@@ -475,7 +477,7 @@ The scene shows a sleek search server resting on top of a soft cloud, with a han
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -484,8 +486,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-with-solr-the-management-conundrum.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/banner-image.png']`
+- **Save as:** `public/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2021/sitecore-with-solr-the-management-conundrum/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about the challenge of hosting a search engine that lives outside your main platform.
@@ -494,7 +496,7 @@ The scene shows a powerful search machine sitting on the border between two very
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -503,8 +505,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-sxa-and-theme.mdx`
 - **Colour family:** architecture (indigo and soft violet)
-- **Save as:** `public/static/images/posts/2020/sitecore-sxa-and-theme/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2020/sitecore-sxa-and-theme/banner-image.png']`
+- **Save as:** `public/static/images/posts/2020/sitecore-sxa-and-theme/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2020/sitecore-sxa-and-theme/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about syncing website theme files with a content platform.
@@ -513,7 +515,7 @@ The scene shows theme files on a front-end developer's desk flowing through a cl
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is indigo and soft violet, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -522,8 +524,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/configuring-solr-for-sitecore.mdx`
 - **Colour family:** search (emerald green and teal)
-- **Save as:** `public/static/images/posts/2019/configuring-solr-for-sitecore/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2019/configuring-solr-for-sitecore/banner-image.png']`
+- **Save as:** `public/static/images/posts/2019/configuring-solr-for-sitecore/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2019/configuring-solr-for-sitecore/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about tuning a search engine for production.
@@ -532,7 +534,7 @@ The scene shows a mechanic in a tidy workshop tuning a compact, powerful engine 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is emerald green and teal, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -541,8 +543,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-8-2-devtools-test-your-queries.mdx`
 - **Colour family:** default (slate blue and soft grey)
-- **Save as:** `public/static/images/posts/2019/sitecore-8-2-devtools-test-your-queries/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2019/sitecore-8-2-devtools-test-your-queries/banner-image.png']`
+- **Save as:** `public/static/images/posts/2019/sitecore-8-2-devtools-test-your-queries/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2019/sitecore-8-2-devtools-test-your-queries/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about testing content queries with developer tools.
@@ -551,7 +553,7 @@ The scene shows a developer's console on the left and a branching tree of conten
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is slate blue and soft grey, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -560,8 +562,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-on-azure-paas-file-i-o-errors.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2019/sitecore-on-azure-paas-file-i-o-errors/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2019/sitecore-on-azure-paas-file-i-o-errors/banner-image.png']`
+- **Save as:** `public/static/images/posts/2019/sitecore-on-azure-paas-file-i-o-errors/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2019/sitecore-on-azure-paas-file-i-o-errors/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about diagnosing file errors on cloud-hosted web servers.
@@ -570,7 +572,7 @@ The scene shows a row of identical server instances behind a load balancer. One 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -579,8 +581,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/wildcard-pages-with-item-buckets-azure-search.mdx`
 - **Colour family:** default (slate blue and soft grey)
-- **Save as:** `public/static/images/posts/2019/wildcard-pages-with-item-buckets-azure-search/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2019/wildcard-pages-with-item-buckets-azure-search/banner-image.png']`
+- **Save as:** `public/static/images/posts/2019/wildcard-pages-with-item-buckets-azure-search/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2019/wildcard-pages-with-item-buckets-azure-search/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about one page template backed by cloud search.
@@ -589,7 +591,7 @@ The scene shows a page stencil producing a fan of pages, fed by a beam of light 
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is slate blue and soft grey, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -598,8 +600,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/build-release-with-azure-paas.mdx`
 - **Colour family:** cloud (royal blue and indigo)
-- **Save as:** `public/static/images/posts/2018/build-release-with-azure-paas/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2018/build-release-with-azure-paas/banner-image.png']`
+- **Save as:** `public/static/images/posts/2018/build-release-with-azure-paas/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2018/build-release-with-azure-paas/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about automating software builds and releases into a cloud platform.
@@ -608,7 +610,7 @@ The scene shows an automated assembly line carrying sealed software crates out o
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is royal blue and indigo, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -617,8 +619,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-with-helix-architecture-multisite.mdx`
 - **Colour family:** architecture (indigo and soft violet)
-- **Save as:** `public/static/images/posts/2018/sitecore-with-helix-architecture-multisite/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2018/sitecore-with-helix-architecture-multisite/banner-image.png']`
+- **Save as:** `public/static/images/posts/2018/sitecore-with-helix-architecture-multisite/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2018/sitecore-with-helix-architecture-multisite/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about combining modular and three-tier architecture.
@@ -627,7 +629,7 @@ The scene shows two architectural models on a table joined by a small bridge: on
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is indigo and soft violet, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
@@ -636,8 +638,8 @@ The image is purely visual: every surface is clean and free of lettering, number
 
 - **Post:** `data/blog/sitecore-helix-initial-thoughts.mdx`
 - **Colour family:** architecture (indigo and soft violet)
-- **Save as:** `public/static/images/posts/2017/sitecore-helix-initial-thoughts/banner-image.png`
-- **Frontmatter:** `images: ['/static/images/posts/2017/sitecore-helix-initial-thoughts/banner-image.png']`
+- **Save as:** `public/static/images/posts/2017/sitecore-helix-initial-thoughts/banner-image.jpg`
+- **Frontmatter:** `images: ['/static/images/posts/2017/sitecore-helix-initial-thoughts/banner-image.jpg']`
 
 ```text
 Create a wide 16:9 editorial illustration to use as the banner image for a technical blog post about a modular, layered way to architect a website.
@@ -646,7 +648,7 @@ The scene shows a spiral staircase built from three kinds of modular layers, fou
 
 Style: a clean, modern, semi-flat digital illustration with soft gradients, gentle depth and a subtle grain texture, in the spirit of a polished tech magazine. The background is a deep navy (#0b1120). The colour palette is indigo and soft violet, with a few small white highlights. Lighting is soft and even, with a gentle glow on the main subject.
 
-Composition: a straight-on, slightly elevated view. Keep the main subject in the centre of the frame, with generous calm space around it, because the image will be cropped to an even wider banner. Keep the scene uncluttered.
+Composition: a straight-on, slightly elevated view. Place the main subject in the centre of the frame, filling roughly the middle 40% of the width, so the centre alone reads as a complete picture. Supporting details can extend toward the sides, but keep the corners and the top and bottom edges calm, because the image is cropped to a wide banner in some places and to a narrow, almost square panel in others. Keep the scene uncluttered.
 
 The image is purely visual: every surface is clean and free of lettering, numbers, logos and brand marks.
 ```
