@@ -14,18 +14,18 @@ Image prompts for the 33 blog posts that don't set `images` in their frontmatter
 
 4. **If any lettering appears, ask Gemini to remove it**, e.g. "Remove all text and lettering from the image; keep everything else the same." Gemini is good at targeted edits like this.
 5. **Save and wire it up.** Save the JPG Gemini gives you at the path listed for the post, then add the frontmatter line shown (or ask Claude to wire it up and check the crops). That image then becomes the post's article header, its card artwork and its social share image.
-6. **Shrink it.** Run `npm run optimise-images`. Gemini's files are about 2752px wide and 2 MB; the script resizes every banner wider than 1600px to a JPG of roughly 70–250 KB with no visible difference, and skips ones it has already done. It is the file social networks fetch for link previews, and it keeps the repo small.
+6. **Shrink it.** Run `npm run optimise-images`. Gemini's files are about 2752px wide and 2 MB; the script resizes every banner wider than 1600px to a JPG of roughly 70â€“250 KB with no visible difference, and skips ones it has already done. It is the file social networks fetch for link previews, and it keeps the repo small.
 
 ## Why the prompts are written this way
 
 - **Full sentences, not keyword lists.** Gemini follows a descriptive paragraph better than a list of tags.
-- **The post's purpose comes first** ("a banner for a technical blog post about…"), so Gemini knows what the image is for.
+- **The post's purpose comes first** ("a banner for a technical blog post aboutâ€¦"), so Gemini knows what the image is for.
 - **Framing is stated explicitly, and strictly.** The site shows each image at several shapes: a 2:1 article header, a 5:2 card, and a narrow, almost square panel on the /blog list that keeps only the middle ~40% of the width. On the anchor, Gemini still pushed the castle and the city into opposite corners, so the list panel shows only the road. The prompts now ask for the story to sit in the middle 40%.
-- **"No text" is phrased positively** ("every surface is clean and free of lettering…"). This works better than a list of don'ts. The post titles are left out of the prompts on purpose: quoting a title tends to make Gemini draw it into the image.
+- **"No text" is phrased positively** ("every surface is clean and free of letteringâ€¦"). This works better than a list of don'ts. The post titles are left out of the prompts on purpose: quoting a title tends to make Gemini draw it into the image.
 
 ---
 
-## Getting Your Legacy Sitecore Data “Migration-Ready”
+## Getting Your Legacy Sitecore Data â€œMigration-Readyâ€
 
 - **Post:** `data/blog/getting-your-legacy-data-migration-ready.mdx`
 - **Colour family:** platform (deep crimson and warm orange)
