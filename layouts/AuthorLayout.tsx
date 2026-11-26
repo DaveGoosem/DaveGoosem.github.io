@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
+import { MvpGallery } from '@/components/MvpAwards'
 
 interface Props {
   children: ReactNode
@@ -41,7 +42,12 @@ export default function AuthorLayout({ children, content }: Props) {
               <SocialIcon kind="bluesky" href={bluesky} />
             </div>
           </div>
-          <div className="prose max-w-none pb-8 dark:prose-invert xl:col-span-2">{children}</div>
+          <div className="pb-8 xl:col-span-2">
+            <div className="prose max-w-none dark:prose-invert">{children}</div>
+            <div className="mt-10">
+              <MvpGallery />
+            </div>
+          </div>
         </div>
       </div>
     </>

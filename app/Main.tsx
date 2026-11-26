@@ -3,7 +3,9 @@ import Tag from '@/components/Tag'
 import PostCard from '@/components/PostCard'
 import siteMetadata from '@/data/siteMetadata'
 import tagData from 'app/tag-data.json'
-import mvpAwards from '@/data/mvpAwards'
+import AuthorCard from '@/components/AuthorCard'
+import { allAuthors } from 'contentlayer/generated'
+import { coreContent } from 'pliny/utils/contentlayer'
 import { getTagLabels } from 'app/tag-labels'
 
 const MAX_DISPLAY = 7
@@ -13,6 +15,7 @@ export default function Home({ posts }) {
   const [featured, ...rest] = posts.slice(0, MAX_DISPLAY)
   const tagCounts = tagData as Record<string, number>
   const tagLabels = getTagLabels()
+  const author = allAuthors.find((a) => a.slug === 'default')
   const topTags = Object.keys(tagCounts)
     .sort((a, b) => tagCounts[b] - tagCounts[a])
     .slice(0, MAX_TOPICS)
@@ -25,16 +28,12 @@ export default function Home({ posts }) {
           aria-hidden="true"
           className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary-500/20 via-sky-400/10 to-indigo-500/20 blur-3xl dark:from-primary-500/15 dark:to-indigo-500/15"
         />
-        <p className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/60 px-3 py-1 text-xs font-semibold text-gray-600 backdrop-blur dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary-500" aria-hidden="true" />
-          {mvpAwards.length}× Sitecore Technology MVP
-        </p>
-        <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl md:text-6xl md:leading-tight">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl md:text-6xl md:leading-tight">
           {siteMetadata.description}
         </h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-gray-600 dark:text-gray-400">
-          Practical write-ups on Sitecore, SitecoreAI, XM Cloud, Next.js and the occasional AI
-          experiment, from someone who builds this stuff for a living.
+          Practical write-ups on Sitecore technologies, Next.js and the occasional AI experiment,
+          from someone who builds this stuff for a living.
         </p>
       </section>
 
@@ -113,6 +112,13 @@ export default function Home({ posts }) {
             Browse all posts &rarr;
           </Link>
         </div>
+      )}
+
+      {/* About the author + MVP badges */}
+      {author && (
+        <section aria-label="About the author" className="mt-16">
+          <AuthorCard author={coreContent(author)} label="About the author" />
+        </section>
       )}
     </>
   )

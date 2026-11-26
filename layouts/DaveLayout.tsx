@@ -14,8 +14,7 @@ import ReadingProgress from '@/components/ReadingProgress'
 import TableOfContents from '@/components/TableOfContents'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import Bleed from 'pliny/ui/Bleed'
-import SocialIcon from '@/components/social-icons'
-import mvpBadges from '@/data/mvpAwards'
+import AuthorCard from '@/components/AuthorCard'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -29,65 +28,6 @@ interface LayoutProps {
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
   children: ReactNode
-}
-
-function AuthorCard({ author }: { author: CoreContent<Authors> }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-6 dark:border-gray-800 dark:bg-gray-900/40">
-      <div className="flex items-start gap-4">
-        {author.avatar && (
-          <Image
-            src={author.avatar}
-            width={64}
-            height={64}
-            alt=""
-            className="h-16 w-16 shrink-0 rounded-full ring-2 ring-white dark:ring-gray-800"
-          />
-        )}
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
-            Written by
-          </p>
-          <p className="mt-1 text-lg font-bold text-gray-900 dark:text-gray-100">{author.name}</p>
-          {(author.occupation || author.company) && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {[author.occupation, author.company].filter(Boolean).join(' at ')}
-            </p>
-          )}
-          <div className="mt-3 flex items-center gap-3">
-            {author.linkedin && <SocialIcon kind="linkedin" href={author.linkedin} size={5} />}
-            {author.bluesky && <SocialIcon kind="bluesky" href={author.bluesky} size={5} />}
-            {author.twitter && <SocialIcon kind="twitter" href={author.twitter} size={5} />}
-            {author.github && <SocialIcon kind="github" href={author.github} size={5} />}
-            <Link
-              href="/about"
-              className="ml-1 text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              More about me &rarr;
-            </Link>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6 border-t border-gray-200 pt-5 dark:border-gray-800">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-          Sitecore Technology MVP &middot; {mvpBadges.length} years running
-        </p>
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {mvpBadges.map((badge) => (
-            <li key={badge.year}>
-              <Image
-                src={badge.src}
-                alt={`${badge.year} Sitecore Technology MVP`}
-                width={64}
-                height={64}
-                className="h-14 w-14 rounded-lg bg-white object-contain p-1 sm:h-16 sm:w-16"
-              />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
 }
 
 function PrevNextLink({
