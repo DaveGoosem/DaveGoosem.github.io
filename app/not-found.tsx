@@ -12,7 +12,17 @@ export default function NotFound() {
         <p className="mb-4 text-xl font-bold leading-normal md:text-2xl">
           Sorry that page couldn't be found...
         </p>
-        <p className="mb-8">But dont worry, you can what you need to from the homepage.</p>
+        <p className="mb-8">
+          It may have moved or been renamed. Try the{' '}
+          <Link href="/blog" className="text-primary-600 underline dark:text-primary-400">
+            list of all posts
+          </Link>{' '}
+          or{' '}
+          <Link href="/tags" className="text-primary-600 underline dark:text-primary-400">
+            browse by topic
+          </Link>
+          .
+        </p>
         <Link
           href="/"
           className="focus:shadow-outline-blue inline rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium leading-5 text-white shadow transition-colors duration-150 hover:bg-blue-700 focus:outline-none dark:hover:bg-blue-500"

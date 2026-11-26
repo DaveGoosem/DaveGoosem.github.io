@@ -24,6 +24,27 @@ export default function Footer() {
           <div>{` • `}</div>
           <Link href="/">{siteMetadata.title}</Link>
         </div>
+        <nav aria-label="Site information" className="mb-2 flex space-x-4 text-sm">
+          {[
+            { href: '/about', label: 'About' },
+            { href: '/contact', label: 'Contact' },
+            { href: '/privacy', label: 'Privacy' },
+            { href: '/llms.txt', label: 'llms.txt' },
+          ].map((item) => {
+            const className =
+              'text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400'
+            // llms.txt is a plain file, not a page, so skip client-side routing for it
+            return item.href.endsWith('.txt') ? (
+              <a key={item.href} href={item.href} className={className}>
+                {item.label}
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} className={className}>
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
     </footer>
   )

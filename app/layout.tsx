@@ -11,6 +11,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { jsonLdGraph, jsonLdScript, personSchema, websiteSchema } from './structured-data'
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -58,26 +59,7 @@ export const metadata: Metadata = {
   },
 }
 
-const websiteSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: siteMetadata.title,
-  url: siteMetadata.siteUrl,
-  description: siteMetadata.description,
-  author: {
-    '@type': 'Person',
-    name: siteMetadata.author,
-    url: siteMetadata.siteUrl,
-  },
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: `${siteMetadata.siteUrl}/blog?q={search_term_string}`,
-    },
-    'query-input': 'required name=search_term_string',
-  },
-}
+const siteGraph = jsonLdGraph(websiteSchema(), personSchema())
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -97,10 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-        />
+        <script {...jsonLdScript(siteGraph)} />
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SpeedInsights />

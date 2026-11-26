@@ -27,6 +27,10 @@ public/sitemap.xml
 
 # search
 /public/search.json
+# Generated for AI agents by scripts/agent-files.ts (app/agent-routes.json is committed)
+/public/md/
+/public/llms.txt
+/public/llms-full.txt
 
 # misc
 .DS_Store

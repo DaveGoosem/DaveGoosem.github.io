@@ -3,6 +3,7 @@ import Tag from '@/components/Tag'
 import PostCard from '@/components/PostCard'
 import siteMetadata from '@/data/siteMetadata'
 import tagData from 'app/tag-data.json'
+import mvpAwards from '@/data/mvpAwards'
 import { getTagLabels } from 'app/tag-labels'
 
 const MAX_DISPLAY = 7
@@ -26,7 +27,7 @@ export default function Home({ posts }) {
         />
         <p className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/60 px-3 py-1 text-xs font-semibold text-gray-600 backdrop-blur dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-300">
           <span className="h-1.5 w-1.5 rounded-full bg-primary-500" aria-hidden="true" />
-          6× Sitecore Technology MVP
+          {mvpAwards.length}× Sitecore Technology MVP
         </p>
         <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl md:text-6xl md:leading-tight">
           {siteMetadata.description}

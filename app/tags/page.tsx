@@ -3,7 +3,12 @@ import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
 import { getTagLabels } from 'app/tag-labels'
 
-export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I blog about' })
+export const metadata = genPageMetadata({
+  title: 'Tags',
+  description:
+    'Every topic covered on DaveGoosem.com, from Sitecore and SitecoreAI to Next.js, search and DevOps.',
+  markdownPath: 'tags.md',
+})
 
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
