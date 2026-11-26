@@ -123,6 +123,50 @@ export function jsonLdScript(data: object) {
 /** Link to the Markdown version of a page, for <head> metadata (`alternates.types`). */
 export const markdownAlternate = (mdPath: string) => ({ 'text/markdown': `/md/${mdPath}` })
 
+export const BLOG_ID = `${site}/#blog`
+
+/**
+ * The Blog entity for the home page: who writes it, what it covers, and its latest posts as
+ * BlogPosting summaries, so answer engines can see what the site is about from one page.
+ */
+export function blogSchema(
+  posts: {
+    title: string
+    path: string
+    date: string
+    lastmod?: string
+    summary?: string
+    images?: unknown
+  }[],
+  description: string
+) {
+  return {
+    '@type': 'Blog',
+    '@id': BLOG_ID,
+    name: siteMetadata.title,
+    url: site,
+    description,
+    inLanguage: siteMetadata.language,
+    author: personRef(),
+    publisher: { '@id': PERSON_ID },
+    isPartOf: { '@id': WEBSITE_ID },
+    blogPost: posts.map((p) => {
+      const image = Array.isArray(p.images) && p.images.length ? p.images[0] : undefined
+      return {
+        '@type': 'BlogPosting',
+        '@id': `${site}/${p.path}`,
+        headline: p.title,
+        url: `${site}/${p.path}`,
+        datePublished: p.date,
+        dateModified: p.lastmod || p.date,
+        ...(p.summary && { description: p.summary }),
+        image: absoluteUrl(typeof image === 'string' ? image : siteMetadata.socialBanner),
+        author: { '@id': PERSON_ID },
+      }
+    }),
+  }
+}
+
 /** ItemList of posts for listing pages (blog index, tag pages). */
 export function postListSchema(posts: { title: string; path: string }[]) {
   return {
