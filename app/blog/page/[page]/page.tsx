@@ -1,4 +1,5 @@
 import ListLayout from '@/layouts/ListLayoutWithTags'
+import { getTagLabels } from 'app/tag-labels'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer'
 import { allBlogs } from 'contentlayer/generated'
 
@@ -30,6 +31,7 @@ export default async function Page({ params }: { params: Promise<{ page: string 
       initialDisplayPosts={initialDisplayPosts}
       pagination={pagination}
       title="All Posts"
+      tagLabels={getTagLabels()}
     />
   )
 }

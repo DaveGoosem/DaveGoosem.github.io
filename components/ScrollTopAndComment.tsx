@@ -3,7 +3,8 @@
 import siteMetadata from '@/data/siteMetadata'
 import { useEffect, useState } from 'react'
 
-const ScrollTopAndComment = () => {
+/** `showComment` hides the jump-to-comments button on layouts that don't render comments. */
+const ScrollTopAndComment = ({ showComment = true }: { showComment?: boolean }) => {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -26,7 +27,7 @@ const ScrollTopAndComment = () => {
     <div
       className={`fixed bottom-8 right-8 hidden flex-col gap-3 ${show ? 'md:flex' : 'md:hidden'}`}
     >
-      {siteMetadata.comments?.provider && (
+      {showComment && siteMetadata.comments?.provider && (
         <button
           aria-label="Scroll To Comment"
           onClick={handleScrollToComment}
