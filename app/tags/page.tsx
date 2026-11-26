@@ -2,21 +2,43 @@ import Tag from '@/components/Tag'
 import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
 import { getTagLabels } from 'app/tag-labels'
+import siteMetadata from '@/data/siteMetadata'
+import { breadcrumbSchema, jsonLdGraph, jsonLdScript, webPageSchema } from 'app/structured-data'
 
-export const metadata = genPageMetadata({
-  title: 'Tags',
-  description:
-    'Every topic covered on DaveGoosem.com, from Sitecore and SitecoreAI to Next.js, search and DevOps.',
-  markdownPath: 'tags.md',
-})
+const description =
+  'Every topic covered on DaveGoosem.com, from Sitecore and SitecoreAI to Next.js, search and DevOps.'
+
+export const metadata = genPageMetadata({ title: 'Tags', description, markdownPath: 'tags.md' })
 
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
   const tagLabels = getTagLabels()
   const tagKeys = Object.keys(tagCounts)
   const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a])
+
+  const jsonLd = jsonLdGraph(
+    webPageSchema('CollectionPage', {
+      path: 'tags',
+      name: 'Topics',
+      description,
+      extra: {
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: sortedTags.map((t, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: `${siteMetadata.siteUrl}/tags/${t}`,
+            name: `${tagLabels[t] ?? t} (${tagCounts[t]} posts)`,
+          })),
+        },
+      },
+    }),
+    breadcrumbSchema([{ name: 'Tags', path: 'tags' }])
+  )
+
   return (
     <div className="pt-6">
+      <script {...jsonLdScript(jsonLd)} />
       <div className="pb-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl md:text-5xl">
           Tags
